@@ -1,10 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { notifyError } from "@/lib/client-error";
 import { museumToast } from "@/lib/museum-toast";
+import LightingPresetPicker from "@/components/media/LightingPresetPicker";
+import LightingStudioViewer from "@/components/media/LightingStudioViewer";
+import {
+  ARTIFACT_CATEGORIES,
+  getCategoryByKey,
+  getDefaultLightingForCategory,
+  type CollectionSlug,
+  type LightingPresetKey,
+} from "@/lib/artifact-categories";
+import { getLightingPreset } from "@/lib/lighting-presets";
 import {
   ALLOWED_MODEL_EXTENSIONS,
   ALLOWED_VIDEO_EXTENSIONS,
@@ -12,11 +22,21 @@ import {
   MAX_VIDEO_FILE_SIZE_LABEL,
   MODEL_FILE_ACCEPT,
   VIDEO_FILE_ACCEPT,
+  extensionOf,
+  modelFormatFromExtension,
   validateUploadFile,
 } from "@/lib/upload-file-policy";
 
 type ArtifactType = "3d-model" | "video-scan";
 type PriceMode = "free" | "paid";
+
+const categoryDescriptions: Record<CollectionSlug, string> = {
+  "bronze-ritual": "Cast bronze figures and ceremonial vessels",
+  "earth-fire": "Painted pottery and hand-shaped terracotta works",
+  "light-through-glass": "Blown, cut, and translucent glass vessels",
+  "remnants-of-stone": "Carved marble, limestone, and weathered sculpture",
+  "community-uploads": "Shared discoveries spanning materials, places, and periods",
+};
 
 const typeOptions: {
   key: ArtifactType;
@@ -35,34 +55,6 @@ const typeOptions: {
     name: "Video Scan",
     desc: "Upload a turntable, walkthrough, or photogrammetry source video",
     formats: ALLOWED_VIDEO_EXTENSIONS.join(" "),
-  },
-];
-
-const lightingOptions = [
-  {
-    key: "warm-diffuse",
-    name: "Warm Diffuse",
-    desc: "Soft amber — ceramics, terracotta, bone",
-  },
-  {
-    key: "directional-spot",
-    name: "Directional Spot",
-    desc: "Sharp key light — metal, bronze, gold",
-  },
-  {
-    key: "cool-ambient",
-    name: "Cool Ambient",
-    desc: "Even blue-white — marble, pale stone",
-  },
-  {
-    key: "backlit-halo",
-    name: "Backlit Halo",
-    desc: "Rim light — glass, crystal, resin",
-  },
-  {
-    key: "raking-light",
-    name: "Raking Light",
-    desc: "Low single grazing — texture, incised marks",
   },
 ];
 
@@ -96,8 +88,9 @@ const licenseOptions = [
 
 const steps = [
   { key: 1, label: "Choose Type" },
-  { key: 2, label: "File & Details" },
-  { key: 3, label: "Review" },
+  { key: 2, label: "Category" },
+  { key: 3, label: "File & Details" },
+  { key: 4, label: "Review" },
 ];
 
 export default function UploadWizard() {
@@ -106,35 +99,51 @@ export default function UploadWizard() {
   const reduceMotion = useReducedMotion();
 
   const [type, setType] = useState<ArtifactType | null>(null);
+  const [category, setCategory] = useState<CollectionSlug | null>(null);
   const [file, setFile] = useState<File | null>(null);
+  const [fileUrl, setFileUrl] = useState<string | null>(null);
+  const fileUrlRef = useRef<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
   const [photo, setPhoto] = useState<File | null>(null);
   const [rejectedFile, setRejectedFile] = useState<{ name: string; reason: string } | null>(null);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [origin, setOrigin] = useState("");
-  const [collection, setCollection] = useState("");
   const [material, setMaterial] = useState("");
-  const [lighting, setLighting] = useState(lightingOptions[0].key);
+  const [lighting, setLighting] = useState<LightingPresetKey | null>(null);
   const [priceMode, setPriceMode] = useState<PriceMode>("free");
   const [price, setPrice] = useState("0.00");
   const [license, setLicense] = useState(licenseOptions[0].key);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
-  const selectedLighting = lightingOptions.find((l) => l.key === lighting);
   const selectedLicense = licenseOptions.find((l) => l.key === license);
   const selectedType = typeOptions.find((option) => option.key === type);
+  const selectedCategory = category ? getCategoryByKey(category) : undefined;
+  const modelFormat = file ? modelFormatFromExtension(extensionOf(file.name)) : null;
+  useEffect(() => {
+    return () => {
+      if (fileUrlRef.current) URL.revokeObjectURL(fileUrlRef.current);
+    };
+  }, []);
+
+  function updateFile(nextFile: File | null) {
+    if (fileUrlRef.current) URL.revokeObjectURL(fileUrlRef.current);
+    const nextUrl = nextFile ? URL.createObjectURL(nextFile) : null;
+    fileUrlRef.current = nextUrl;
+    setFile(nextFile);
+    setFileUrl(nextUrl);
+  }
   const acceptedExtensions =
     type === "video-scan" ? ALLOWED_VIDEO_EXTENSIONS : ALLOWED_MODEL_EXTENSIONS;
   const acceptedFiles = type === "video-scan" ? VIDEO_FILE_ACCEPT : MODEL_FILE_ACCEPT;
   const maxFileSizeLabel =
     type === "video-scan" ? MAX_VIDEO_FILE_SIZE_LABEL : MAX_MODEL_FILE_SIZE_LABEL;
 
-  const canReview = name.trim().length > 0 && description.trim().length >= 40 && file !== null && photo !== null;
+  const canReview = name.trim().length > 0 && description.trim().length >= 40 && file !== null && photo !== null && category !== null && (type !== "3d-model" || lighting !== null);
 
   async function submitUpload() {
-    if (!file || !photo || !type) {
+    if (!file || !photo || !type || !category || (type === "3d-model" && !lighting)) {
       museumToast.warning("Upload details are incomplete", "Choose an artifact file and a display photo before submitting.");
       return;
     }
@@ -145,11 +154,11 @@ export default function UploadWizard() {
     form.set("photo", photo);
     form.set("title", name);
     form.set("description", description);
-    form.set("category", material || "Uncategorized");
+    form.set("category", category ?? "");
+    form.set("material", material);
     form.set("type", type);
     form.set("origin", origin);
-    form.set("collection", collection);
-    form.set("lighting", lighting);
+    if (type === "3d-model" && lighting) form.set("lighting", lighting);
     form.set("price", priceMode === "paid" ? price : "");
     form.set("license", license);
 
@@ -241,11 +250,14 @@ export default function UploadWizard() {
                   type="button"
                   onClick={() => {
                     if (type !== opt.key) {
-                      setFile(null);
+                      updateFile(null);
                       setFileName(null);
                       setRejectedFile(null);
                     }
                     setType(opt.key);
+                    if (opt.key === "3d-model" && category) {
+                      setLighting(getDefaultLightingForCategory(category));
+                    }
                   }}
                   className={`border px-5 py-5 text-left transition-colors ${
                     type === opt.key
@@ -284,8 +296,53 @@ export default function UploadWizard() {
           </motion.div>
         )}
 
-        {/* Step 2 — File & Details */}
+        {/* Step 2 — Category */}
         {step === 2 && (
+          <motion.div
+            key="category"
+            initial={reduceMotion ? false : { opacity: 0, x: 24 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={reduceMotion ? undefined : { opacity: 0, x: -24 }}
+            className="mt-8"
+          >
+            <p className="text-sm text-stone">Which collection best fits this artifact?</p>
+            <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
+              {ARTIFACT_CATEGORIES.map((opt) => (
+                <button
+                  key={opt.key}
+                  type="button"
+                  onClick={() => {
+                    setCategory(opt.key);
+                    if (type === "3d-model") setLighting(getDefaultLightingForCategory(opt.key));
+                  }}
+                  className={`border px-5 py-5 text-left transition-colors ${
+                    category === opt.key ? "border-ink bg-cream-dark" : "border-line hover:border-stone"
+                  }`}
+                >
+                  <p className="text-sm text-ink">{opt.name}</p>
+                  <p className="mt-1.5 text-xs leading-relaxed text-stone">{categoryDescriptions[opt.key]}</p>
+                </button>
+              ))}
+            </div>
+            <div className="mt-8 flex gap-3">
+              <button type="button" onClick={() => setStep(1)} className="border border-line px-6 py-3.5 text-[11px] tracking-label text-ink uppercase hover:bg-black/5">Back</button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!category) {
+                    museumToast.warning("Choose a category", "Select the collection that best fits your artifact.");
+                    return;
+                  }
+                  setStep(3);
+                }}
+                className={`flex-1 py-3.5 text-[11px] tracking-label uppercase transition-colors ${category ? "bg-ink text-cream hover:bg-charcoal" : "cursor-not-allowed bg-cream-dark text-stone-light"}`}
+              >Continue</button>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Step 3 — File & Details */}
+        {step === 3 && (
           <motion.div
             key="details"
             initial={reduceMotion ? false : { opacity: 0, x: 24 }}
@@ -302,7 +359,7 @@ export default function UploadWizard() {
                   const selected = event.target.files?.[0] ?? null;
                   setRejectedFile(null);
                   if (!selected) {
-                    setFile(null);
+                    updateFile(null);
                     setFileName(null);
                     return;
                   }
@@ -311,14 +368,14 @@ export default function UploadWizard() {
                     type ?? "3d-model",
                   );
                   if (!validation.valid) {
-                    setFile(null);
+                    updateFile(null);
                     setFileName(null);
                     setRejectedFile({ name: selected.name, reason: validation.reason });
                     museumToast.error("File rejected", validation.reason);
                     event.target.value = "";
                     return;
                   }
-                  setFile(selected);
+                  updateFile(selected);
                   setFileName(selected.name);
                 }}
               />
@@ -344,6 +401,15 @@ export default function UploadWizard() {
               </div>
             )}
 
+            {type === "3d-model" && fileUrl && modelFormat && lighting && (
+              <div className="mt-6">
+                <LightingStudioViewer src={fileUrl} format={modelFormat} presetKey={lighting} title={name || fileName || "Uploaded artifact"} className="aspect-[4/3]" />
+                <p className="mt-8 text-[10px] tracking-label text-stone uppercase">Suggested Lighting</p>
+                <div className="mt-3">
+                  <LightingPresetPicker value={lighting} onChange={setLighting} defaultKey={category ? getDefaultLightingForCategory(category) : undefined} />
+                </div>
+              </div>
+            )}
             <div className="mt-7 flex flex-col gap-6">
               <div>
                 <label className="text-[10px] tracking-label uppercase text-stone">
@@ -414,17 +480,6 @@ export default function UploadWizard() {
               </div>
               <div>
                 <label className="text-[10px] tracking-label uppercase text-stone">
-                  Collection
-                </label>
-                <input
-                  value={collection}
-                  onChange={(e) => setCollection(e.target.value)}
-                  placeholder="e.g. Greco-Roman Antiquities"
-                  className="mt-2.5 w-full border-b border-line bg-transparent pb-2.5 text-sm text-ink placeholder:text-stone-light focus:border-ink focus:outline-none"
-                />
-              </div>
-              <div>
-                <label className="text-[10px] tracking-label uppercase text-stone">
                   Primary Material
                 </label>
                 <input
@@ -436,31 +491,11 @@ export default function UploadWizard() {
               </div>
             </div>
 
-            <p className="mt-8 text-[10px] tracking-label text-stone uppercase">
-              Suggested Lighting
-            </p>
-            <div className="mt-3 divide-y divide-line border-t border-b border-line">
-              {lightingOptions.map((opt) => (
-                <button
-                  key={opt.key}
-                  type="button"
-                  onClick={() => setLighting(opt.key)}
-                  className="flex w-full items-center justify-between py-3.5 text-left"
-                >
-                  <span>
-                    <span className="block text-sm text-ink">{opt.name}</span>
-                    <span className="block text-xs text-stone">
-                      {opt.desc}
-                    </span>
-                  </span>
-                  <span
-                    className={`h-2.5 w-2.5 flex-shrink-0 rounded-full ${
-                      lighting === opt.key ? "bg-ink" : "border border-line"
-                    }`}
-                  />
-                </button>
-              ))}
-            </div>
+            {type === "video-scan" && (
+              <div className="mt-8 bg-cream-dark px-5 py-4 text-xs leading-relaxed text-charcoal/70">
+                This artifact already has its own lighting from the video — no lighting preset is needed.
+              </div>
+            )}
 
             <p className="mt-8 text-[10px] tracking-label text-stone uppercase">
               Listing Price
@@ -539,7 +574,7 @@ export default function UploadWizard() {
             <div className="mt-8 flex gap-3">
               <button
                 type="button"
-                onClick={() => setStep(1)}
+                onClick={() => setStep(2)}
                 className="border border-line px-6 py-3.5 text-[11px] tracking-label text-ink uppercase hover:bg-black/5"
               >
                 Back
@@ -551,7 +586,7 @@ export default function UploadWizard() {
                     museumToast.warning("Upload details are incomplete", "Add a name, description, artifact file, and display photo before review.");
                     return;
                   }
-                  setStep(3);
+                  setStep(4);
                 }}
                 className={`flex-1 py-3.5 text-[11px] tracking-label uppercase transition-colors ${
                   canReview
@@ -565,8 +600,8 @@ export default function UploadWizard() {
           </motion.div>
         )}
 
-        {/* Step 3 — Review */}
-        {step === 3 && (
+        {/* Step 4 — Review */}
+        {step === 4 && (
           <motion.div
             key="review"
             initial={reduceMotion ? false : { opacity: 0, x: 24 }}
@@ -578,6 +613,17 @@ export default function UploadWizard() {
               Review your submission before it reaches a museum curator
             </p>
 
+            {fileUrl && type === "3d-model" && modelFormat && lighting && (
+              <div className="mt-6">
+                <LightingStudioViewer src={fileUrl} format={modelFormat} presetKey={lighting} title={name || fileName || "Uploaded artifact"} className="aspect-[4/3]" />
+              </div>
+            )}
+            {fileUrl && type === "video-scan" && (
+              <video className="mt-6 aspect-video w-full bg-black object-contain" controls src={fileUrl}>
+                Your browser does not support video playback.
+              </video>
+            )}
+
             <div className="mt-6 divide-y divide-line border-t border-b border-line">
               <div className="flex items-center justify-between py-3.5">
                 <span className="text-[10px] tracking-label text-stone uppercase">
@@ -585,6 +631,14 @@ export default function UploadWizard() {
                 </span>
                 <span className="text-sm text-ink">
                   {selectedType?.name ?? "Not selected"}
+                </span>
+              </div>
+              <div className="flex items-center justify-between py-3.5">
+                <span className="text-[10px] tracking-label text-stone uppercase">
+                  Category
+                </span>
+                <span className="text-sm text-ink">
+                  {selectedCategory?.name ?? "Not selected"}
                 </span>
               </div>
               <div className="flex items-center justify-between py-3.5">
@@ -608,7 +662,7 @@ export default function UploadWizard() {
                   Lighting
                 </span>
                 <span className="text-sm text-ink">
-                  {selectedLighting?.name}
+                  {type === "3d-model" && lighting ? getLightingPreset(lighting).name : "Embedded in video"}
                 </span>
               </div>
               <div className="flex items-center justify-between py-3.5">
@@ -641,7 +695,7 @@ export default function UploadWizard() {
             <div className="mt-8 flex gap-3">
               <button
                 type="button"
-                onClick={() => setStep(2)}
+                onClick={() => setStep(3)}
                 className="border border-line px-6 py-3.5 text-[11px] tracking-label text-ink uppercase hover:bg-black/5"
               >
                 Edit

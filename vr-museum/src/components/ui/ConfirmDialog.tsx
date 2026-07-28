@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type ReactNode, type RefObject } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 
@@ -10,7 +10,10 @@ type ConfirmDialogProps = {
   description: string;
   confirmLabel: string;
   pending?: boolean;
+  confirmDisabled?: boolean;
   tone?: "danger" | "important";
+  children?: ReactNode;
+  initialFocusRef?: RefObject<HTMLElement | null>;
   onCancel: () => void;
   onConfirm: () => void | Promise<void>;
 };
@@ -21,21 +24,28 @@ export default function ConfirmDialog({
   description,
   confirmLabel,
   pending = false,
+  confirmDisabled = false,
   tone = "danger",
+  children,
+  initialFocusRef,
   onCancel,
   onConfirm,
 }: ConfirmDialogProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   const cancelRef = useRef<HTMLButtonElement>(null);
   const reduceMotion = useReducedMotion();
+  const returnFocusRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     if (!open) return;
-    cancelRef.current?.focus();
+    returnFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    requestAnimationFrame(() => (initialFocusRef?.current ?? cancelRef.current)?.focus());
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape" && !pending) onCancel();
       if (event.key !== "Tab") return;
-      const controls = panelRef.current?.querySelectorAll<HTMLElement>("button:not(:disabled)");
+      const controls = panelRef.current?.querySelectorAll<HTMLElement>(
+        "button:not(:disabled), textarea:not(:disabled), input:not(:disabled), select:not(:disabled), a[href], [tabindex]:not([tabindex='-1'])",
+      );
       if (!controls?.length) return;
       const first = controls[0];
       const last = controls[controls.length - 1];
@@ -48,8 +58,11 @@ export default function ConfirmDialog({
       }
     };
     document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
-  }, [onCancel, open, pending]);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      returnFocusRef.current?.focus();
+    };
+  }, [initialFocusRef, onCancel, open, pending]);
 
   const dialog = (
     <AnimatePresence>
@@ -76,11 +89,12 @@ export default function ConfirmDialog({
             <p className="text-[10px] tracking-label uppercase text-stone">Please confirm</p>
             <h2 id="confirm-dialog-title" className="font-display mt-3 text-3xl italic">{title}</h2>
             <p id="confirm-dialog-description" className="mt-4 text-sm leading-relaxed text-stone">{description}</p>
+            {children}
             <div className="mt-8 flex justify-end gap-3">
               <button ref={cancelRef} type="button" disabled={pending} onClick={onCancel} className="border border-line px-6 py-3 text-[10px] tracking-label uppercase hover:bg-cream-dark disabled:opacity-50">
                 Keep
               </button>
-              <button type="button" disabled={pending} onClick={onConfirm} className={`px-6 py-3 text-[10px] tracking-label uppercase text-white disabled:cursor-wait disabled:opacity-50 ${tone === "danger" ? "bg-red-900 hover:bg-red-800" : "bg-ink hover:bg-charcoal"}`}>
+              <button type="button" disabled={pending || confirmDisabled} onClick={onConfirm} className={`px-6 py-3 text-[10px] tracking-label uppercase text-white disabled:cursor-not-allowed disabled:opacity-50 ${tone === "danger" ? "bg-red-900 hover:bg-red-800" : "bg-ink hover:bg-charcoal"}`}>
                 {pending ? "Working…" : confirmLabel}
               </button>
             </div>

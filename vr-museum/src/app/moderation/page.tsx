@@ -10,11 +10,34 @@ import { listOpenReports } from "@/server/services/report.service";
 import ReportQueue from "@/components/moderation/ReportQueue";
 import SupportQueue from "@/components/moderation/SupportQueue";
 import { listOpenSupportRequests } from "@/server/services/support.service";
+import type { CollectionSlug, LightingPresetKey } from "@/lib/artifact-categories";
+import type { ModelFormat } from "@/lib/three/loaders";
 
 export const metadata = {
   title: "Upload Moderation",
   description: "Review artifact uploads awaiting curatorial approval.",
 };
+
+type ReviewMetadata = {
+  description: string;
+  origin: string;
+  material: string;
+  license: string;
+  price: number | null;
+};
+
+function parseReviewMetadata(value: unknown): ReviewMetadata {
+  const metadata = value && typeof value === "object" && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : {};
+  return {
+    description: typeof metadata.description === "string" ? metadata.description : "",
+    origin: typeof metadata.origin === "string" ? metadata.origin : "",
+    material: typeof metadata.material === "string" ? metadata.material : "",
+    license: typeof metadata.license === "string" ? metadata.license : "",
+    price: typeof metadata.price === "number" && Number.isFinite(metadata.price) ? metadata.price : null,
+  };
+}
 
 export default async function ModerationPage() {
   const user = await getCurrentUser();
@@ -55,13 +78,22 @@ export default async function ModerationPage() {
           <div className="mt-12 border-t border-line pt-10">
             <h2 className="font-display mb-5 text-2xl italic">Uploads awaiting review ({uploads.length})</h2>
             <ModerationQueue
-              initialItems={uploads.map((upload) => ({
-                id: upload.id,
-                title: upload.title,
-                category: upload.category,
-                ownerName: upload.owner.name ?? "Museum member",
-                ownerEmail: upload.owner.email,
-              }))}
+              initialItems={uploads.map((upload) => {
+                const details = parseReviewMetadata(upload.metadata);
+                return {
+                  id: upload.id,
+                  title: upload.title,
+                  category: upload.category as CollectionSlug,
+                  ownerName: upload.owner.name ?? "Museum member",
+                  ownerEmail: upload.owner.email,
+                  lightingPreset: upload.lightingPreset as LightingPresetKey | null,
+                  fileUrl: upload.fileUrl,
+                  thumbnailUrl: upload.thumbnailUrl,
+                  mediaType: upload.mediaType as "MODEL_3D" | "VIDEO",
+                  modelFormat: upload.modelFormat as ModelFormat | null,
+                  ...details,
+                };
+              })}
             />
           </div>
         </div>

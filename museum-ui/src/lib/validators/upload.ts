@@ -1,0 +1,101 @@
+import { z } from "zod";
+import {
+  artifactMediaTypeSchema,
+  modelFormatSchema,
+  modelUrlSchema,
+  videoUrlSchema,
+} from "@/lib/validators/artifact";
+
+const uploadBaseSchema = z.object({
+  title: z.string().trim().min(1).max(200),
+  category: z.string().trim().min(1).max(100),
+  fileUrl: z.string().trim().min(1).max(2_000),
+  thumbnailUrl: z.string().trim().max(2_000).nullable().optional(),
+  mediaType: artifactMediaTypeSchema,
+  modelFormat: modelFormatSchema.nullable().optional(),
+  metadata: z.record(z.string(), z.json()).default({}),
+});
+
+export const uploadSchema = uploadBaseSchema.superRefine((input, context) => {
+  const legacyType = input.metadata.type;
+  if (
+    (input.mediaType === "MODEL_3D" && legacyType !== "3d-model") ||
+    (input.mediaType === "VIDEO" && legacyType !== "video-scan") ||
+    input.mediaType === "IMAGE"
+  ) {
+    context.addIssue({
+      code: "custom",
+      path: ["metadata", "type"],
+      message: "Upload type must be a 3D model or video scan",
+    });
+  }
+  const mediaUrlResult = input.mediaType === "MODEL_3D"
+    ? modelUrlSchema.safeParse(input.fileUrl)
+    : videoUrlSchema.safeParse(input.fileUrl);
+  if (!mediaUrlResult.success) {
+    context.addIssue({
+      code: "custom",
+      path: ["fileUrl"],
+      message: mediaUrlResult.error.issues[0]?.message ?? "Unsupported media URL",
+    });
+  }
+  if (input.mediaType === "MODEL_3D" && !input.modelFormat) {
+    context.addIssue({
+      code: "custom",
+      path: ["modelFormat"],
+      message: "Model format is required for 3D model uploads",
+    });
+  }
+  if (
+    input.mediaType === "MODEL_3D" &&
+    input.modelFormat &&
+    !input.fileUrl.toLowerCase().split(/[?#]/)[0].endsWith(`.${input.modelFormat}`)
+  ) {
+    context.addIssue({
+      code: "custom",
+      path: ["modelFormat"],
+      message: "Model format must match the uploaded file extension",
+    });
+  }
+  if (input.mediaType === "VIDEO" && input.modelFormat) {
+    context.addIssue({
+      code: "custom",
+      path: ["modelFormat"],
+      message: "Video uploads cannot include a model format",
+    });
+  }
+  const description = input.metadata.description;
+  if (typeof description !== "string" || description.trim().length < 40) {
+    context.addIssue({
+      code: "custom",
+      path: ["metadata", "description"],
+      message: "Public description must be at least 40 characters",
+    });
+  }
+});
+
+export const uploadIdSchema = z.object({
+  id: z.string().trim().min(1),
+});
+
+export const moderationSchema = z.object({
+  status: z.enum(["APPROVED", "REJECTED"]),
+});
+
+export const uploadUpdateSchema = uploadBaseSchema
+  .pick({
+    title: true,
+    category: true,
+    thumbnailUrl: true,
+    mediaType: true,
+    modelFormat: true,
+    metadata: true,
+  })
+  .partial()
+  .extend({
+    metadata: z.record(z.string(), z.json()).optional(),
+  })
+  .refine((input) => Object.keys(input).length > 0, "Provide a field to update");
+
+export type UploadInput = z.infer<typeof uploadSchema>;
+export type UploadUpdateInput = z.infer<typeof uploadUpdateSchema>;

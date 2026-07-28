@@ -1,0 +1,96 @@
+"use client";
+
+import { useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+
+type ConfirmDialogProps = {
+  open: boolean;
+  title: string;
+  description: string;
+  confirmLabel: string;
+  pending?: boolean;
+  tone?: "danger" | "important";
+  onCancel: () => void;
+  onConfirm: () => void | Promise<void>;
+};
+
+export default function ConfirmDialog({
+  open,
+  title,
+  description,
+  confirmLabel,
+  pending = false,
+  tone = "danger",
+  onCancel,
+  onConfirm,
+}: ConfirmDialogProps) {
+  const panelRef = useRef<HTMLDivElement>(null);
+  const cancelRef = useRef<HTMLButtonElement>(null);
+  const reduceMotion = useReducedMotion();
+
+  useEffect(() => {
+    if (!open) return;
+    cancelRef.current?.focus();
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && !pending) onCancel();
+      if (event.key !== "Tab") return;
+      const controls = panelRef.current?.querySelectorAll<HTMLElement>("button:not(:disabled)");
+      if (!controls?.length) return;
+      const first = controls[0];
+      const last = controls[controls.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [onCancel, open, pending]);
+
+  const dialog = (
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          initial={reduceMotion ? false : { opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={reduceMotion ? undefined : { opacity: 0 }}
+          className="fixed inset-0 z-[70] flex items-center justify-center overflow-y-auto bg-black/70 px-6 py-6"
+          onClick={() => !pending && onCancel()}
+        >
+          <motion.div
+            ref={panelRef}
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="confirm-dialog-title"
+            aria-describedby="confirm-dialog-description"
+            initial={reduceMotion ? false : { opacity: 0, y: 18, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={reduceMotion ? undefined : { opacity: 0, y: 12, scale: 0.98 }}
+            className="max-h-[calc(100dvh-3rem)] w-full max-w-md overflow-y-auto bg-cream p-8 text-ink"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <p className="text-[10px] tracking-label uppercase text-stone">Please confirm</p>
+            <h2 id="confirm-dialog-title" className="font-display mt-3 text-3xl italic">{title}</h2>
+            <p id="confirm-dialog-description" className="mt-4 text-sm leading-relaxed text-stone">{description}</p>
+            <div className="mt-8 flex justify-end gap-3">
+              <button ref={cancelRef} type="button" disabled={pending} onClick={onCancel} className="border border-line px-6 py-3 text-[10px] tracking-label uppercase hover:bg-cream-dark disabled:opacity-50">
+                Keep
+              </button>
+              <button type="button" disabled={pending} onClick={onConfirm} className={`px-6 py-3 text-[10px] tracking-label uppercase text-white disabled:cursor-wait disabled:opacity-50 ${tone === "danger" ? "bg-red-900 hover:bg-red-800" : "bg-ink hover:bg-charcoal"}`}>
+                {pending ? "Working…" : confirmLabel}
+              </button>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+
+  return typeof document === "undefined"
+    ? null
+    : createPortal(dialog, document.body);
+}

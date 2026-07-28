@@ -1,0 +1,120 @@
+@import "tailwindcss";
+
+:root {
+  --color-cream: #f4efe4;
+  --color-cream-dark: #eae3d3;
+  --color-ink: #17130f;
+  --color-ink-soft: #1e1a15;
+  --color-charcoal: #3a352d;
+  --color-stone: #7a7365;
+  --color-stone-light: #b8b0a0;
+  --color-line: rgba(23, 19, 15, 0.12);
+  --color-line-dark: rgba(244, 239, 228, 0.14);
+}
+
+@theme inline {
+  --color-cream: var(--color-cream);
+  --color-cream-dark: var(--color-cream-dark);
+  --color-ink: var(--color-ink);
+  --color-ink-soft: var(--color-ink-soft);
+  --color-charcoal: var(--color-charcoal);
+  --color-stone: var(--color-stone);
+  --color-stone-light: var(--color-stone-light);
+  --font-display: var(--font-playfair);
+  --font-sans: var(--font-inter);
+}
+
+body {
+  background: var(--color-cream);
+  color: var(--color-ink);
+  font-family: var(--font-inter), Arial, Helvetica, sans-serif;
+}
+
+:where(a, button, input, select, textarea):focus-visible {
+  outline: 2px solid #b88932;
+  outline-offset: 3px;
+}
+
+.font-display {
+  font-family: var(--font-playfair), Georgia, serif;
+}
+
+.tracking-label {
+  letter-spacing: 0.18em;
+}
+
+[data-sonner-toaster] .museum-toast {
+  min-width: min(23rem, calc(100vw - 2rem));
+  padding: 1rem 1rem 1rem 1.1rem;
+  box-shadow: 0 18px 50px rgba(23, 19, 15, 0.18);
+}
+
+[data-sonner-toaster] .museum-toast [data-title] {
+  font-family: var(--font-playfair), Georgia, serif;
+  font-size: 1rem;
+  font-style: italic;
+  font-weight: 500;
+}
+
+[data-sonner-toaster] .museum-toast [data-description] {
+  color: var(--color-stone);
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+.museum-toast__icon {
+  display: flex;
+  width: 1.75rem;
+  height: 1.75rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+}
+
+.museum-toast__icon--success { color: #496348; }
+.museum-toast__icon--error { color: #8a342e; }
+.museum-toast__icon--warning { color: #9a671d; }
+.museum-toast__icon--info { color: #486273; }
+.museum-toast--success { border-left: 3px solid #496348 !important; }
+.museum-toast--error { border-left: 3px solid #8a342e !important; }
+.museum-toast--warning { border-left: 3px solid #9a671d !important; }
+.museum-toast--info { border-left: 3px solid #486273 !important; }
+
+.motion-underline {
+  position: relative;
+}
+
+.motion-underline::after {
+  position: absolute;
+  right: 0;
+  bottom: -0.15rem;
+  left: 0;
+  height: 1px;
+  content: "";
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 240ms ease;
+}
+
+.group:hover .motion-underline::after,
+.motion-underline:hover::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .motion-underline::after {
+    display: none;
+  }
+}

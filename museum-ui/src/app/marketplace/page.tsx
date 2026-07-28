@@ -1,0 +1,56 @@
+import Navbar from "@/components/layout/Navbar";
+import Footer from "@/components/layout/Footer";
+import MarketplaceHero from "@/components/sections/MarketplaceHero";
+import FeaturedListings from "@/components/sections/FeaturedListings";
+import MarketplaceGrid from "@/components/sections/MarketplaceGrid";
+import MarketplaceCTABanner from "@/components/sections/MarketplaceCTABanner";
+import { listMarketplace } from "@/server/services/marketplace.service";
+import { publicUploadToMarketplaceView, toMarketplaceView } from "@/server/view-models";
+import { Suspense } from "react";
+import { GridSectionSkeleton } from "@/components/ui/PageSkeleton";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Digital Artifact Marketplace",
+  description: "Browse licensed, studio-grade 3D scans of historical artifacts.",
+  openGraph: { images: ["/images/marketplace-hero.png"] },
+};
+
+async function MarketplaceResults({ page }: { page: number }) {
+  const result = await listMarketplace({ page, limit: 12 });
+  const marketplaceProducts = result.items.map((entry) =>
+    entry.source === "museum"
+      ? toMarketplaceView(entry.item)
+      : publicUploadToMarketplaceView(entry.item),
+  );
+  const featured = marketplaceProducts.slice(0, 3);
+
+  return (
+    <>
+      <FeaturedListings items={featured} />
+      <MarketplaceGrid items={marketplaceProducts} pagination={result.pagination} />
+    </>
+  );
+}
+
+export default async function MarketplacePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>;
+}) {
+  const requestedPage = Number((await searchParams).page ?? "1");
+  const page = Number.isInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
+  return (
+    <>
+      <Navbar hasHeroBackground />
+      <main>
+        <MarketplaceHero />
+        <Suspense fallback={<GridSectionSkeleton />}>
+          <MarketplaceResults page={page} />
+        </Suspense>
+        <MarketplaceCTABanner />
+      </main>
+      <Footer />
+    </>
+  );
+}

@@ -9,11 +9,15 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    await requirePermission(request, "moderateUploads");
+    const curator = await requirePermission(request, "moderateUploads");
     const { id } = uploadIdSchema.parse(await params);
-    const { status } = moderationSchema.parse(await request.json());
-    return apiSuccess(await moderateUpload(id, status), {
-      message: status === "APPROVED" ? "Upload approved" : "Upload rejected",
+    const { status, comment } = moderationSchema.parse(await request.json());
+    return apiSuccess(await moderateUpload(id, status, comment, curator.id), {
+      message: status === "APPROVED"
+        ? "Upload approved"
+        : status === "CHANGES_REQUESTED"
+          ? "Changes requested"
+          : "Upload rejected",
     });
   } catch (error) {
     return handleRouteError(error, "PATCH /api/moderation/uploads/[id]");

@@ -2,6 +2,7 @@ import { Prisma } from "@/generated/prisma/client";
 import type { UploadInput, UploadUpdateInput } from "@/lib/validators/upload";
 import { prisma } from "@/lib/prisma";
 import { ServiceError } from "@/lib/service-error";
+import { getCategoryByKey, type CollectionSlug } from "@/lib/artifact-categories";
 
 const COMMUNITY_COLLECTION_ID = "community-uploads";
 export const communityArtifactId = (id: string) => `community-artifact-${id}`;
@@ -17,6 +18,8 @@ type UploadForListing = {
   thumbnailUrl: string | null;
   mediaType: "IMAGE" | "VIDEO" | "MODEL_3D";
   modelFormat: string | null;
+  lightingPreset: string | null;
+  collectionSlug: string | null;
   metadata: unknown;
 };
 
@@ -32,25 +35,42 @@ async function createCommunityListing(
     : 0;
   const origin = String(metadata.period ?? metadata.origin ?? "Community upload");
 
-  const collection = await transaction.collection.upsert({
-    where: { slug: "community-uploads" },
-    update: {},
-    create: {
-      id: COMMUNITY_COLLECTION_ID,
-      slug: "community-uploads",
-      title: "Community Uploads",
-      subtitle: "Curator-approved community artifacts",
-      description: "Artifacts uploaded by community creators and approved for the marketplace.",
-      heroImage: upload.thumbnailUrl ?? "",
-      category: "Community",
-    },
-  });
+  const collectionSlug = (upload.collectionSlug ?? "community-uploads") as CollectionSlug;
+  const category = getCategoryByKey(collectionSlug) ?? getCategoryByKey("community-uploads")!;
+  const collection = collectionSlug === "community-uploads"
+    ? await transaction.collection.upsert({
+        where: { slug: "community-uploads" },
+        update: {},
+        create: {
+          id: COMMUNITY_COLLECTION_ID,
+          slug: "community-uploads",
+          title: category.name,
+          subtitle: "Curator-approved community artifacts",
+          description: "Artifacts uploaded by community creators and approved for the marketplace.",
+          heroImage: upload.thumbnailUrl ?? "",
+          category: "Community",
+        },
+      })
+    : await transaction.collection.findUnique({ where: { slug: collectionSlug } });
+  if (!collection) {
+    throw new ServiceError(`Collection ${category.name} was not found`, "COLLECTION_NOT_FOUND", 500);
+  }
+  const presetNames: Record<string, string> = {
+    "warm-diffuse": "Warm Diffuse",
+    "directional-spot": "Directional Spot",
+    "cool-ambient": "Cool Ambient",
+    "backlit-halo": "Backlit Halo",
+    "raking-light": "Raking Light",
+  };
+  const preset = upload.lightingPreset
+    ? presetNames[upload.lightingPreset] ?? upload.lightingPreset
+    : "Studio Recorded";
   await transaction.artifact.upsert({
     where: { id: communityArtifactId(upload.id) },
     update: {
       title: upload.title,
       subtitle: `${origin} · ${upload.category}`,
-      preset: String(metadata.lighting ?? "Studio"),
+      preset,
       image: upload.thumbnailUrl ?? "",
       videoUrl: upload.mediaType === "VIDEO" ? upload.fileUrl : null,
       modelUrl: upload.mediaType === "MODEL_3D" ? upload.fileUrl : null,
@@ -66,7 +86,7 @@ async function createCommunityListing(
       slug: communityArtifactSlug(upload.id),
       title: upload.title,
       subtitle: `${origin} · ${upload.category}`,
-      preset: String(metadata.lighting ?? "Studio"),
+      preset,
       image: upload.thumbnailUrl ?? "",
       videoUrl: upload.mediaType === "VIDEO" ? upload.fileUrl : null,
       modelUrl: upload.mediaType === "MODEL_3D" ? upload.fileUrl : null,
@@ -110,6 +130,8 @@ export function createUpload(userId: string, input: UploadInput) {
       thumbnailUrl: input.thumbnailUrl,
       mediaType: input.mediaType,
       modelFormat: input.modelFormat,
+      lightingPreset: input.lightingPreset,
+      collectionSlug: input.category,
       metadata: input.metadata as Prisma.InputJsonObject,
       status: "PENDING",
     },
@@ -156,7 +178,12 @@ export function listPendingUploads() {
   });
 }
 
-export async function moderateUpload(id: string, status: "APPROVED" | "REJECTED") {
+export async function moderateUpload(
+  id: string,
+  status: "APPROVED" | "REJECTED" | "CHANGES_REQUESTED",
+  comment: string | undefined,
+  curatorId: string,
+) {
   const upload = await prisma.uploadedAsset.findUnique({
     where: { id },
   });
@@ -171,7 +198,12 @@ export async function moderateUpload(id: string, status: "APPROVED" | "REJECTED"
   return prisma.$transaction(async (transaction) => {
     const moderated = await transaction.uploadedAsset.update({
       where: { id },
-      data: { status },
+      data: {
+        status,
+        curatorId,
+        reviewedAt: new Date(),
+        curatorComment: status === "APPROVED" ? null : comment,
+      },
       include: { owner: { select: { id: true, name: true, email: true, role: true } } },
     });
     if (status === "APPROVED") await createCommunityListing(transaction, upload);
@@ -193,6 +225,13 @@ export async function updateUpload(
   input: UploadUpdateInput,
 ) {
   const existing = await getUpload(userId, id);
+  if (existing.status === "REJECTED") {
+    throw new ServiceError(
+      "This upload was rejected and can no longer be edited",
+      "UPLOAD_REJECTED_TERMINAL",
+      409,
+    );
+  }
   const existingMetadata = existing.metadata && typeof existing.metadata === "object"
     ? existing.metadata as Record<string, Prisma.JsonValue>
     : {};
@@ -205,8 +244,11 @@ export async function updateUpload(
       where: { id },
       data: {
         ...input,
+        ...(input.category ? { collectionSlug: input.category } : {}),
         metadata: metadata as Prisma.InputJsonObject,
-        ...(existing.status === "REJECTED" ? { status: "PENDING" as const } : {}),
+        ...(existing.status === "CHANGES_REQUESTED"
+          ? { status: "PENDING" as const, curatorComment: null }
+          : {}),
       },
     });
     if (updated.status === "APPROVED") {

@@ -69,6 +69,7 @@ export async function POST(request: Request) {
       }
       const stored = await fileStorage.save(file);
       const storedPhoto = await fileStorage.save(photo);
+      const lighting = form.get("lighting");
       rawInput = {
         title: form.get("title"),
         category: form.get("category"),
@@ -79,11 +80,11 @@ export async function POST(request: Request) {
           type === "3d-model"
             ? modelFormatFromExtension(stored.extension)
             : null,
+        lightingPreset:
+          typeof lighting === "string" && lighting.length > 0 ? lighting : null,
         metadata: {
           type,
           origin: form.get("origin"),
-          collection: form.get("collection"),
-          lighting: form.get("lighting"),
           price: form.get("price") ? Number(form.get("price")) : null,
           license: form.get("license"),
           description: form.get("description"),

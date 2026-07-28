@@ -16,7 +16,7 @@ import {
 import { marketplaceQuerySchema, marketplaceUpdateSchema } from "./marketplace";
 import { artifactListQuerySchema, artifactSchema } from "./artifact";
 import { collectionSchema } from "./collection";
-import { uploadSchema, uploadUpdateSchema } from "./upload";
+import { moderationSchema, uploadSchema, uploadUpdateSchema } from "./upload";
 
 describe("user validators", () => {
   it("requires complete, valid checkout profile details", () => {
@@ -125,10 +125,11 @@ describe("catalog and upload validators", () => {
     ).toBe(true);
     const upload = uploadSchema.parse({
       title: "Scan",
-      category: "Sculpture",
+      category: "remnants-of-stone",
       fileUrl: "/uploads/scan.glb",
       mediaType: "MODEL_3D",
       modelFormat: "glb",
+      lightingPreset: "raking-light",
       metadata: {
         type: "3d-model",
         description: "A detailed public description long enough for moderation review.",
@@ -136,5 +137,14 @@ describe("catalog and upload validators", () => {
     });
     expect(upload.metadata).toMatchObject({ description: expect.any(String) });
     expect(uploadUpdateSchema.safeParse({}).success).toBe(false);
+    expect(
+      moderationSchema.safeParse({ status: "CHANGES_REQUESTED" }).success,
+    ).toBe(false);
+    expect(
+      moderationSchema.safeParse({
+        status: "CHANGES_REQUESTED",
+        comment: "Please improve the artifact lighting.",
+      }).success,
+    ).toBe(true);
   });
 });

@@ -205,7 +205,8 @@ describe("key API routes", () => {
     mocks.createUpload.mockResolvedValue({ id: "upload-1", status: "PENDING" });
     const form = new FormData();
     form.set("title", "Valid model");
-    form.set("category", "Bronze");
+    form.set("category", "bronze-ritual");
+    form.set("lighting", "directional-spot");
     form.set("type", "3d-model");
     form.set("description", "A documented bronze artifact scan with sufficient provenance for public curator review.");
     form.set(
@@ -237,7 +238,7 @@ describe("key API routes", () => {
     mocks.createUpload.mockResolvedValue({ id: "upload-video", status: "PENDING" });
     const form = new FormData();
     form.set("title", "Turntable video scan");
-    form.set("category", "Bronze");
+    form.set("category", "bronze-ritual");
     form.set("type", "video-scan");
     form.set("description", "A complete turntable recording of the artifact for photogrammetry and curator review.");
     form.set(

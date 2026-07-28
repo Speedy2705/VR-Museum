@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ARTIFACT_CATEGORIES } from "@/lib/artifact-categories";
 import {
   artifactMediaTypeSchema,
   modelFormatSchema,
@@ -6,13 +7,26 @@ import {
   videoUrlSchema,
 } from "@/lib/validators/artifact";
 
+const categoryKeys = ARTIFACT_CATEGORIES.map(({ key }) => key) as [
+  (typeof ARTIFACT_CATEGORIES)[number]["key"],
+  ...(typeof ARTIFACT_CATEGORIES)[number]["key"][],
+];
+const lightingPresetKeys = ARTIFACT_CATEGORIES.map(({ lightingPreset }) => lightingPreset) as [
+  (typeof ARTIFACT_CATEGORIES)[number]["lightingPreset"],
+  ...(typeof ARTIFACT_CATEGORIES)[number]["lightingPreset"][],
+];
+
+const categorySchema = z.enum(categoryKeys);
+const lightingPresetSchema = z.enum(lightingPresetKeys);
+
 const uploadBaseSchema = z.object({
   title: z.string().trim().min(1).max(200),
-  category: z.string().trim().min(1).max(100),
+  category: categorySchema,
   fileUrl: z.string().trim().min(1).max(2_000),
   thumbnailUrl: z.string().trim().max(2_000).nullable().optional(),
   mediaType: artifactMediaTypeSchema,
   modelFormat: modelFormatSchema.nullable().optional(),
+  lightingPreset: lightingPresetSchema.nullable().optional(),
   metadata: z.record(z.string(), z.json()).default({}),
 });
 
@@ -64,6 +78,20 @@ export const uploadSchema = uploadBaseSchema.superRefine((input, context) => {
       message: "Video uploads cannot include a model format",
     });
   }
+  if (input.mediaType === "MODEL_3D" && !input.lightingPreset) {
+    context.addIssue({
+      code: "custom",
+      path: ["lightingPreset"],
+      message: "Lighting preset is required for 3D model uploads",
+    });
+  }
+  if (input.mediaType === "VIDEO" && input.lightingPreset) {
+    context.addIssue({
+      code: "custom",
+      path: ["lightingPreset"],
+      message: "Video uploads cannot include a lighting preset",
+    });
+  }
   const description = input.metadata.description;
   if (typeof description !== "string" || description.trim().length < 40) {
     context.addIssue({
@@ -79,8 +107,12 @@ export const uploadIdSchema = z.object({
 });
 
 export const moderationSchema = z.object({
-  status: z.enum(["APPROVED", "REJECTED"]),
-});
+  status: z.enum(["APPROVED", "REJECTED", "CHANGES_REQUESTED"]),
+  comment: z.string().trim().min(1).max(2_000).optional(),
+}).refine(
+  (input) => input.status === "APPROVED" || Boolean(input.comment),
+  { path: ["comment"], message: "A curator comment is required unless approving the upload" },
+);
 
 export const uploadUpdateSchema = uploadBaseSchema
   .pick({
@@ -89,6 +121,7 @@ export const uploadUpdateSchema = uploadBaseSchema
     thumbnailUrl: true,
     mediaType: true,
     modelFormat: true,
+    lightingPreset: true,
     metadata: true,
   })
   .partial()

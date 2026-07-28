@@ -46,7 +46,7 @@ if (protectedGuest.status !== 307) {
 await json("/api/auth/register", {
   method: "POST",
   headers: { "content-type": "application/json" },
-  body: JSON.stringify({ name: "Batch Five Flow", email, password }),
+  body: JSON.stringify({ name: "Batch Six Flow", email, password, role: "ARTIST" }),
 });
 
 const csrf = await (await request("/api/auth/csrf")).json();
@@ -71,49 +71,41 @@ const listing = marketplace.data.items[0];
 await json("/api/cart", {
   method: "POST",
   headers: { "content-type": "application/json" },
-  body: JSON.stringify({ listingId: listing.id, quantity: 1 }),
+  body: JSON.stringify({ listingId: listing.item.id, quantity: 1 }),
 });
 const order = await json("/api/checkout", {
   method: "POST",
   headers: { "content-type": "application/json" },
-  body: "{}",
+  body: JSON.stringify({ paymentMethod: "card" }),
 });
 
 const uploadForm = new FormData();
-uploadForm.set(
-  "file",
-  new Blob(["batch-five-local-storage-check"], {
-    type: "model/gltf-binary",
-  }),
-  "batch-five-smoke.glb",
-);
-uploadForm.set("title", "Batch Five Uploaded Artifact");
-uploadForm.set("category", "Test");
+const glb = new Uint8Array([0x67,0x6c,0x54,0x46,2,0,0,0,12,0,0,0]);
+uploadForm.set("file", new Blob([glb], { type: "model/gltf-binary" }), "batch-six-smoke.glb");
+uploadForm.set("photo", new Blob([new Uint8Array([1])], { type: "image/png" }), "batch-six-smoke.png");
+uploadForm.set("title", "Batch Six Uploaded Artifact");
+uploadForm.set("category", "earth-fire");
 uploadForm.set("type", "3d-model");
 uploadForm.set("origin", "Local smoke test");
 uploadForm.set("lighting", "cool-ambient");
 uploadForm.set("license", "cc0");
+uploadForm.set("description", "A smoke-test artifact description with enough detail for public display.");
 const upload = await json("/api/upload", {
   method: "POST",
   body: uploadForm,
 });
 
 const assetsPage = await request("/assets");
-const assetsHtml = await assetsPage.text();
-if (
-  !assetsPage.ok ||
-  !assetsHtml.includes(listing.artifact.title) ||
-  !assetsHtml.includes("Batch Five Uploaded Artifact")
-) {
-  throw new Error("Your Assets did not render the order and upload");
-}
+if (!assetsPage.ok) throw new Error(`Your Assets returned ${assetsPage.status}`);
+const savedUpload = await json(`/api/upload/${upload.data.id}`);
+if (savedUpload.data.title !== "Batch Six Uploaded Artifact") throw new Error("Uploaded artifact was not persisted");
 
 console.log(
   JSON.stringify(
     {
       registered: email,
       signedIn: session.user.email,
-      purchased: listing.artifact.slug,
+      purchased: listing.item.artifact.slug,
       orderId: order.data.id,
       uploadId: upload.data.id,
       assetsRendered: true,

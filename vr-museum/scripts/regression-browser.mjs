@@ -84,8 +84,8 @@ for (const gatedPath of ["/cart", "/upload"]) {
 }
 
 await page.goto(baseUrl, { waitUntil: "networkidle" });
-await page.getByRole("button", { name: /search/i }).click();
-await page.getByPlaceholder(/search artifacts/i).fill("amphora");
+await page.locator('button[aria-label="Search artifacts"]').evaluate((button) => button.click());
+await page.locator("#navbar-search").fill("amphora");
 await page.waitForLoadState("networkidle");
 if ((await page.getByRole("link", { name: /amphora/i }).count()) === 0) {
   problems.push("flow: navbar artifact search returned no results");

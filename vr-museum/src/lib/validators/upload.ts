@@ -118,6 +118,7 @@ export const uploadUpdateSchema = uploadBaseSchema
   .pick({
     title: true,
     category: true,
+    fileUrl: true,
     thumbnailUrl: true,
     mediaType: true,
     modelFormat: true,

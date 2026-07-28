@@ -44,3 +44,7 @@ export const LIGHTING_PRESETS = [
 
 export const FALLBACK_MATERIAL_HINTS = Object.fromEntries(LIGHTING_PRESETS.map(({ key, fallbackMaterial }) => [key, fallbackMaterial])) as Record<LightingPresetKey, FallbackMaterialHint>;
 export function getLightingPreset(key: LightingPresetKey) { return LIGHTING_PRESETS.find((preset) => preset.key === key)!; }
+export function keyFromDisplayName(name: string | null | undefined): LightingPresetKey {
+  const normalized = name?.trim().toLowerCase();
+  return LIGHTING_PRESETS.find((preset) => preset.name.toLowerCase() === normalized || preset.key === normalized)?.key ?? "raking-light";
+}

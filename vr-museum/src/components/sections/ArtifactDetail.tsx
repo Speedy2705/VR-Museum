@@ -14,7 +14,7 @@ type ArtifactDetailProps = {
   preset: { name: string; note: string };
   image?: { src?: string; alt: string; label: string };
   video?: string;
-  model?: { url: string; format: "glb" | "gltf" | "usdz" };
+  model?: { url: string; format: "glb" | "gltf" | "obj" | "stl" };
   primaryMediaType?: "image" | "video" | "model";
   backHref: string;
   collectionTitle: string;
@@ -40,7 +40,7 @@ export default function ArtifactDetail({
   return (
     <section className="bg-cream px-6 py-16 md:px-10">
       <div className="mx-auto grid max-w-5xl grid-cols-1 gap-10 md:grid-cols-2 md:gap-14">
-        <ArtifactMediaStage title={title} image={image?.src} video={video} model={model} primaryMediaType={primaryMediaType} />
+        <ArtifactMediaStage title={title} image={image?.src} video={video} model={model} lighting={preset.name} primaryMediaType={primaryMediaType} />
 
         <div className="flex flex-col justify-center py-4">
           <Breadcrumbs items={[

@@ -7,7 +7,7 @@ const executablePath =
 const browser = await chromium.launch({ executablePath, headless: true });
 
 async function checkDesktop(path) {
-  const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+  const page = await browser.newPage({ viewport: { width: 1440, height: 1000 }, reducedMotion: "no-preference" });
   await page.goto(`${baseUrl}${path}`, { waitUntil: "networkidle" });
   const badges = page.getByText(/^(▶ Video|◇ 360°)$/);
   const count = await badges.count();
@@ -19,14 +19,14 @@ async function checkDesktop(path) {
       ).slice(0, 500)}; labels=${labels.join(" | ")}`,
     );
   }
-  const thumb = badges.first().locator("..");
-  await thumb.hover();
+  const card = badges.first().locator("xpath=ancestor::a[1]");
+  await card.hover();
   await page.waitForTimeout(350);
-  const previewCount = await thumb.locator("video, model-viewer").count();
+  const previewCount = await card.locator("video, model-viewer").count();
   if (!previewCount) throw new Error(`${path}: hover did not mount a preview`);
   await page.mouse.move(0, 0);
   await page.waitForTimeout(350);
-  if (await thumb.locator("video, model-viewer").count()) {
+  if (await card.locator("video, model-viewer").count()) {
     throw new Error(`${path}: preview did not unload after pointer leave`);
   }
   await page.close();

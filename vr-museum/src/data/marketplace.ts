@@ -59,7 +59,7 @@ export const marketplaceProducts: MarketplaceProduct[] = [
     origin: "Henan, China",
     period: "5th century BCE",
     material: "Terracotta",
-    lighting: "Soft Studio",
+    lighting: "Warm Diffuse",
     license: "CC0 Public Domain",
     price: null,
     description:

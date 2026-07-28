@@ -43,7 +43,7 @@ export const purchasedAssets: PurchasedAsset[] = [
     artist: "Elena Vassiliev",
     period: "480–450 BCE",
     license: "CC-BY 4.0",
-    formats: [".glb", ".usdz"],
+    formats: [".glb", ".gltf"],
     acquiredDate: "10 Jul 2025",
   },
   {

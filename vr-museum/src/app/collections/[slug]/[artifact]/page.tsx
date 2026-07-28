@@ -60,7 +60,7 @@ export default async function ArtifactDetailPage({
             label: artifact.title,
           }}
           video={artifact.videoUrl ?? undefined}
-          model={artifact.modelUrl && (artifact.modelFormat === "glb" || artifact.modelFormat === "gltf" || artifact.modelFormat === "usdz") ? { url: artifact.modelUrl, format: artifact.modelFormat } : undefined}
+          model={artifact.modelUrl && (artifact.modelFormat === "glb" || artifact.modelFormat === "gltf" || artifact.modelFormat === "obj" || artifact.modelFormat === "stl") ? { url: artifact.modelUrl, format: artifact.modelFormat } : undefined}
           primaryMediaType={artifact.primaryMediaType === "MODEL_3D" ? "model" : artifact.primaryMediaType.toLowerCase() as "image" | "video"}
           backHref={`/collections/${artifact.collection.slug}`}
           collectionTitle={artifact.collection.title}

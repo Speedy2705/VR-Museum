@@ -180,7 +180,7 @@ export const collections: Collection[] = [
         title: "Terracotta Female Figurine",
         material: "Terracotta",
         period: "5th century BCE",
-        lighting: "Soft Studio",
+        lighting: "Warm Diffuse",
         location: "Henan, China",
         description:
           "A small votive figurine with traces of original pigment, scanned under soft studio lighting to keep the surface detail legible.",

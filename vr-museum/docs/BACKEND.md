@@ -47,3 +47,8 @@ SQLite and PostgreSQL migration histories should not be mixed.
 `src/lib/auth.ts` is reserved for the future Auth.js configuration and
 server-side session helpers. `NEXTAUTH_SECRET` is documented now, but
 authentication is not enabled in this batch.
+# Upload and moderation flow
+
+Uploads have two media branches. Video scans accept MP4, MOV, or WebM and skip lighting entirely. 3D uploads accept GLB, glTF, OBJ, or STL and store one of five fixed Three.js lighting presets. The four public categories suggest presets as follows: Bronze & Ritual → Directional Spot, Earth & Fire → Warm Diffuse, Light Through Glass → Backlit Halo, and Remnants of Stone → Cool Ambient. Curators can preview and override any 3D upload with all five presets, including Raking Light.
+
+Moderation has two negative outcomes. `CHANGES_REQUESTED` is actionable: the curator comment is shown to the artist, who may edit metadata, replace the media or display photo, change 3D lighting, and resubmit; saving returns the upload to `PENDING`. `REJECTED` is terminal: its curator comment remains visible, but editing is hidden in the UI and rejected updates are rejected by the service/API. Approval publishes the upload into its selected collection and marketplace listing.

@@ -64,7 +64,7 @@ export default function MarketplaceItemDetail({
   return (
     <section className="bg-cream px-6 py-16 md:px-10">
       <div className="mx-auto grid max-w-5xl grid-cols-1 gap-10 md:grid-cols-2 md:gap-14">
-        <ArtifactMediaStage title={product.title} image={product.image} video={product.video} model={product.model} primaryMediaType={product.primaryMediaType} />
+        <ArtifactMediaStage title={product.title} image={product.image} video={product.video} model={product.model} lighting={product.lighting} primaryMediaType={product.primaryMediaType} />
 
         <div className="flex flex-col justify-center py-4">
           <Breadcrumbs items={[

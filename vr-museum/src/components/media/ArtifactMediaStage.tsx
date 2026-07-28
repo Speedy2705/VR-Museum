@@ -5,16 +5,18 @@ import { useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import PlaceholderImage from "@/components/ui/PlaceholderImage";
+import AmbientArView from "./AmbientArView";
+import { keyFromDisplayName } from "@/lib/lighting-presets";
 
 const VideoPlayer = dynamic(() => import("./ArtifactVideoPlayer"), { ssr: false, loading: () => <MediaLoading label="Preparing video" /> });
-const ModelViewer = dynamic(() => import("./ArtifactModelViewer"), { ssr: false, loading: () => <MediaLoading label="Preparing 3D view" /> });
+const ModelViewer = dynamic(() => import("./LightingStudioViewer"), { ssr: false, loading: () => <MediaLoading label="Preparing 3D view" /> });
 
 type MediaKind = "image" | "video" | "model";
-type Props = { title: string; image?: string; video?: string; model?: { url: string; format: "glb" | "gltf" | "obj" | "stl" | "usdz" }; primaryMediaType?: MediaKind };
+type Props = { title: string; image?: string; video?: string; model?: { url: string; format: "glb" | "gltf" | "obj" | "stl" | "usdz" }; lighting?: string | null; primaryMediaType?: MediaKind };
 
 function MediaLoading({ label }: { label: string }) { return <div className="flex h-full items-center justify-center bg-cream-dark text-[10px] tracking-label text-stone uppercase">{label}…</div>; }
 
-export default function ArtifactMediaStage({ title, image, video, model, primaryMediaType = "image" }: Props) {
+export default function ArtifactMediaStage({ title, image, video, model, lighting, primaryMediaType = "image" }: Props) {
   const available: MediaKind[] = ["image", ...(video ? ["video" as const] : []), ...(model ? ["model" as const] : [])];
   const initial = available.includes(primaryMediaType) ? primaryMediaType : "image";
   const [active, setActive] = useState<MediaKind>(initial);
@@ -45,7 +47,7 @@ export default function ArtifactMediaStage({ title, image, video, model, primary
 
   const renderActive = (modal = false) => {
     if (active === "video" && video) return <VideoPlayer key={modal ? "modal-video" : "video"} src={video} poster={image} title={title} />;
-    if (active === "model" && model) return <ModelViewer key={modal ? "modal-model" : "model"} src={model.url} poster={image} title={title} />;
+    if (active === "model" && model && model.format !== "usdz") return <div className="relative h-full"><ModelViewer key={modal ? "modal-model" : "model"} src={model.url} format={model.format} presetKey={keyFromDisplayName(lighting)} poster={image} title={title} />{(model.format === "glb" || model.format === "gltf") && <div className="absolute right-3 top-3 z-20"><AmbientArView src={model.url} alt={`${title} in augmented reality`} /></div>}</div>;
     return <PlaceholderImage src={image} alt={title} label={title} sizes={modal ? "100vw" : "(min-width: 768px) 50vw, 100vw"} />;
   };
 

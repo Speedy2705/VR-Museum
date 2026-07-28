@@ -3,13 +3,8 @@ import { requirePermission } from "@/lib/auth";
 import { handleRouteError } from "@/lib/route-error";
 import { uploadSchema } from "@/lib/validators/upload";
 import { createUpload } from "@/server/services/upload.service";
-import { fileStorage } from "@/server/storage";
 import { ServiceError } from "@/lib/service-error";
-import {
-  type UploadMediaType,
-  modelFormatFromExtension,
-  validateUploadFile,
-} from "@/lib/upload-file-policy";
+import { storeDisplayPhoto, storeUploadFile } from "@/server/upload-media";
 
 export const dynamic = "force-dynamic";
 
@@ -35,17 +30,7 @@ export async function POST(request: Request) {
           400,
         );
       }
-      const fileValidation = await validateUploadFile(
-        file,
-        type as UploadMediaType,
-      );
-      if (!fileValidation.valid) {
-        throw new ServiceError(
-          fileValidation.reason,
-          "INVALID_UPLOAD_FILE",
-          400,
-        );
-      }
+      const { stored, modelFormat } = await storeUploadFile(file, type);
       const photo = form.get("photo");
       if (!(photo instanceof File)) {
         throw new ServiceError(
@@ -54,21 +39,7 @@ export async function POST(request: Request) {
           400,
         );
       }
-      const allowedPhotoTypes = new Set([
-        "image/jpeg",
-        "image/png",
-        "image/webp",
-        "image/avif",
-      ]);
-      if (!allowedPhotoTypes.has(photo.type) || photo.size > 10 * 1024 * 1024) {
-        throw new ServiceError(
-          "Use a JPG, PNG, WebP, or AVIF display photo no larger than 10 MB",
-          "INVALID_DISPLAY_PHOTO",
-          400,
-        );
-      }
-      const stored = await fileStorage.save(file);
-      const storedPhoto = await fileStorage.save(photo);
+      const storedPhoto = await storeDisplayPhoto(photo);
       const lighting = form.get("lighting");
       rawInput = {
         title: form.get("title"),
@@ -76,10 +47,7 @@ export async function POST(request: Request) {
         fileUrl: stored.url,
         thumbnailUrl: storedPhoto.url,
         mediaType: type === "video-scan" ? "VIDEO" : "MODEL_3D",
-        modelFormat:
-          type === "3d-model"
-            ? modelFormatFromExtension(stored.extension)
-            : null,
+        modelFormat,
         lightingPreset:
           typeof lighting === "string" && lighting.length > 0 ? lighting : null,
         metadata: {

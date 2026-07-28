@@ -19,9 +19,9 @@ export default async function CommunityArtifactPage({ params }: {
     ? upload.metadata as Record<string, unknown>
     : {};
   const modelFormat = upload.modelFormat;
-  const model: { url: string; format: "glb" | "gltf" | "usdz" } | undefined =
+  const model: { url: string; format: "glb" | "gltf" | "obj" | "stl" } | undefined =
     upload.mediaType === "MODEL_3D" &&
-    (modelFormat === "glb" || modelFormat === "gltf" || modelFormat === "usdz")
+    (modelFormat === "glb" || modelFormat === "gltf" || modelFormat === "obj" || modelFormat === "stl")
     ? { url: upload.fileUrl, format: modelFormat }
     : undefined;
   const video = upload.mediaType === "VIDEO" ? upload.fileUrl : undefined;
@@ -39,6 +39,7 @@ export default async function CommunityArtifactPage({ params }: {
             image={upload.thumbnailUrl ?? undefined}
             video={video}
             model={model}
+            lighting={upload.lightingPreset}
             primaryMediaType={model ? "model" : video ? "video" : "image"}
           />
           <div className="flex flex-col justify-center">

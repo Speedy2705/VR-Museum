@@ -36,7 +36,7 @@ export async function listPublicCollections() {
     }),
   ]);
   return [
-    ...collections.map((collection) => ({
+    ...collections.filter((collection) => collection.slug !== "community-uploads").map((collection) => ({
       ...collection,
       source: "museum" as const,
       count: collection._count.artifacts,

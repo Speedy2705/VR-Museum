@@ -18,7 +18,7 @@ export default function BackButton() {
       onClick={() =>
         window.history.length > 1 ? router.back() : router.push("/")
       }
-      className="group fixed top-24 left-4 z-20 inline-flex items-center gap-2 border border-line bg-cream/95 px-4 py-3 text-[10px] tracking-label text-ink uppercase shadow-lg backdrop-blur transition-colors hover:bg-white sm:left-6"
+      className="inline-flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center text-current opacity-80 transition-opacity hover:opacity-100"
       aria-label="Go back"
     >
       <motion.span
@@ -29,11 +29,10 @@ export default function BackButton() {
             ? undefined
             : { duration: 1.25, repeat: Infinity, ease: "easeInOut" }
         }
-        className="inline-block text-base leading-none"
+        className="inline-block text-xl leading-none"
       >
         ←
       </motion.span>
-      Back
     </button>
   );
 }

@@ -6,14 +6,12 @@ import type { ReactNode } from "react";
 import { CartProvider } from "@/context/CartContext";
 import PageTransition from "@/components/motion/PageTransition";
 import { Toaster } from "sonner";
-import BackButton from "@/components/layout/BackButton";
 
 export default function AppProviders({ children }: { children: ReactNode }) {
   return (
     <SessionProvider>
       <CartProvider>
         <PageTransition>{children}</PageTransition>
-        <BackButton />
         <Toaster
           position="bottom-right"
           closeButton

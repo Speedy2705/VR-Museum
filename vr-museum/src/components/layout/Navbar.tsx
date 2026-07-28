@@ -10,6 +10,7 @@ import { notifyError } from "@/lib/client-error";
 import { userRoles } from "@/lib/validators/user";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import { useRole } from "@/hooks/useRole";
+import BackButton from "@/components/layout/BackButton";
 
 /*
  * Visual regression checklist
@@ -147,6 +148,7 @@ export default function Navbar({ hasHeroBackground = false }: NavbarProps) {
         transition={transition}
         className="mx-auto flex max-w-[1600px] items-center justify-between gap-4 px-4 sm:px-6 xl:px-10"
       >
+        <BackButton />
         <button
           type="button"
           className="flex shrink-0 text-current xl:hidden"

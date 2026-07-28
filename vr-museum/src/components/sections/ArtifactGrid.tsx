@@ -10,7 +10,7 @@ export type ArtifactCardData = {
   preset: string;
   image?: string;
   video?: string;
-  model?: { url: string; format: "glb" | "gltf" | "usdz" };
+  model?: { url: string; format: "glb" | "gltf" | "obj" | "stl" | "usdz" };
   primaryMediaType?: "image" | "video" | "model";
   href?: string;
   attribution?: string;

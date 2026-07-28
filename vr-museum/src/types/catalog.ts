@@ -7,7 +7,7 @@ export type CollectionView = {
   category: string;
   count: number;
   video?: string;
-  model?: { url: string; format: "glb" | "gltf" | "obj" | "stl" };
+  model?: { url: string; format: "glb" | "gltf" | "obj" | "stl" | "usdz" };
   primaryMediaType?: "image" | "video" | "model";
 };
 
@@ -28,7 +28,7 @@ export type MarketplaceView = {
   description: string;
   image: string;
   video?: string;
-  model?: { url: string; format: "glb" | "gltf" | "obj" | "stl" };
+  model?: { url: string; format: "glb" | "gltf" | "obj" | "stl" | "usdz" };
   primaryMediaType?: "image" | "video" | "model";
 };
 
@@ -43,7 +43,7 @@ export type PurchasedAssetView = {
   acquiredDate: string;
   image: string;
   video?: string;
-  model?: { url: string; format: "glb" | "gltf" | "obj" | "stl" };
+  model?: { url: string; format: "glb" | "gltf" | "obj" | "stl" | "usdz" };
   primaryMediaType?: "image" | "video" | "model";
 };
 
@@ -64,6 +64,6 @@ export type UploadedAssetView = {
   uploadedDate: string;
   image?: string;
   video?: string;
-  model?: { url: string; format: "glb" | "gltf" | "obj" | "stl" };
+  model?: { url: string; format: "glb" | "gltf" | "obj" | "stl" | "usdz" };
   primaryMediaType?: "image" | "video" | "model";
 };

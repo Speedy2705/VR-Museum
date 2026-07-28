@@ -10,7 +10,7 @@ const VideoPlayer = dynamic(() => import("./ArtifactVideoPlayer"), { ssr: false,
 const ModelViewer = dynamic(() => import("./ArtifactModelViewer"), { ssr: false, loading: () => <MediaLoading label="Preparing 3D view" /> });
 
 type MediaKind = "image" | "video" | "model";
-type Props = { title: string; image?: string; video?: string; model?: { url: string; format: "glb" | "gltf" | "usdz" }; primaryMediaType?: MediaKind };
+type Props = { title: string; image?: string; video?: string; model?: { url: string; format: "glb" | "gltf" | "obj" | "stl" | "usdz" }; primaryMediaType?: MediaKind };
 
 function MediaLoading({ label }: { label: string }) { return <div className="flex h-full items-center justify-center bg-cream-dark text-[10px] tracking-label text-stone uppercase">{label}…</div>; }
 

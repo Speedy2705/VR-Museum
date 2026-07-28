@@ -22,12 +22,16 @@ export default async function Home() {
       collection.artifacts[0]?.modelUrl &&
       (collection.artifacts[0].modelFormat === "glb" ||
         collection.artifacts[0].modelFormat === "gltf" ||
+        collection.artifacts[0].modelFormat === "obj" ||
+        collection.artifacts[0].modelFormat === "stl" ||
         collection.artifacts[0].modelFormat === "usdz")
         ? {
             url: collection.artifacts[0].modelUrl,
             format: collection.artifacts[0].modelFormat as
               | "glb"
               | "gltf"
+              | "obj"
+              | "stl"
               | "usdz",
           }
         : undefined,

@@ -45,13 +45,15 @@ export async function listPublicCollections() {
         collection.artifacts[0]?.modelUrl &&
         (collection.artifacts[0].modelFormat === "glb" ||
           collection.artifacts[0].modelFormat === "gltf" ||
-          collection.artifacts[0].modelFormat === "usdz")
+          collection.artifacts[0].modelFormat === "obj" ||
+          collection.artifacts[0].modelFormat === "stl")
           ? {
               url: collection.artifacts[0].modelUrl,
               format: collection.artifacts[0].modelFormat as
                 | "glb"
                 | "gltf"
-                | "usdz",
+                | "obj"
+                | "stl",
             }
           : undefined,
       primaryMediaType:
@@ -77,10 +79,11 @@ export async function listPublicCollections() {
         latest?.mediaType === "MODEL_3D" &&
         (latest.modelFormat === "glb" ||
           latest.modelFormat === "gltf" ||
-          latest.modelFormat === "usdz")
+          latest.modelFormat === "obj" ||
+          latest.modelFormat === "stl")
           ? {
               url: latest.fileUrl,
-              format: latest.modelFormat as "glb" | "gltf" | "usdz",
+              format: latest.modelFormat as "glb" | "gltf" | "obj" | "stl",
             }
           : undefined,
       primaryMediaType:

@@ -55,7 +55,8 @@ export function toMarketplaceView(listing: ListingRecord): MarketplaceView {
       listing.artifact.modelUrl &&
       (listing.artifact.modelFormat === "glb" ||
         listing.artifact.modelFormat === "gltf" ||
-        listing.artifact.modelFormat === "usdz")
+        listing.artifact.modelFormat === "obj" ||
+        listing.artifact.modelFormat === "stl")
         ? {
             url: listing.artifact.modelUrl,
             format: listing.artifact.modelFormat,
@@ -104,7 +105,8 @@ export function publicUploadToMarketplaceView(upload: {
       upload.mediaType === "MODEL_3D" &&
       (upload.modelFormat === "glb" ||
         upload.modelFormat === "gltf" ||
-        upload.modelFormat === "usdz")
+        upload.modelFormat === "obj" ||
+        upload.modelFormat === "stl")
         ? { url: upload.fileUrl, format: upload.modelFormat }
         : undefined,
     primaryMediaType:
@@ -157,7 +159,10 @@ export function toUploadedAssetView(upload: {
   fileUrl: string;
   mediaType: "IMAGE" | "VIDEO" | "MODEL_3D";
   modelFormat: string | null;
-  status: "PENDING" | "APPROVED" | "REJECTED";
+  status: "PENDING" | "APPROVED" | "REJECTED" | "CHANGES_REQUESTED";
+  lightingPreset: string | null;
+  curatorComment: string | null;
+  collectionSlug: string | null;
   metadata: unknown;
   views?: number;
   earnings?: number;
@@ -173,10 +178,15 @@ export function toUploadedAssetView(upload: {
     status:
       upload.status === "APPROVED"
         ? "live"
+        : upload.status === "CHANGES_REQUESTED"
+          ? "changes-requested"
         : upload.status === "REJECTED"
           ? "rejected"
           : "under-review",
     period: String(metadata.period ?? metadata.origin ?? "Awaiting review"),
+    lightingPreset: upload.lightingPreset,
+    curatorComment: upload.curatorComment,
+    collectionSlug: upload.collectionSlug,
     material: upload.category,
     license: String(metadata.license ?? "Pending"),
     price: typeof metadata.price === "number" ? metadata.price : null,
@@ -196,7 +206,8 @@ export function toUploadedAssetView(upload: {
       upload.mediaType === "MODEL_3D" &&
       (upload.modelFormat === "glb" ||
         upload.modelFormat === "gltf" ||
-        upload.modelFormat === "usdz")
+        upload.modelFormat === "obj" ||
+        upload.modelFormat === "stl")
         ? { url: upload.fileUrl, format: upload.modelFormat }
         : undefined,
     primaryMediaType:

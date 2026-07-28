@@ -7,7 +7,7 @@ export type CollectionView = {
   category: string;
   count: number;
   video?: string;
-  model?: { url: string; format: "glb" | "gltf" | "usdz" };
+  model?: { url: string; format: "glb" | "gltf" | "obj" | "stl" };
   primaryMediaType?: "image" | "video" | "model";
 };
 
@@ -28,7 +28,7 @@ export type MarketplaceView = {
   description: string;
   image: string;
   video?: string;
-  model?: { url: string; format: "glb" | "gltf" | "usdz" };
+  model?: { url: string; format: "glb" | "gltf" | "obj" | "stl" };
   primaryMediaType?: "image" | "video" | "model";
 };
 
@@ -43,7 +43,7 @@ export type PurchasedAssetView = {
   acquiredDate: string;
   image: string;
   video?: string;
-  model?: { url: string; format: "glb" | "gltf" | "usdz" };
+  model?: { url: string; format: "glb" | "gltf" | "obj" | "stl" };
   primaryMediaType?: "image" | "video" | "model";
 };
 
@@ -51,7 +51,10 @@ export type UploadedAssetView = {
   id: string;
   slug: string;
   title: string;
-  status: "live" | "under-review" | "rejected";
+  status: "live" | "under-review" | "changes-requested" | "rejected";
+  lightingPreset: string | null;
+  curatorComment: string | null;
+  collectionSlug: string | null;
   period: string;
   material: string;
   license: string;
@@ -61,6 +64,6 @@ export type UploadedAssetView = {
   uploadedDate: string;
   image?: string;
   video?: string;
-  model?: { url: string; format: "glb" | "gltf" | "usdz" };
+  model?: { url: string; format: "glb" | "gltf" | "obj" | "stl" };
   primaryMediaType?: "image" | "video" | "model";
 };

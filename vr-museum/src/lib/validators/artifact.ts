@@ -13,7 +13,7 @@ const hasAllowedExtension = (value: string, extensions: readonly string[]) => {
   }
 };
 
-export const modelFormatSchema = z.enum(["glb", "gltf", "usdz"]);
+export const modelFormatSchema = z.enum(["glb", "gltf", "obj", "stl"]);
 export const artifactMediaTypeSchema = z.enum(["IMAGE", "VIDEO", "MODEL_3D"]);
 export const modelUrlSchema = z.string().trim().min(1).max(2_000).refine(
   (value) => hasAllowedExtension(value, ALLOWED_MODEL_EXTENSIONS),

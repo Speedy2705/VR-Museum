@@ -25,8 +25,8 @@ import BackButton from "@/components/layout/BackButton";
  */
 const NAVBAR_TRANSITION_DURATION = 0.25;
 const NAVBAR_SCROLL_THRESHOLD = 24;
-const NAVBAR_TOP_PADDING = 24;
-const NAVBAR_SCROLLED_PADDING = 14;
+const NAVBAR_TOP_PADDING = 0;
+const NAVBAR_SCROLLED_PADDING = 0;
 const NAVBAR_SOLID_BACKGROUND = "rgba(23, 19, 15, 0.96)";
 const NAVBAR_OVERLAY_BACKGROUND = "rgba(23, 19, 15, 0)";
 const NAVBAR_SOLID_BLUR = "blur(14px)";
@@ -137,7 +137,7 @@ export default function Navbar({ hasHeroBackground = false }: NavbarProps) {
       }}
       transition={transition}
       className={
-        `${hasHeroBackground ? "fixed left-0" : "sticky"} top-0 z-30 w-full text-white`
+        "fixed top-0 left-0 z-30 h-20 w-full text-white"
       }
     >
       <motion.nav
@@ -146,7 +146,7 @@ export default function Navbar({ hasHeroBackground = false }: NavbarProps) {
           paddingBottom: scrolled ? NAVBAR_SCROLLED_PADDING : NAVBAR_TOP_PADDING,
         }}
         transition={transition}
-        className="mx-auto flex max-w-[1600px] items-center justify-between gap-4 px-4 sm:px-6 xl:px-10"
+        className="mx-auto flex h-20 max-w-[1600px] items-center justify-between gap-4 px-4 sm:px-6 xl:px-10"
       >
         <BackButton />
         <button

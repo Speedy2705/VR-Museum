@@ -7,6 +7,7 @@ import { notifyError } from "@/lib/client-error";
 import { museumToast } from "@/lib/museum-toast";
 import LightingPresetPicker from "@/components/media/LightingPresetPicker";
 import LightingStudioViewer from "@/components/media/LightingStudioViewer";
+import ArtifactStageFullscreen from "@/components/media/ArtifactStageFullscreen";
 import {
   ARTIFACT_CATEGORIES,
   getCategoryByKey,
@@ -402,12 +403,12 @@ export default function UploadWizard() {
             )}
 
             {type === "3d-model" && fileUrl && modelFormat && lighting && (
-              <div className="mt-6">
-                <LightingStudioViewer src={fileUrl} format={modelFormat} presetKey={lighting} title={name || fileName || "Uploaded artifact"} className="aspect-[4/3]" />
-                <p className="mt-8 text-[10px] tracking-label text-stone uppercase">Suggested Lighting</p>
-                <div className="mt-3">
-                  <LightingPresetPicker value={lighting} onChange={setLighting} defaultKey={category ? getDefaultLightingForCategory(category) : undefined} />
-                </div>
+              <div className="mt-6 -mx-6 md:-mx-10">
+                <ArtifactStageFullscreen
+                  overlayLabel="Upload lighting controls"
+                  viewer={<LightingStudioViewer src={fileUrl} format={modelFormat} presetKey={lighting} title={name || fileName || "Uploaded artifact"} />}
+                  overlay={<div><p className="text-[9px] tracking-label text-stone uppercase">Step 3 of 4 · File &amp; Details</p><p className="mt-4 text-[10px] tracking-label text-stone uppercase">Suggested Lighting</p><div className="mt-3"><LightingPresetPicker value={lighting} onChange={setLighting} defaultKey={category ? getDefaultLightingForCategory(category) : undefined} /></div><p className="mt-4 text-xs leading-relaxed text-stone">Choose the museum lighting, then continue filling in the artifact details below.</p></div>}
+                />
               </div>
             )}
             <div className="mt-7 flex flex-col gap-6">
@@ -614,14 +615,12 @@ export default function UploadWizard() {
             </p>
 
             {fileUrl && type === "3d-model" && modelFormat && lighting && (
-              <div className="mt-6">
-                <LightingStudioViewer src={fileUrl} format={modelFormat} presetKey={lighting} title={name || fileName || "Uploaded artifact"} className="aspect-[4/3]" />
+              <div className="mt-6 -mx-6 md:-mx-10">
+                <ArtifactStageFullscreen viewer={<LightingStudioViewer src={fileUrl} format={modelFormat} presetKey={lighting} title={name || fileName || "Uploaded artifact"} />} overlay={<div><p className="text-[9px] tracking-label text-stone uppercase">Step 4 of 4 · Review</p><h2 className="font-display mt-3 text-2xl italic">{name}</h2><p className="mt-2 text-xs text-stone">{selectedCategory?.name} · {getLightingPreset(lighting).name}</p><p className="mt-4 text-sm leading-relaxed text-charcoal/80">{description}</p><div className="mt-6 flex gap-3"><button type="button" onClick={() => setStep(3)} className="border border-line px-5 py-3 text-[10px] tracking-label uppercase">Back</button><button type="button" onClick={submitUpload} disabled={submitting} className="flex-1 bg-ink px-5 py-3 text-[10px] tracking-label text-cream uppercase">{submitting ? "Uploading…" : "Submit Artifact"}</button></div></div>} />
               </div>
             )}
             {fileUrl && type === "video-scan" && (
-              <video className="mt-6 aspect-video w-full bg-black object-contain" controls src={fileUrl}>
-                Your browser does not support video playback.
-              </video>
+              <div className="mt-6 -mx-6 md:-mx-10"><ArtifactStageFullscreen viewer={<video className="h-full w-full bg-black object-contain" controls src={fileUrl}>Your browser does not support video playback.</video>} overlay={<div><p className="text-[9px] tracking-label text-stone uppercase">Step 4 of 4 · Review</p><h2 className="font-display mt-3 text-2xl italic">{name}</h2><p className="mt-4 text-sm leading-relaxed text-charcoal/80">{description}</p><div className="mt-6 flex gap-3"><button type="button" onClick={() => setStep(3)} className="border border-line px-5 py-3 text-[10px] tracking-label uppercase">Back</button><button type="button" onClick={submitUpload} disabled={submitting} className="flex-1 bg-ink px-5 py-3 text-[10px] tracking-label text-cream uppercase">{submitting ? "Uploading…" : "Submit Artifact"}</button></div></div>} /></div>
             )}
 
             <div className="mt-6 divide-y divide-line border-t border-b border-line">

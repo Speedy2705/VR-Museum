@@ -210,6 +210,8 @@ model UploadedAsset {
   modelFormat    String?
   status         AssetStatus       @default(PENDING)
   lightingPreset String?
+  lightTemperature String?
+  lightDirection   String?
   curatorComment String?
   curatorId      String?
   reviewedAt     DateTime?

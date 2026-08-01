@@ -5,9 +5,9 @@ import LightingPresetPicker from "@/components/media/LightingPresetPicker";
 import LightingStudioViewer from "@/components/media/LightingStudioViewer";
 import ArtifactStageFullscreen from "@/components/media/ArtifactStageFullscreen";
 import ModerationCommentDialog, { type CommentDecision } from "@/components/moderation/ModerationCommentDialog";
-import { getCategoryByKey, type CollectionSlug, type LightingPresetKey } from "@/lib/artifact-categories";
+import { getCategoryByKey, type CollectionSlug, type LightDirectionKey, type LightTemperatureKey } from "@/lib/artifact-categories";
 import { notifyError } from "@/lib/client-error";
-import { getLightingPreset } from "@/lib/lighting-presets";
+import { getLightDirection, getLightTemperature } from "@/lib/lighting-presets";
 import { museumToast } from "@/lib/museum-toast";
 import type { ModelFormat } from "@/lib/three/loaders";
 
@@ -17,7 +17,8 @@ type ModerationItem = {
   category: CollectionSlug;
   ownerName: string;
   ownerEmail: string;
-  lightingPreset: LightingPresetKey | null;
+  lightTemperature: LightTemperatureKey | null;
+  lightDirection: LightDirectionKey | null;
   fileUrl: string;
   thumbnailUrl: string | null;
   mediaType: "MODEL_3D" | "VIDEO";
@@ -46,7 +47,8 @@ export default function ModerationQueue({ initialItems }: { initialItems: Modera
   const [pendingId, setPendingId] = useState("");
   const [error, setError] = useState("");
   const [dialog, setDialog] = useState<DialogState>(null);
-  const [previewPresets, setPreviewPresets] = useState<Record<string, LightingPresetKey>>({});
+  const [previewTemperatures, setPreviewTemperatures] = useState<Record<string, LightTemperatureKey>>({});
+  const [previewDirections, setPreviewDirections] = useState<Record<string, LightDirectionKey>>({});
 
   async function moderate(id: string, status: "APPROVED" | CommentDecision, comment?: string) {
     setPendingId(id);
@@ -80,8 +82,8 @@ export default function ModerationQueue({ initialItems }: { initialItems: Modera
       {items.map((item) => {
         const expanded = expandedId === item.id;
         const categoryName = getCategoryByKey(item.category)?.name ?? item.category;
-        const submittedPreset = item.lightingPreset;
-        const previewPreset = submittedPreset ? previewPresets[item.id] ?? submittedPreset : null;
+        const previewTemperature = previewTemperatures[item.id] ?? item.lightTemperature;
+        const previewDirection = previewDirections[item.id] ?? item.lightDirection;
         return (
           <article key={item.id} className="border border-line">
             <button
@@ -102,16 +104,19 @@ export default function ModerationQueue({ initialItems }: { initialItems: Modera
             {expanded && (
               <div id={`moderation-detail-${item.id}`} className="fixed inset-x-0 top-20 z-20" tabIndex={-1}>
                 <ArtifactStageFullscreen
+                  immersiveDetails={item.mediaType === "MODEL_3D"}
+                  splitDetails={item.mediaType === "VIDEO"}
                   overlayLabel={`Moderation details for ${item.title}`}
-                  viewer={item.mediaType === "MODEL_3D" && previewPreset && item.modelFormat
-                    ? <LightingStudioViewer src={item.fileUrl} format={item.modelFormat} presetKey={previewPreset} title={item.title} poster={item.thumbnailUrl ?? undefined} />
+                  viewer={item.mediaType === "MODEL_3D" && previewTemperature && previewDirection && item.modelFormat
+                    ? <LightingStudioViewer src={item.fileUrl} format={item.modelFormat} lightTemperature={previewTemperature} lightDirection={previewDirection} title={item.title} poster={item.thumbnailUrl ?? undefined} museumLayout="details" plaqueOrigin={item.origin} panelDetails={{ uploadType: "Curator Lighting Study · Pending", title: item.title, uploader: item.ownerName, description: item.description, material: item.material, origin: item.origin, license: item.license, price: item.price === null ? "Free" : `$${item.price.toFixed(2)}` }} />
                     : <video className="h-full w-full bg-black object-contain" controls src={item.fileUrl}>Your browser does not support video playback.</video>}
+                  overlayActions={item.mediaType === "MODEL_3D" && previewTemperature && previewDirection ? <div className="hidden md:block"><button type="button" onClick={() => setExpandedId(null)} className="text-[10px] tracking-label uppercase text-cream/70">Close ×</button><div className="mt-3 max-h-[45vh] overflow-y-auto"><LightingPresetPicker temperature={previewTemperature} direction={previewDirection} onTemperatureChange={(value) => setPreviewTemperatures((current) => ({ ...current, [item.id]: value }))} onDirectionChange={(value) => setPreviewDirections((current) => ({ ...current, [item.id]: value }))} /></div><div className="mt-4 flex flex-wrap justify-end gap-3"><button type="button" disabled={pendingId === item.id} onClick={() => setDialog({ id: item.id, decision: "REJECTED" })} className="border border-red-500 px-5 py-2.5 text-[10px] tracking-label uppercase text-red-300 disabled:opacity-50">Reject</button><button type="button" disabled={pendingId === item.id} onClick={() => setDialog({ id: item.id, decision: "CHANGES_REQUESTED" })} className="border border-white/30 px-5 py-2.5 text-[10px] tracking-label uppercase disabled:opacity-50">Request Changes</button><button type="button" disabled={pendingId === item.id} onClick={() => moderate(item.id, "APPROVED")} className="bg-cream px-5 py-2.5 text-[10px] tracking-label uppercase text-ink disabled:opacity-50">Approve</button></div></div> : undefined}
                   overlay={<div>
                     <button type="button" onClick={() => setExpandedId(null)} className="float-right text-[10px] tracking-label uppercase text-stone">Close ×</button>
                     <p className="text-[9px] tracking-label uppercase text-stone">{categoryName}</p>
                     <h2 className="font-display mt-2 text-2xl italic">{item.title}</h2>
                     <p className="mt-2 text-xs text-stone">{item.ownerName} · {item.ownerEmail}</p>
-                    {submittedPreset && previewPreset && <div className="mt-5"><span className="inline-block border border-line bg-cream-dark px-3 py-1.5 text-[9px] tracking-label uppercase text-charcoal">Artist&apos;s choice: {getLightingPreset(submittedPreset).name}</span><div className="mt-4"><LightingPresetPicker value={previewPreset} onChange={(preset) => setPreviewPresets((current) => ({ ...current, [item.id]: preset }))} /></div></div>}
+                    {previewTemperature && previewDirection && <div className="mt-5"><span className="inline-block border border-line bg-cream-dark px-3 py-1.5 text-[9px] tracking-label uppercase text-charcoal">Contributor&apos;s choice: {getLightTemperature(item.lightTemperature ?? previewTemperature).name} · {getLightDirection(item.lightDirection ?? previewDirection).name}</span><div className="mt-4"><LightingPresetPicker temperature={previewTemperature} direction={previewDirection} onTemperatureChange={(value) => setPreviewTemperatures((current) => ({ ...current, [item.id]: value }))} onDirectionChange={(value) => setPreviewDirections((current) => ({ ...current, [item.id]: value }))} /></div></div>}
                     <div className="mt-5 divide-y divide-line border-t border-b border-line">
                   <DetailRow label="Public Description">{item.description}</DetailRow>
                   <DetailRow label="Origin / Provenance">{item.origin}</DetailRow>

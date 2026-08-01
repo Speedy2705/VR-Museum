@@ -1,13 +1,18 @@
-import type { LightingPresetKey } from "@/lib/artifact-categories";
-import { getLightingPreset, LIGHTING_PRESETS } from "@/lib/lighting-presets";
+import { useState } from "react";
+import type { LightDirectionKey, LightTemperatureKey, LightingPresetKey } from "@/lib/artifact-categories";
+import { getLightingPreset, LIGHT_DIRECTIONS, LIGHT_TEMPERATURES, LIGHTING_PRESETS } from "@/lib/lighting-presets";
 
-export default function LightingPresetPicker({ value, onChange, defaultKey }: { value: LightingPresetKey; onChange: (key: LightingPresetKey) => void; defaultKey?: LightingPresetKey }) {
-  return (
-    <div>
-      {defaultKey && value !== defaultKey && <button type="button" onClick={() => onChange(defaultKey)} className="mb-3 text-[10px] tracking-label text-stone underline underline-offset-4">Reassign to suggested lighting ({getLightingPreset(defaultKey).name})</button>}
-      <div className="divide-y divide-line border-t border-b border-line">
-        {LIGHTING_PRESETS.map((opt) => <button key={opt.key} type="button" onClick={() => onChange(opt.key)} className="flex w-full items-center justify-between py-3.5 text-left"><span><span className="block text-sm text-ink">{opt.name}</span><span className="block text-xs text-stone">{opt.description}</span></span><span className={`h-2.5 w-2.5 flex-shrink-0 rounded-full ${value === opt.key ? "bg-ink" : "border border-line"}`} /></button>)}
-      </div>
-    </div>
-  );
+type Props = { temperature: LightTemperatureKey; direction: LightDirectionKey; onTemperatureChange: (value: LightTemperatureKey) => void; onDirectionChange: (value: LightDirectionKey) => void; suggestedTemperature?: LightTemperatureKey; stepped?: boolean } | { value: LightingPresetKey; onChange: (value: LightingPresetKey) => void; defaultKey?: LightingPresetKey };
+export default function LightingPresetPicker(props: Props) {
+  const [innerStep, setInnerStep] = useState<1 | 2>(1);
+  if ("value" in props) return <div>{props.defaultKey && props.value !== props.defaultKey && <button type="button" onClick={() => props.onChange(props.defaultKey!)} className="mb-3 text-xs underline">Use suggested lighting ({getLightingPreset(props.defaultKey).name})</button>}<div className="space-y-2">{LIGHTING_PRESETS.map((item) => <button key={item.key} type="button" onClick={() => props.onChange(item.key)} className={`w-full border p-3 text-left text-sm ${props.value === item.key ? "border-ink" : "border-line"}`}>{item.name}</button>)}</div></div>;
+  const { temperature, direction, onTemperatureChange, onDirectionChange, suggestedTemperature, stepped } = props;
+  if (stepped) return <div>
+    <div className="grid grid-cols-2 border border-line"><button type="button" onClick={() => setInnerStep(1)} className={`px-3 py-3 text-[10px] tracking-label uppercase ${innerStep === 1 ? "bg-ink text-cream" : "text-stone"}`}>1 · Temperature</button><button type="button" onClick={() => setInnerStep(2)} className={`border-l border-line px-3 py-3 text-[10px] tracking-label uppercase ${innerStep === 2 ? "bg-ink text-cream" : "text-stone"}`}>2 · Direction</button></div>
+    {innerStep === 1 ? <fieldset className="mt-5"><legend className="text-[10px] tracking-label uppercase text-stone">Choose colour temperature</legend><div className="mt-3 space-y-3">{LIGHT_TEMPERATURES.map((item) => <button key={item.key} type="button" onClick={() => onTemperatureChange(item.key)} className={`w-full border p-4 text-left ${temperature === item.key ? "border-ink bg-cream-dark" : "border-line"}`}><span className="block text-sm">{item.name} · {item.kelvin} K {suggestedTemperature === item.key ? "· Recommended" : ""}</span><span className="mt-1.5 block text-xs leading-relaxed text-stone">{item.description}</span></button>)}</div><button type="button" onClick={() => setInnerStep(2)} className="mt-5 w-full bg-ink px-5 py-3 text-[10px] tracking-label text-cream uppercase">Continue to Direction</button></fieldset> : <fieldset className="mt-5"><legend className="text-[10px] tracking-label uppercase text-stone">Choose light direction</legend><div className="mt-3 space-y-3">{LIGHT_DIRECTIONS.map((item) => <button key={item.key} type="button" onClick={() => onDirectionChange(item.key)} className={`w-full border p-4 text-left ${direction === item.key ? "border-ink bg-cream-dark" : "border-line"}`}><span className="block text-sm">{item.name}</span><span className="mt-1.5 block text-xs leading-relaxed text-stone">{item.description}</span></button>)}</div><button type="button" onClick={() => setInnerStep(1)} className="mt-5 w-full border border-line px-5 py-3 text-[10px] tracking-label uppercase">Back to Temperature</button></fieldset>}
+  </div>;
+  return <div className="space-y-5">
+    <fieldset><legend className="text-[10px] tracking-label uppercase text-stone">Colour temperature</legend><div className="mt-2 space-y-2">{LIGHT_TEMPERATURES.map((item) => <button key={item.key} type="button" onClick={() => onTemperatureChange(item.key)} className={`w-full border p-3 text-left ${temperature === item.key ? "border-ink bg-cream-dark" : "border-line"}`}><span className="block text-sm">{item.name} · {item.kelvin} K {suggestedTemperature === item.key ? "· Recommended" : ""}</span><span className="mt-1 block text-xs text-stone">{item.description}</span></button>)}</div></fieldset>
+    <fieldset><legend className="text-[10px] tracking-label uppercase text-stone">Light direction</legend><div className="mt-2 space-y-2">{LIGHT_DIRECTIONS.map((item) => <button key={item.key} type="button" onClick={() => onDirectionChange(item.key)} className={`w-full border p-3 text-left ${direction === item.key ? "border-ink bg-cream-dark" : "border-line"}`}><span className="block text-sm">{item.name}</span><span className="mt-1 block text-xs text-stone">{item.description}</span></button>)}</div></fieldset>
+  </div>;
 }

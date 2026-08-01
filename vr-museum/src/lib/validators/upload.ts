@@ -11,13 +11,10 @@ const categoryKeys = ARTIFACT_CATEGORIES.map(({ key }) => key) as [
   (typeof ARTIFACT_CATEGORIES)[number]["key"],
   ...(typeof ARTIFACT_CATEGORIES)[number]["key"][],
 ];
-const lightingPresetKeys = ARTIFACT_CATEGORIES.map(({ lightingPreset }) => lightingPreset) as [
-  (typeof ARTIFACT_CATEGORIES)[number]["lightingPreset"],
-  ...(typeof ARTIFACT_CATEGORIES)[number]["lightingPreset"][],
-];
-
 const categorySchema = z.enum(categoryKeys);
-const lightingPresetSchema = z.enum(lightingPresetKeys);
+const lightingPresetSchema = z.enum(["warm-diffuse", "directional-spot", "cool-ambient", "backlit-halo", "raking-light"]);
+const lightTemperatureSchema = z.enum(["warm-white", "cool-white", "artificial-daylight"]);
+const lightDirectionSchema = z.enum(["spotlight", "top-light", "front-facing", "raking-light", "backlight"]);
 
 const uploadBaseSchema = z.object({
   title: z.string().trim().min(1).max(200),
@@ -27,6 +24,8 @@ const uploadBaseSchema = z.object({
   mediaType: artifactMediaTypeSchema,
   modelFormat: modelFormatSchema.nullable().optional(),
   lightingPreset: lightingPresetSchema.nullable().optional(),
+  lightTemperature: lightTemperatureSchema.nullable().optional(),
+  lightDirection: lightDirectionSchema.nullable().optional(),
   metadata: z.record(z.string(), z.json()).default({}),
 });
 
@@ -78,14 +77,14 @@ export const uploadSchema = uploadBaseSchema.superRefine((input, context) => {
       message: "Video uploads cannot include a model format",
     });
   }
-  if (input.mediaType === "MODEL_3D" && !input.lightingPreset) {
+  if (input.mediaType === "MODEL_3D" && (!input.lightTemperature || !input.lightDirection)) {
     context.addIssue({
       code: "custom",
-      path: ["lightingPreset"],
-      message: "Lighting preset is required for 3D model uploads",
+      path: ["lightTemperature"],
+      message: "Light temperature and direction are required for 3D model uploads",
     });
   }
-  if (input.mediaType === "VIDEO" && input.lightingPreset) {
+  if (input.mediaType === "VIDEO" && (input.lightingPreset || input.lightTemperature || input.lightDirection)) {
     context.addIssue({
       code: "custom",
       path: ["lightingPreset"],
@@ -123,6 +122,8 @@ export const uploadUpdateSchema = uploadBaseSchema
     mediaType: true,
     modelFormat: true,
     lightingPreset: true,
+    lightTemperature: true,
+    lightDirection: true,
     metadata: true,
   })
   .partial()

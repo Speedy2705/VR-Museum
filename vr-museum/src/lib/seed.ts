@@ -7,6 +7,7 @@ import { collections } from "../data/collections";
 import { getArtifactImage, getCollectionImage } from "../data/images";
 import { marketplaceProducts } from "../data/marketplace";
 import { getArtifactModel, getArtifactVideo } from "./media";
+import { ARTIFACT_CATEGORIES, type CollectionSlug } from "./artifact-categories";
 
 const adapter = new PrismaBetterSqlite3({
   url: process.env.DATABASE_URL ?? "file:./dev.db",
@@ -14,11 +15,21 @@ const adapter = new PrismaBetterSqlite3({
 const prisma = new PrismaClient({ adapter });
 
 const collectionForMaterial: Record<string, string> = {
-  Marble: "remnants-of-stone",
-  Silver: "remnants-of-stone",
-  Bronze: "bronze-ritual",
-  Terracotta: "earth-fire",
-  Glass: "light-through-glass",
+  Marble: "veins-of-marble",
+  "Pentelic Marble": "veins-of-marble",
+  Silver: "forged-in-time",
+  Bronze: "forged-in-time",
+  Terracotta: "earth-and-ember",
+  Glass: "stories-in-color",
+};
+
+const collectionPresentation: Record<CollectionSlug, { subtitle: string; category: string }> = {
+  "veins-of-marble": { subtitle: "Form revealed in luminous stone", category: "Marble" },
+  "forged-in-time": { subtitle: "Metal shaped by ritual, craft, and history", category: "Metal" },
+  "stories-in-color": { subtitle: "Culture and memory carried through colour", category: "Painting" },
+  "echoes-in-stone": { subtitle: "Marks, inscriptions, and weathered memory", category: "Stone" },
+  "earth-and-ember": { subtitle: "Earthen forms born from hand and flame", category: "Terracotta" },
+  "community-uploads": { subtitle: "Discoveries beyond the five galleries", category: "Community" },
 };
 
 const videoArtifactSlugs = new Set([
@@ -70,26 +81,20 @@ function sellerEmail(name: string) {
 async function main() {
   const collectionIds = new Map<string, string>();
 
-  for (const collection of collections) {
+  for (const category of ARTIFACT_CATEGORIES) {
+    const presentation = collectionPresentation[category.key];
     const row = await prisma.collection.upsert({
-      where: { slug: collection.slug },
+      where: { slug: category.key },
       update: {
-        title: collection.title,
-        subtitle: collection.era,
-        description: collection.description,
-        heroImage: getCollectionImage(collection.slug) ?? "",
-        category: collection.materialTag,
+        title: category.name, subtitle: presentation.subtitle, description: category.description,
+        heroImage: getCollectionImage(category.key) ?? "", category: presentation.category,
       },
       create: {
-        slug: collection.slug,
-        title: collection.title,
-        subtitle: collection.era,
-        description: collection.description,
-        heroImage: getCollectionImage(collection.slug) ?? "",
-        category: collection.materialTag,
+        slug: category.key, title: category.name, subtitle: presentation.subtitle,
+        description: category.description, heroImage: getCollectionImage(category.key) ?? "", category: presentation.category,
       },
     });
-    collectionIds.set(collection.slug, row.id);
+    collectionIds.set(category.key, row.id);
   }
 
   const productsBySlug = new Map(
@@ -108,7 +113,7 @@ async function main() {
           preset: artifact.lighting,
           image: getArtifactImage(artifact.slug),
           description: artifact.description,
-          collectionId: collectionIds.get(collection.slug)!,
+          collectionId: collectionIds.get(collectionForMaterial[artifact.material] ?? "community-uploads")!,
           price: product?.price ?? null,
           isForSale: Boolean(product),
           ...media,
@@ -120,7 +125,7 @@ async function main() {
           preset: artifact.lighting,
           image: getArtifactImage(artifact.slug),
           description: artifact.description,
-          collectionId: collectionIds.get(collection.slug)!,
+          collectionId: collectionIds.get(collectionForMaterial[artifact.material] ?? "community-uploads")!,
           price: product?.price ?? null,
           isForSale: Boolean(product),
           ...media,
@@ -131,7 +136,7 @@ async function main() {
 
   for (const product of marketplaceProducts) {
     const collectionSlug =
-      collectionForMaterial[product.material] ?? "remnants-of-stone";
+      collectionForMaterial[product.material] ?? "community-uploads";
     const artifact = await prisma.artifact.upsert({
       where: { slug: product.slug },
       update: {

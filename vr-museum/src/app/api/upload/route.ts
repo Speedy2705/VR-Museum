@@ -41,6 +41,8 @@ export async function POST(request: Request) {
       }
       const storedPhoto = await storeDisplayPhoto(photo);
       const lighting = form.get("lighting");
+      const lightTemperature = form.get("lightTemperature");
+      const lightDirection = form.get("lightDirection");
       rawInput = {
         title: form.get("title"),
         category: form.get("category"),
@@ -50,9 +52,12 @@ export async function POST(request: Request) {
         modelFormat,
         lightingPreset:
           typeof lighting === "string" && lighting.length > 0 ? lighting : null,
+        lightTemperature: typeof lightTemperature === "string" && lightTemperature ? lightTemperature : null,
+        lightDirection: typeof lightDirection === "string" && lightDirection ? lightDirection : null,
         metadata: {
           type,
           origin: form.get("origin"),
+          material: form.get("material"),
           price: form.get("price") ? Number(form.get("price")) : null,
           license: form.get("license"),
           description: form.get("description"),

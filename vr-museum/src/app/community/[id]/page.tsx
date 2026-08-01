@@ -42,7 +42,7 @@ export default async function CommunityArtifactPage({ params }: { params: Promis
   const actions = (
     <div className="[&_button]:border-white/30">
       {price ? <ArtifactPurchaseActions listingId={communityListingId(upload.id)} slug={artifactSlug} title={upload.title} artist={upload.owner.name ?? "Museum community member"} material={upload.category} price={price} image={upload.thumbnailUrl ?? undefined} /> : <VrEntryModal href={`/vr/${artifactSlug}`} label="Enter VR" variant="dark" className="w-full" />}
-      <div className="mt-3 flex items-center justify-between gap-4"><Link className="text-[9px] tracking-label text-cream/60 underline uppercase hover:text-cream" href={`/community/creator/${upload.owner.id}`}>Curator profile</Link><ReportFlagButton uploadId={upload.id} /></div>
+      <div className="mt-3 text-right"><ReportFlagButton uploadId={upload.id} /></div>
     </div>
   );
 

@@ -125,11 +125,13 @@ describe("catalog and upload validators", () => {
     ).toBe(true);
     const upload = uploadSchema.parse({
       title: "Scan",
-      category: "remnants-of-stone",
+      category: "echoes-in-stone",
       fileUrl: "/uploads/scan.glb",
       mediaType: "MODEL_3D",
       modelFormat: "glb",
       lightingPreset: "raking-light",
+      lightTemperature: "artificial-daylight",
+      lightDirection: "raking-light",
       metadata: {
         type: "3d-model",
         description: "A detailed public description long enough for moderation review.",

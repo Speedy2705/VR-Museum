@@ -19,6 +19,8 @@ type UploadForListing = {
   mediaType: "IMAGE" | "VIDEO" | "MODEL_3D";
   modelFormat: string | null;
   lightingPreset: string | null;
+  lightTemperature: string | null;
+  lightDirection: string | null;
   collectionSlug: string | null;
   metadata: unknown;
 };
@@ -131,6 +133,8 @@ export function createUpload(userId: string, input: UploadInput) {
       mediaType: input.mediaType,
       modelFormat: input.modelFormat,
       lightingPreset: input.lightingPreset,
+      lightTemperature: input.lightTemperature,
+      lightDirection: input.lightDirection,
       collectionSlug: input.category,
       metadata: input.metadata as Prisma.InputJsonObject,
       status: "PENDING",

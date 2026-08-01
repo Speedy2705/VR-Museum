@@ -44,6 +44,8 @@ export async function PATCH(
         category: form.get("category"),
         mediaType: type === "video-scan" ? "VIDEO" : "MODEL_3D",
         lightingPreset: type === "3d-model" ? form.get("lightingPreset") : null,
+        lightTemperature: type === "3d-model" ? form.get("lightTemperature") : null,
+        lightDirection: type === "3d-model" ? form.get("lightDirection") : null,
         metadata,
       };
       rawInput = multipartInput;

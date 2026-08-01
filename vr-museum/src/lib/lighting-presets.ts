@@ -1,50 +1,41 @@
 import * as THREE from "three";
-import type { LightingPresetKey } from "@/lib/artifact-categories";
+import type { LightDirectionKey, LightTemperatureKey, LightingPresetKey } from "@/lib/artifact-categories";
 
-export type FallbackMaterialHint = { color: THREE.ColorRepresentation; metalness: number; roughness: number; transparent?: boolean; opacity?: number };
-export type LightingPreset = { key: LightingPresetKey; name: string; description: string; build: (scene: THREE.Scene) => THREE.Light[]; fallbackMaterial: FallbackMaterialHint };
+export const LIGHT_TEMPERATURES = [
+  { key: "warm-white", name: "Warm White", kelvin: 3000, description: "A welcoming amber-white glow that enriches clay, wood, aged finishes, and warm pigments." },
+  { key: "cool-white", name: "Cool White", kelvin: 4000, description: "A balanced, neutral-white light that preserves colour while keeping metalwork and painted detail crisp." },
+  { key: "artificial-daylight", name: "Artificial Daylight", kelvin: 5000, description: "A clean daylight simulation that reveals pale stone, marble veining, inscriptions, and subtle surface variation." },
+] as const;
 
-function addLights(scene: THREE.Scene, lights: THREE.Light[]) {
-  scene.add(...lights);
-  return lights;
+export const LIGHT_DIRECTIONS = [
+  { key: "spotlight", name: "Spotlight", description: "A focused beam from above and to one side, creating dramatic emphasis and bright highlights on a chosen feature." },
+  { key: "top-light", name: "Top Light", description: "Light falling vertically from above, defining the crown and upper contours while grounding the artifact with shadow." },
+  { key: "front-facing", name: "Front-Facing Light", description: "Even illumination from the viewer’s direction, ideal for clearly reading colour, form, and documentary detail." },
+  { key: "raking-light", name: "Raking Light", description: "A low grazing beam that stretches shadows across the surface to reveal carving, tool marks, cracks, and inscriptions." },
+  { key: "backlight", name: "Backlight", description: "Light placed behind the artifact to outline its silhouette and reveal translucency in glass or thin materials." },
+] as const;
+
+export function getLightTemperature(key: LightTemperatureKey) { return LIGHT_TEMPERATURES.find((item) => item.key === key)!; }
+export function getLightDirection(key: LightDirectionKey) { return LIGHT_DIRECTIONS.find((item) => item.key === key)!; }
+
+const colours: Record<LightTemperatureKey, number> = { "warm-white": 0xffc58f, "cool-white": 0xfff4e5, "artificial-daylight": 0xe7f2ff };
+export function buildLighting(scene: THREE.Scene, temperature: LightTemperatureKey, direction: LightDirectionKey) {
+  const color = colours[temperature];
+  const temperatureBoost = temperature === "warm-white" ? 1.2 : temperature === "cool-white" ? 1.12 : 1;
+  const ambient = new THREE.HemisphereLight(color, 0x292725, (direction === "front-facing" ? 2.35 : 1.15) * temperatureBoost);
+  let key: THREE.Light;
+  if (direction === "spotlight") { const light = new THREE.SpotLight(color, 10 * temperatureBoost, 0, Math.PI / 6, .3, 1.2); light.position.set(0.75, 2.15, 1.45); light.target.name = "artifact-spotlight-target"; light.target.position.set(0, 0.8, 0); scene.add(light.target); key = light; }
+  else { const light = new THREE.DirectionalLight(color, (direction === "front-facing" ? 5.5 : 7) * temperatureBoost); light.position.set(...(direction === "top-light" ? [0, 6, 0.5] : direction === "raking-light" ? [6, .7, 2] : direction === "backlight" ? [0, 3, -5] : [0, 2.5, 6]) as [number, number, number]); key = light; }
+  scene.add(ambient, key); return [ambient, key];
 }
 
-export const LIGHTING_PRESETS = [
-  {
-    key: "warm-diffuse", name: "Warm Diffuse",
-    description: "A broad, soft amber source from above. Eliminates harsh shadow and shows the warmth of fired clay surfaces.",
-    build: (scene) => { const key = new THREE.DirectionalLight(0xffc980, 2.5); key.position.set(2, 5, 3); return addLights(scene, [new THREE.HemisphereLight(0xffe0b2, 0x4a3024, 1.8), key]); },
-    fallbackMaterial: { color: 0xb87345, metalness: 0.05, roughness: 0.78 },
-  },
-  {
-    key: "directional-spot", name: "Directional Spot",
-    description: "A narrow, high-intensity key light at 45°. Creates specular highlights that reveal cast surface texture on metal.",
-    build: (scene) => { const spot = new THREE.SpotLight(0xffe2ad, 7, 0, Math.PI / 7, 0.3, 1.2); spot.position.set(4, 5, 4); return addLights(scene, [new THREE.AmbientLight(0x302b27, 0.7), spot]); },
-    fallbackMaterial: { color: 0x8c6239, metalness: 0.82, roughness: 0.3 },
-  },
-  {
-    key: "cool-ambient", name: "Cool Ambient",
-    description: "A diffuse, bluish fill matching the colour temperature of overcast northern daylight — ideal for pale stone.",
-    build: (scene) => { const key = new THREE.DirectionalLight(0xe4edff, 1.2); key.position.set(-3, 4, 2); return addLights(scene, [new THREE.HemisphereLight(0xc9dcff, 0x657080, 2.2), key]); },
-    fallbackMaterial: { color: 0xd8d5cc, metalness: 0, roughness: 0.72 },
-  },
-  {
-    key: "backlit-halo", name: "Backlit Halo",
-    description: "A translucent rim source behind the artifact. Light passes through the material, revealing internal colour.",
-    build: (scene) => { const back = new THREE.PointLight(0x7fdcff, 8, 20, 1.5); back.position.set(0, 2, -4); const rim = new THREE.DirectionalLight(0xb9efff, 2.5); rim.position.set(-3, 3, -2); return addLights(scene, [new THREE.AmbientLight(0x172536, 0.65), back, rim]); },
-    fallbackMaterial: { color: 0x5fc7d6, metalness: 0.05, roughness: 0.18, transparent: true, opacity: 0.62 },
-  },
-  {
-    key: "raking-light", name: "Raking Light",
-    description: "A low-angle grazing light at 10–15° from the surface. Makes incised marks and surface texture legible.",
-    build: (scene) => { const rake = new THREE.DirectionalLight(0xffd7a3, 4.5); rake.position.set(5, 0.8, 2); return addLights(scene, [new THREE.AmbientLight(0x28231f, 0.55), rake]); },
-    fallbackMaterial: { color: 0x756a5d, metalness: 0.08, roughness: 0.9 },
-  },
-] as const satisfies readonly LightingPreset[];
-
-export const FALLBACK_MATERIAL_HINTS = Object.fromEntries(LIGHTING_PRESETS.map(({ key, fallbackMaterial }) => [key, fallbackMaterial])) as Record<LightingPresetKey, FallbackMaterialHint>;
-export function getLightingPreset(key: LightingPresetKey) { return LIGHTING_PRESETS.find((preset) => preset.key === key)!; }
-export function keyFromDisplayName(name: string | null | undefined): LightingPresetKey {
-  const normalized = name?.trim().toLowerCase();
-  return LIGHTING_PRESETS.find((preset) => preset.name.toLowerCase() === normalized || preset.key === normalized)?.key ?? "raking-light";
-}
+const legacyMap: Record<LightingPresetKey, { temperature: LightTemperatureKey; direction: LightDirectionKey; name: string }> = {
+  "warm-diffuse": { temperature: "warm-white", direction: "front-facing", name: "Warm Diffuse" },
+  "directional-spot": { temperature: "cool-white", direction: "spotlight", name: "Directional Spot" },
+  "cool-ambient": { temperature: "artificial-daylight", direction: "front-facing", name: "Cool Ambient" },
+  "backlit-halo": { temperature: "cool-white", direction: "backlight", name: "Backlit Halo" },
+  "raking-light": { temperature: "cool-white", direction: "raking-light", name: "Raking Light" },
+};
+export function getLightingPreset(key: LightingPresetKey) { const item = legacyMap[key]; return { key, name: item.name, description: getLightDirection(item.direction).description, build: (scene: THREE.Scene) => buildLighting(scene, item.temperature, item.direction), fallbackMaterial: { color: 0xaaa49a, metalness: .1, roughness: .65 } }; }
+export function keyFromDisplayName(name: string | null | undefined): LightingPresetKey { const normalized = name?.toLowerCase() ?? ""; return (Object.keys(legacyMap) as LightingPresetKey[]).find((key) => key === normalized || legacyMap[key].name.toLowerCase() === normalized) ?? "raking-light"; }
+export const LIGHTING_PRESETS = (Object.keys(legacyMap) as LightingPresetKey[]).map(getLightingPreset);

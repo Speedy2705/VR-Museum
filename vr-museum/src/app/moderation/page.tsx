@@ -10,7 +10,7 @@ import { listOpenReports } from "@/server/services/report.service";
 import ReportQueue from "@/components/moderation/ReportQueue";
 import SupportQueue from "@/components/moderation/SupportQueue";
 import { listOpenSupportRequests } from "@/server/services/support.service";
-import type { CollectionSlug, LightingPresetKey } from "@/lib/artifact-categories";
+import type { CollectionSlug, LightDirectionKey, LightTemperatureKey } from "@/lib/artifact-categories";
 import type { ModelFormat } from "@/lib/three/loaders";
 
 export const metadata = {
@@ -86,7 +86,8 @@ export default async function ModerationPage() {
                   category: upload.category as CollectionSlug,
                   ownerName: upload.owner.name ?? "Museum member",
                   ownerEmail: upload.owner.email,
-                  lightingPreset: upload.lightingPreset as LightingPresetKey | null,
+                  lightTemperature: upload.lightTemperature as LightTemperatureKey | null,
+                  lightDirection: upload.lightDirection as LightDirectionKey | null,
                   fileUrl: upload.fileUrl,
                   thumbnailUrl: upload.thumbnailUrl,
                   mediaType: upload.mediaType as "MODEL_3D" | "VIDEO",

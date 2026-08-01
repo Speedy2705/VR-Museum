@@ -10,12 +10,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import PlaceholderImage from "@/components/ui/PlaceholderImage";
-import type { LightingPresetKey } from "@/lib/artifact-categories";
-import { getLightingPreset } from "@/lib/lighting-presets";
+import type { LightDirectionKey, LightTemperatureKey, LightingPresetKey } from "@/lib/artifact-categories";
+import { buildLighting, getLightingPreset } from "@/lib/lighting-presets";
 import { createMuseumEnvironment, type MuseumPanelDetails } from "@/lib/three/museum-environment";
 import { loadModel, type ModelFormat, type ModelLoadError } from "@/lib/three/loaders";
 
-export type LightingStudioViewerProps = { src: string; format: ModelFormat; presetKey: LightingPresetKey; title: string; poster?: string; onReady?: () => void; onError?: (message: string) => void; showMuseumEnvironment?: boolean; className?: string; museumLayout?: "centered" | "details"; plaqueOrigin?: string; panelDetails?: MuseumPanelDetails };
+export type LightingStudioViewerProps = { src: string; format: ModelFormat; presetKey?: LightingPresetKey; lightTemperature?: LightTemperatureKey; lightDirection?: LightDirectionKey; title: string; poster?: string; onReady?: () => void; onError?: (message: string) => void; showMuseumEnvironment?: boolean; className?: string; museumLayout?: "centered" | "details"; plaqueOrigin?: string; panelDetails?: MuseumPanelDetails };
 
 function disposeMaterial(material: THREE.Material) {
   for (const value of Object.values(material)) if (value instanceof THREE.Texture) value.dispose();
@@ -31,36 +31,48 @@ function disposeObject(object: THREE.Object3D) {
   });
 }
 
-function frameObject(object: THREE.Object3D, camera: THREE.PerspectiveCamera, controls: OrbitControls, museumComposition = false) {
+function frameObject(object: THREE.Object3D, camera: THREE.PerspectiveCamera, controls: OrbitControls, museumEnvironment: THREE.Group | null = null, detailsComposition = false) {
   const box = new THREE.Box3().setFromObject(object);
+  const museumComposition = Boolean(museumEnvironment);
+  if (museumEnvironment) {
+    ["platform", "pedestal", "glass-case", "museum-info-display"].forEach((name) => {
+      const part = museumEnvironment.getObjectByName(name);
+      if (part) box.expandByObject(part);
+    });
+  }
   const size = box.getSize(new THREE.Vector3());
   const center = box.getCenter(new THREE.Vector3());
-  const longest = Math.max(size.x, size.y, size.z) || 1;
-  const fittedDistance = longest / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2))) * 1.45;
-  const distance = museumComposition ? Math.max(fittedDistance * 1.25, 7.5) : fittedDistance;
-  const compositionOffset = museumComposition ? 2.1 : 0;
-  camera.position.set(center.x + compositionOffset + (museumComposition ? 0 : distance * 0.55), center.y + distance * (museumComposition ? 0.12 : 0.3), center.z + distance);
+  if (detailsComposition) center.x += 2.5;
+  else if (museumComposition) center.x += 1.1;
+  const verticalFov = THREE.MathUtils.degToRad(camera.fov);
+  const horizontalFov = 2 * Math.atan(Math.tan(verticalFov / 2) * camera.aspect);
+  const fittedDistance = museumComposition
+    ? Math.max(size.y / (2 * Math.tan(verticalFov / 2)), size.x / (2 * Math.tan(horizontalFov / 2))) * 1.18
+    : Math.max(size.x, size.y, size.z, 1) / (2 * Math.tan(verticalFov / 2)) * 1.45;
+  const distance = museumComposition ? Math.max(fittedDistance, 7.5) * 1.18 : fittedDistance;
+  camera.position.set(center.x + (museumComposition ? 0 : distance * 0.55), center.y + distance * (museumComposition ? 0.04 : 0.3), center.z + distance);
   camera.near = Math.max(distance / 100, 0.01);
   camera.far = Math.max(distance * 100, 100);
   camera.updateProjectionMatrix();
-  controls.target.copy(center).add(new THREE.Vector3(compositionOffset, 0, 0));
+  controls.target.copy(center);
   controls.minDistance = distance * 0.35;
   controls.maxDistance = museumComposition ? distance * 1.02 : distance * 4;
   controls.update();
 }
 
-export default function LightingStudioViewer({ src, format, presetKey, title, poster, onReady, onError, showMuseumEnvironment = true, className = "", museumLayout = "centered", plaqueOrigin, panelDetails }: LightingStudioViewerProps) {
+export default function LightingStudioViewer({ src, format, presetKey = "raking-light", lightTemperature, lightDirection, title, poster, onReady, onError, showMuseumEnvironment = true, className = "", museumLayout = "centered", plaqueOrigin, panelDetails }: LightingStudioViewerProps) {
   const hostRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<THREE.Scene>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera>(null);
   const controlsRef = useRef<OrbitControls>(null);
   const modelRef = useRef<THREE.Object3D>(null);
   const environmentRef = useRef<THREE.Group>(null);
-  const originalViewRef = useRef<{ position: THREE.Vector3; target: THREE.Vector3 }>(null);
+  const originalViewRef = useRef<{ position: THREE.Vector3; target: THREE.Vector3; minDistance: number; maxDistance: number }>(null);
   const cameraMoveRef = useRef<{ startedAt: number; fromPosition: THREE.Vector3; toPosition: THREE.Vector3; fromTarget: THREE.Vector3; toTarget: THREE.Vector3 }>(null);
   const rotatingRef = useRef(false);
   const presetRef = useRef(presetKey);
   const callbacksRef = useRef({ onReady, onError });
+  const exhibitDetailsRef = useRef({ title, plaqueOrigin, panelDetails });
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -69,12 +81,14 @@ export default function LightingStudioViewer({ src, format, presetKey, title, po
 
   useEffect(() => { rotatingRef.current = rotating; }, [rotating]);
   useEffect(() => { callbacksRef.current = { onReady, onError }; }, [onReady, onError]);
+  useEffect(() => { exhibitDetailsRef.current = { title, plaqueOrigin, panelDetails }; }, [title, plaqueOrigin, panelDetails]);
   useEffect(() => { presetRef.current = presetKey; }, [presetKey]);
 
   const moveCamera = useCallback((position: THREE.Vector3, target: THREE.Vector3) => {
     const camera = cameraRef.current; const controls = controlsRef.current;
     if (!camera || !controls) return;
     controls.enabled = false;
+    controls.enableDamping = false;
     cameraMoveRef.current = { startedAt: performance.now(), fromPosition: camera.position.clone(), toPosition: position.clone(), fromTarget: controls.target.clone(), toTarget: target.clone() };
   }, []);
 
@@ -84,15 +98,28 @@ export default function LightingStudioViewer({ src, format, presetKey, title, po
     const box = new THREE.Box3().setFromObject(object);
     const size = box.getSize(new THREE.Vector3()); const center = box.getCenter(new THREE.Vector3());
     const longest = Math.max(size.x, size.y, size.z) || 1;
-    const distance = Math.max(longest / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2))) * 1.35, kind === "details" ? 3.8 : 2.4);
-    const direction = camera.position.clone().sub(controls.target).normalize();
-    moveCamera(center.clone().add(direction.multiplyScalar(distance)), center);
+    const padding = kind === "artifact" ? 1.38 : 1.35;
+    const distance = Math.max(longest / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2))) * padding, kind === "details" ? 3.8 : 2.4);
+    const viewCenter = center.clone();
+    if (kind === "artifact" && museumLayout === "details") {
+      viewCenter.x += 1;
+      viewCenter.y -= 0.22;
+    }
+    const frontPosition = new THREE.Vector3(viewCenter.x, viewCenter.y + distance * 0.05, viewCenter.z + distance);
+    controls.minDistance = distance * 0.4;
+    controls.maxDistance = originalViewRef.current?.maxDistance ?? distance * 3;
+    moveCamera(frontPosition, viewCenter);
+    setRotating(false);
     setFocused(kind);
-  }, [moveCamera]);
+  }, [moveCamera, museumLayout]);
 
   const resetView = useCallback(() => {
     const view = originalViewRef.current;
     if (!view) return;
+    if (controlsRef.current) {
+      controlsRef.current.minDistance = view.minDistance;
+      controlsRef.current.maxDistance = view.maxDistance;
+    }
     moveCamera(view.position, view.target);
     setFocused("both");
   }, [moveCamera]);
@@ -106,7 +133,7 @@ export default function LightingStudioViewer({ src, format, presetKey, title, po
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1;
+    renderer.toneMappingExposure = 1.2;
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -114,8 +141,9 @@ export default function LightingStudioViewer({ src, format, presetKey, title, po
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.06;
-    const exhibitOffsetX = museumLayout === "details" ? -2.15 : 0;
-    const environment = showMuseumEnvironment ? createMuseumEnvironment({ exhibitOffsetX, plaqueTitle: title, plaqueOrigin, showInfoDisplay: museumLayout === "details", panelDetails }) : null;
+    const exhibitOffsetX = museumLayout === "details" ? -2.35 : 0;
+    const exhibitDetails = exhibitDetailsRef.current;
+    const environment = showMuseumEnvironment ? createMuseumEnvironment({ exhibitOffsetX, plaqueTitle: exhibitDetails.title, plaqueOrigin: exhibitDetails.plaqueOrigin, showInfoDisplay: museumLayout === "details", panelDetails: exhibitDetails.panelDetails }) : null;
     if (environment) scene.add(environment);
     environmentRef.current = environment;
     sceneRef.current = scene; cameraRef.current = camera; controlsRef.current = controls;
@@ -129,7 +157,7 @@ export default function LightingStudioViewer({ src, format, presetKey, title, po
         const eased = 1 - Math.pow(1 - progress, 3);
         camera.position.lerpVectors(move.fromPosition, move.toPosition, eased);
         controls.target.lerpVectors(move.fromTarget, move.toTarget, eased);
-        if (progress === 1) { cameraMoveRef.current = null; controls.enabled = true; }
+        if (progress === 1) { controls.update(); controls.enableDamping = true; cameraMoveRef.current = null; controls.enabled = true; }
       }
       controls.autoRotate = rotatingRef.current && !move; controls.autoRotateSpeed = 1.6; controls.update(); renderer.render(scene, camera); frame = requestAnimationFrame(animate);
     };
@@ -143,25 +171,28 @@ export default function LightingStudioViewer({ src, format, presetKey, title, po
       const hits = raycaster.intersectObjects(scene.children, true);
       const belongsTo = (child: THREE.Object3D, parent: THREE.Object3D | null) => { let current: THREE.Object3D | null = child; while (current) { if (current === parent) return true; current = current.parent; } return false; };
       const detailsDisplay = environment?.getObjectByName("museum-info-display") ?? null;
-      const artifactHit = hits.some(({ object }) => belongsTo(object, modelRef.current));
+      const artifactDisplay = environment?.getObjectByName("artifact-exhibit") ?? null;
+      const artifactFocusTarget = modelRef.current ?? artifactDisplay;
+      const artifactHit = hits.some(({ object }) => belongsTo(object, modelRef.current) || belongsTo(object, artifactDisplay));
       const detailsHit = detailsDisplay && hits.some(({ object }) => belongsTo(object, detailsDisplay));
-      if (artifactHit && modelRef.current) focusObject(modelRef.current, "artifact");
+      if (artifactHit && artifactFocusTarget) focusObject(artifactFocusTarget, "artifact");
       else if (detailsHit && detailsDisplay) focusObject(detailsDisplay, "details");
     };
     renderer.domElement.addEventListener("pointerdown", onPointerDown);
     renderer.domElement.addEventListener("pointerup", onPointerUp);
     frame = requestAnimationFrame(animate);
     return () => { cancelAnimationFrame(frame); observer.disconnect(); renderer.domElement.removeEventListener("pointerdown", onPointerDown); renderer.domElement.removeEventListener("pointerup", onPointerUp); controls.dispose(); if (modelRef.current) disposeObject(modelRef.current); if (environment) disposeObject(environment); renderer.dispose(); renderer.domElement.remove(); sceneRef.current = null; cameraRef.current = null; controlsRef.current = null; modelRef.current = null; environmentRef.current = null; cameraMoveRef.current = null; };
-  }, [showMuseumEnvironment, museumLayout, title, plaqueOrigin, panelDetails, focusObject]);
+  }, [showMuseumEnvironment, museumLayout, focusObject]);
 
   useEffect(() => {
     const scene = sceneRef.current;
     if (!scene) return;
-    scene.children.filter((child): child is THREE.Light => child instanceof THREE.Light).forEach((light) => scene.remove(light));
-    getLightingPreset(presetKey).build(scene).forEach((light) => { light.castShadow = true; });
+    scene.children.filter((child) => child instanceof THREE.Light || child.name === "artifact-spotlight-target").forEach((child) => scene.remove(child));
+    const activeLights = lightTemperature && lightDirection ? buildLighting(scene, lightTemperature, lightDirection) : getLightingPreset(presetKey).build(scene);
+    activeLights.forEach((light: THREE.Light) => { light.castShadow = true; });
     const hint = getLightingPreset(presetKey).fallbackMaterial;
     modelRef.current?.traverse((child) => { if (child instanceof THREE.Mesh && child.userData.usesPresetFallbackMaterial) { const old = child.material as THREE.Material; child.material = new THREE.MeshStandardMaterial({ ...hint }); disposeMaterial(old); } });
-  }, [presetKey, loaded]);
+  }, [presetKey, lightTemperature, lightDirection, loaded]);
 
   useEffect(() => {
     const scene = sceneRef.current; const camera = cameraRef.current; const controls = controlsRef.current;
@@ -173,14 +204,20 @@ export default function LightingStudioViewer({ src, format, presetKey, title, po
       if (!active) { disposeObject(object); return; }
       if (modelRef.current) { scene.remove(modelRef.current); disposeObject(modelRef.current); }
       object.traverse((child) => { if (child instanceof THREE.Mesh) { child.castShadow = true; child.receiveShadow = true; } });
-      object.position.x += museumLayout === "details" ? -2.15 : 0;
-      modelRef.current = object; scene.add(object); frameObject(object, camera, controls, museumLayout === "details");
-      originalViewRef.current = { position: camera.position.clone(), target: controls.target.clone() };
+      // Uploaded models often carry an off-centre authoring pivot. Align their
+      // visible bounds—not that pivot—with the centre of the museum case.
+      const rawCenter = new THREE.Box3().setFromObject(object).getCenter(new THREE.Vector3());
+      const exhibitCenterX = museumLayout === "details" ? -2.35 : 0;
+      object.position.x += exhibitCenterX - rawCenter.x;
+      object.position.z -= rawCenter.z;
+      if (museumLayout === "details") object.rotation.y += 0.35;
+      modelRef.current = object; scene.add(object); frameObject(object, camera, controls, showMuseumEnvironment ? environmentRef.current : null, museumLayout === "details");
+      originalViewRef.current = { position: camera.position.clone(), target: controls.target.clone(), minDistance: controls.minDistance, maxDistance: controls.maxDistance };
       setProgress(100); setLoaded(true); callbacksRef.current.onReady?.();
     }).catch((error: ModelLoadError) => { if (!active) return; const message = error.message || "The model file may be missing or no longer available."; setFailed(true); callbacksRef.current.onError?.(message); }).finally(() => window.clearInterval(timer));
     return () => { active = false; window.clearInterval(timer); if (modelRef.current) { scene.remove(modelRef.current); disposeObject(modelRef.current); modelRef.current = null; } };
   }, [src, format, showMuseumEnvironment, museumLayout]);
 
   if (failed) return <div role="alert" className={`relative flex h-full items-center justify-center overflow-hidden bg-cream-dark p-8 text-center ${className}`}>{poster && <div className="absolute inset-0 opacity-35"><PlaceholderImage src={poster} alt={title} label={title} sizes="(min-width: 768px) 50vw, 100vw" /></div>}<div className="relative"><p className="font-display text-2xl italic">The model is unavailable</p><p className="mt-3 text-sm text-stone">We couldn’t prepare this 3D view. Try the artifact photo instead.</p></div></div>;
-  return <div className={`relative h-full min-h-64 w-full overflow-hidden bg-cream-dark ${className}`}><div ref={hostRef} className="absolute inset-0" aria-label={`Interactive 3D model of ${title}`} />{!loaded && <div className="pointer-events-none absolute inset-x-5 bottom-5" role="status" aria-label={`Loading 3D model: ${progress}%`}><div className="h-px bg-cream/30"><span className="block h-full bg-cream transition-[width]" style={{ width: `${progress}%` }} /></div><p className="mt-2 text-[9px] tracking-label text-cream/75 uppercase">Preparing 3D view · {progress}%</p></div>}{loaded && <div className="absolute bottom-3 left-3 flex flex-wrap gap-2"><button type="button" aria-pressed={rotating} onClick={() => setRotating((value) => !value)} className="bg-cream/95 px-3 py-2 text-[9px] tracking-label uppercase shadow">{rotating ? "Stop rotation" : "Auto rotate"}</button>{museumLayout === "details" && <><button type="button" aria-pressed={focused === "artifact"} onClick={() => modelRef.current && focusObject(modelRef.current, "artifact")} className="bg-cream/95 px-3 py-2 text-[9px] tracking-label uppercase shadow">Focus artifact</button><button type="button" aria-pressed={focused === "details"} onClick={() => { const display = environmentRef.current?.getObjectByName("museum-info-display"); if (display) focusObject(display, "details"); }} className="bg-cream/95 px-3 py-2 text-[9px] tracking-label uppercase shadow">Focus details</button></>}<button type="button" aria-pressed={focused === "both"} onClick={resetView} className="bg-cream/95 px-3 py-2 text-[9px] tracking-label uppercase shadow">Reset view</button></div>}</div>;
+  return <div className={`relative h-full min-h-64 w-full overflow-hidden bg-cream-dark ${className}`}><div ref={hostRef} className="absolute inset-0" aria-label={`Interactive 3D model of ${title}`} />{!loaded && <div className="pointer-events-none absolute inset-x-5 bottom-5" role="status" aria-label={`Loading 3D model: ${progress}%`}><div className="h-px bg-cream/30"><span className="block h-full bg-cream transition-[width]" style={{ width: `${progress}%` }} /></div><p className="mt-2 text-[9px] tracking-label text-cream/75 uppercase">Preparing 3D view · {progress}%</p></div>}{loaded && <div className="absolute bottom-3 left-3 flex flex-wrap gap-2"><button type="button" aria-pressed={rotating} onClick={() => setRotating((value) => !value)} className="bg-cream/95 px-3 py-2 text-[9px] tracking-label uppercase shadow">{rotating ? "Stop rotation" : "Auto rotate"}</button>{museumLayout === "details" ? <><button type="button" aria-pressed={focused === "artifact"} onClick={() => modelRef.current && focusObject(modelRef.current, "artifact")} className="bg-cream/95 px-3 py-2 text-[9px] tracking-label uppercase shadow">Focus artifact</button><button type="button" aria-pressed={focused === "details"} onClick={() => { const display = environmentRef.current?.getObjectByName("museum-info-display"); if (display) focusObject(display, "details"); }} className="bg-cream/95 px-3 py-2 text-[9px] tracking-label uppercase shadow">View details</button><button type="button" aria-pressed={focused === "both"} onClick={resetView} className="bg-cream/95 px-3 py-2 text-[9px] tracking-label uppercase shadow">View all</button></> : <button type="button" aria-pressed={focused === "both"} onClick={resetView} className="bg-cream/95 px-3 py-2 text-[9px] tracking-label uppercase shadow">Focus artifact</button>}</div>}</div>;
 }

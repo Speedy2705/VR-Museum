@@ -18,6 +18,11 @@ const collectionImageMap: Record<string, string> = {
   "bronze-ritual": "/images/collection-bronze-ritual.png",
   "earth-fire": "/images/collection-earth-fire.png",
   "light-through-glass": "/images/collection-light-through-glass.png",
+  "veins-of-marble": "/images/collection-remnants-of-stone.png",
+  "forged-in-time": "/images/collection-bronze-ritual.png",
+  "stories-in-color": "/images/collection-light-through-glass.png",
+  "echoes-in-stone": "/images/collection-remnants-of-stone.png",
+  "earth-and-ember": "/images/collection-earth-fire.png",
 };
 
 /** Returns the public path for an artifact/product thumbnail by slug. */

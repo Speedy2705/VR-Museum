@@ -45,11 +45,11 @@ export default function ArtifactDetail({
       <p className="mt-6 text-sm leading-relaxed text-charcoal/80">{description}</p>
       <div className="mt-6 divide-y divide-line border-t border-line">{specs.map((spec) => <div key={spec.label} className="flex items-center justify-between py-3"><span className="text-[10px] tracking-label text-stone uppercase">{spec.label}</span><span className="text-sm text-ink">{spec.value}</span></div>)}</div>
       <div className="mt-5 border border-line px-4 py-3"><p className="text-[10px] tracking-label text-stone uppercase">{preset.name}</p><p className="mt-2 text-xs leading-relaxed text-stone">{preset.note}</p></div>
-      {sale ? <ArtifactPurchaseActions {...sale} title={title} /> : <VrEntryModal href={`/vr/${vrSlug}`} label="Enter VR" variant="dark" className="mt-7 w-full" />}
-      <div className="mt-5 text-center"><ReportFlagButton artifactSlug={vrSlug} /></div>
     </div>
   );
+  const actions = <div>{sale ? <ArtifactPurchaseActions {...sale} title={title} /> : <VrEntryModal href={`/vr/${vrSlug}`} label="Enter VR" variant="dark" className="w-full" />}<div className="mt-3 text-right"><ReportFlagButton artifactSlug={vrSlug} /></div></div>;
+  const material = specs.find((spec) => spec.label === "Material")?.value ?? "Artifact";
   return (
-    <div className="pt-20"><ArtifactMediaStage title={title} image={image?.src} video={video} model={model} lighting={preset.name} primaryMediaType={primaryMediaType} fullscreen overlay={details} /></div>
+    <div className="pt-20"><ArtifactMediaStage title={title} image={image?.src} video={video} model={model} lighting={preset.name} primaryMediaType={primaryMediaType} fullscreen overlay={<>{details}{!model && actions}</>} overlayActions={model ? actions : undefined} immersiveDetails={Boolean(model)} plaqueOrigin={location} panelDetails={model ? { uploadType: `Museum Collection · ${collectionTitle}`, title, uploader: sale?.artist ?? "Museum Curator", description, material, origin: location, license: sale ? "Digital Artifact License" : "Museum display", price: sale ? `$${sale.price}` : "Not for sale" } : undefined} /></div>
   );
 }

@@ -15,7 +15,11 @@ type Props = { title: string; image?: string; video?: string; model?: { url: str
 function MediaLoading({ label }: { label: string }) { return <div className="flex h-full items-center justify-center bg-cream-dark text-[10px] tracking-label text-stone uppercase">{label}…</div>; }
 
 export default function ArtifactMediaStage({ title, image, video, model, lighting, primaryMediaType = "image", fullscreen = false, overlay, overlayActions, immersiveDetails = false, plaqueOrigin, panelDetails }: Props) {
-  const available: MediaKind[] = immersiveDetails && model ? ["model"] : ["image", ...(video ? ["video" as const] : []), ...(model ? ["model" as const] : [])];
+  const available: MediaKind[] = immersiveDetails && model
+    ? ["model"]
+    : fullscreen && primaryMediaType === "video" && video
+      ? ["video"]
+      : ["image", ...(video ? ["video" as const] : []), ...(model ? ["model" as const] : [])];
   const [active, setActive] = useState<MediaKind>(available.includes(primaryMediaType) ? primaryMediaType : "image");
   const tabsId = useId();
   const renderActive = () => {
@@ -25,6 +29,6 @@ export default function ArtifactMediaStage({ title, image, video, model, lightin
   };
   const tabs = available.length > 1 && <div role="tablist" aria-label="Artifact media" className="mb-4 flex border border-line bg-cream-dark p-1">{available.map((kind) => <button key={kind} id={`${tabsId}-${kind}`} type="button" role="tab" aria-selected={active === kind} aria-controls={`${tabsId}-panel`} onClick={() => setActive(kind)} className={`flex-1 px-3 py-2 text-[9px] tracking-label uppercase transition-colors ${active === kind ? "bg-ink text-cream" : "text-stone hover:bg-cream"}`}>{kind === "model" ? "3D View" : kind === "image" ? "Photo" : "Video"}</button>)}</div>;
   const panel = <div id={`${tabsId}-panel`} role="tabpanel" aria-labelledby={`${tabsId}-${active}`} className={fullscreen ? "h-full w-full" : "relative aspect-[4/5] w-full overflow-hidden bg-cream-dark"}>{renderActive()}</div>;
-  if (fullscreen) return <ArtifactStageFullscreen viewer={panel} overlay={<>{tabs}{overlay}</>} overlayActions={overlayActions} immersiveDetails={immersiveDetails} />;
+  if (fullscreen) return <ArtifactStageFullscreen viewer={panel} overlay={<>{tabs}{overlay}</>} overlayActions={overlayActions} immersiveDetails={immersiveDetails} splitDetails={active === "video"} />;
   return <div className="w-full">{tabs}{panel}</div>;
 }

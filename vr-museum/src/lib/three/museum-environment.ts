@@ -76,6 +76,10 @@ export function createMuseumEnvironment(options: MuseumEnvironmentOptions = {}):
   group.name = "museum-environment";
   const exhibitOffsetX = options.exhibitOffsetX ?? 0;
   const infoDisplayX = 2.05;
+  const exhibit = new THREE.Group();
+  exhibit.name = "artifact-exhibit";
+  exhibit.position.x = exhibitOffsetX;
+  exhibit.rotation.y = options.showInfoDisplay ? 0.35 : 0;
 
   const stone = new THREE.MeshStandardMaterial({ color: 0xd8d1c3, roughness: 0.88 });
   const darkStone = new THREE.MeshStandardMaterial({ color: 0x756d62, roughness: 0.78 });
@@ -88,26 +92,29 @@ export function createMuseumEnvironment(options: MuseumEnvironmentOptions = {}):
   floor.name = "floor";
 
   const platform = receiveShadows(new THREE.Mesh(new THREE.CylinderGeometry(2.15, 2.3, 0.22, 64), darkStone));
-  platform.position.set(exhibitOffsetX, -1.43, 0);
+  platform.position.set(0, -1.43, 0);
   platform.name = "platform";
 
   const pedestal = receiveShadows(new THREE.Mesh(new THREE.BoxGeometry(1.5, 1.05, 1.5), stone));
-  pedestal.position.set(exhibitOffsetX, -0.8, 0);
+  pedestal.position.set(0, -0.8, 0);
   pedestal.name = "pedestal";
 
   const caseMesh = new THREE.Mesh(new THREE.BoxGeometry(2.45, 3.3, 2.45), glass);
-  caseMesh.position.set(exhibitOffsetX, 0.55, 0);
+  caseMesh.position.set(0, 0.55, 0);
   caseMesh.name = "glass-case";
 
   const plaqueTexture = createPlaqueTexture(options.plaqueTitle ?? "Artifact", options.plaqueOrigin ?? "Origin unknown");
   const plaqueMaterial = plaqueTexture ? new THREE.MeshStandardMaterial({ map: plaqueTexture, roughness: 0.9 }) : brass;
   const plaque = new THREE.Mesh(new THREE.PlaneGeometry(1.22, 0.5), plaqueMaterial);
-  plaque.position.set(exhibitOffsetX, -0.78, 0.758);
+  plaque.position.set(0, -0.78, 0.758);
   plaque.name = "plaque";
 
   const glowMaterial = new THREE.MeshBasicMaterial({ color: 0xd9c8a8, transparent: true, opacity: 0.12, side: THREE.DoubleSide, depthWrite: false });
-  const wallGlow = new THREE.Mesh(new THREE.PlaneGeometry(options.showInfoDisplay ? 10.5 : 7, options.showInfoDisplay ? 5.6 : 5), glowMaterial);
-  wallGlow.position.set(options.showInfoDisplay ? (exhibitOffsetX + infoDisplayX) / 2 : exhibitOffsetX, 0.65, -3.6);
+  const wallGlow = new THREE.Mesh(new THREE.PlaneGeometry(options.showInfoDisplay ? 12.5 : 7, options.showInfoDisplay ? 6.5 : 5), glowMaterial);
+  // Keep the rear display plane centred on the exhibit. The information panel
+  // is a separate object and must not pull the artifact backdrop sideways.
+  const backdropX = options.showInfoDisplay ? (exhibitOffsetX + infoDisplayX) / 2 - 0.6 : exhibitOffsetX;
+  wallGlow.position.set(backdropX, options.showInfoDisplay ? 0.05 : 0.65, -3.6);
   wallGlow.name = "wall-glow";
 
   if (options.showInfoDisplay) {
@@ -175,6 +182,7 @@ export function createMuseumEnvironment(options: MuseumEnvironmentOptions = {}):
     group.add(display);
   }
 
-  group.add(floor, platform, pedestal, caseMesh, plaque, wallGlow);
+  exhibit.add(platform, pedestal, caseMesh, plaque);
+  group.add(floor, exhibit, wallGlow);
   return group;
 }

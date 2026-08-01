@@ -53,6 +53,8 @@ export type UploadedAssetView = {
   title: string;
   status: "live" | "under-review" | "changes-requested" | "rejected";
   lightingPreset: string | null;
+  lightTemperature: string | null;
+  lightDirection: string | null;
   curatorComment: string | null;
   collectionSlug: string | null;
   period: string;

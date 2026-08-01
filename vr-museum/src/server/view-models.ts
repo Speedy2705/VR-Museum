@@ -161,6 +161,8 @@ export function toUploadedAssetView(upload: {
   modelFormat: string | null;
   status: "PENDING" | "APPROVED" | "REJECTED" | "CHANGES_REQUESTED";
   lightingPreset: string | null;
+  lightTemperature: string | null;
+  lightDirection: string | null;
   curatorComment: string | null;
   collectionSlug: string | null;
   metadata: unknown;
@@ -185,6 +187,8 @@ export function toUploadedAssetView(upload: {
           : "under-review",
     period: String(metadata.period ?? metadata.origin ?? "Awaiting review"),
     lightingPreset: upload.lightingPreset,
+    lightTemperature: upload.lightTemperature,
+    lightDirection: upload.lightDirection,
     curatorComment: upload.curatorComment,
     collectionSlug: upload.collectionSlug,
     material: upload.category,

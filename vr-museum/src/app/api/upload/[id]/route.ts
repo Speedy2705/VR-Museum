@@ -39,13 +39,22 @@ export async function PATCH(
         throw new ServiceError("Choose a valid upload type", "INVALID_UPLOAD_TYPE", 400);
       }
       const metadata = JSON.parse(String(form.get("metadata") ?? "{}")) as Record<string, unknown>;
+      const lightingPreset = form.get("lightingPreset");
+      const lightTemperature = form.get("lightTemperature");
+      const lightDirection = form.get("lightDirection");
       const multipartInput: Record<string, unknown> = {
         title: form.get("title"),
         category: form.get("category"),
         mediaType: type === "video-scan" ? "VIDEO" : "MODEL_3D",
-        lightingPreset: type === "3d-model" ? form.get("lightingPreset") : null,
-        lightTemperature: type === "3d-model" ? form.get("lightTemperature") : null,
-        lightDirection: type === "3d-model" ? form.get("lightDirection") : null,
+        lightingPreset: type === "3d-model" && typeof lightingPreset === "string" && lightingPreset
+          ? lightingPreset
+          : null,
+        lightTemperature: type === "3d-model" && typeof lightTemperature === "string" && lightTemperature
+          ? lightTemperature
+          : null,
+        lightDirection: type === "3d-model" && typeof lightDirection === "string" && lightDirection
+          ? lightDirection
+          : null,
         metadata,
       };
       rawInput = multipartInput;

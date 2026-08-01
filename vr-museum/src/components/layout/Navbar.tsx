@@ -129,6 +129,7 @@ export default function Navbar({ hasHeroBackground = false }: NavbarProps) {
   const transition = { duration: reduceMotion ? 0 : NAVBAR_TRANSITION_DURATION };
 
   return (
+    <>
     <motion.header
       initial={false}
       animate={{
@@ -388,5 +389,7 @@ export default function Navbar({ hasHeroBackground = false }: NavbarProps) {
         onConfirm={() => signOut({ redirectTo: "/" })}
       />
     </motion.header>
+    {!hasHeroBackground && <div aria-hidden="true" className="h-20 shrink-0" />}
+    </>
   );
 }

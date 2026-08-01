@@ -15,7 +15,7 @@ import { buildLighting, getLightingPreset } from "@/lib/lighting-presets";
 import { createMuseumEnvironment, type MuseumPanelDetails } from "@/lib/three/museum-environment";
 import { loadModel, type ModelFormat, type ModelLoadError } from "@/lib/three/loaders";
 
-export type LightingStudioViewerProps = { src: string; format: ModelFormat; presetKey?: LightingPresetKey; lightTemperature?: LightTemperatureKey; lightDirection?: LightDirectionKey; title: string; poster?: string; onReady?: () => void; onError?: (message: string) => void; showMuseumEnvironment?: boolean; className?: string; museumLayout?: "centered" | "details"; plaqueOrigin?: string; panelDetails?: MuseumPanelDetails };
+export type LightingStudioViewerProps = { src: string; format: ModelFormat; presetKey?: LightingPresetKey; lightTemperature?: LightTemperatureKey; lightDirection?: LightDirectionKey; title: string; poster?: string; onReady?: () => void; onError?: (message: string) => void; showMuseumEnvironment?: boolean; className?: string; museumLayout?: "centered" | "details"; focusArtifactWithExhibit?: boolean; plaqueOrigin?: string; panelDetails?: MuseumPanelDetails };
 
 function disposeMaterial(material: THREE.Material) {
   for (const value of Object.values(material)) if (value instanceof THREE.Texture) value.dispose();
@@ -60,7 +60,7 @@ function frameObject(object: THREE.Object3D, camera: THREE.PerspectiveCamera, co
   controls.update();
 }
 
-export default function LightingStudioViewer({ src, format, presetKey = "raking-light", lightTemperature, lightDirection, title, poster, onReady, onError, showMuseumEnvironment = true, className = "", museumLayout = "centered", plaqueOrigin, panelDetails }: LightingStudioViewerProps) {
+export default function LightingStudioViewer({ src, format, presetKey = "raking-light", lightTemperature, lightDirection, title, poster, onReady, onError, showMuseumEnvironment = true, className = "", museumLayout = "centered", focusArtifactWithExhibit = false, plaqueOrigin, panelDetails }: LightingStudioViewerProps) {
   const hostRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<THREE.Scene>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera>(null);
@@ -130,6 +130,7 @@ export default function LightingStudioViewer({ src, format, presetKey = "raking-
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x242321);
     const camera = new THREE.PerspectiveCamera(38, 1, 0.01, 1000);
+    camera.layers.enable(1);
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -145,6 +146,10 @@ export default function LightingStudioViewer({ src, format, presetKey = "raking-
     const exhibitDetails = exhibitDetailsRef.current;
     const environment = showMuseumEnvironment ? createMuseumEnvironment({ exhibitOffsetX, plaqueTitle: exhibitDetails.title, plaqueOrigin: exhibitDetails.plaqueOrigin, showInfoDisplay: museumLayout === "details", panelDetails: exhibitDetails.panelDetails }) : null;
     if (environment) scene.add(environment);
+    const environmentFill = new THREE.HemisphereLight(0xfff4e5, 0x292725, 1.35);
+    environmentFill.layers.set(0);
+    environmentFill.name = "museum-environment-light";
+    scene.add(environmentFill);
     environmentRef.current = environment;
     sceneRef.current = scene; cameraRef.current = camera; controlsRef.current = controls;
     const observer = new ResizeObserver(([entry]) => { const { width, height } = entry.contentRect; if (!width || !height) return; renderer.setSize(width, height, false); camera.aspect = width / height; camera.updateProjectionMatrix(); });
@@ -161,34 +166,18 @@ export default function LightingStudioViewer({ src, format, presetKey = "raking-
       }
       controls.autoRotate = rotatingRef.current && !move; controls.autoRotateSpeed = 1.6; controls.update(); renderer.render(scene, camera); frame = requestAnimationFrame(animate);
     };
-    const pointerStart = new THREE.Vector2();
-    const onPointerDown = (event: PointerEvent) => pointerStart.set(event.clientX, event.clientY);
-    const onPointerUp = (event: PointerEvent) => {
-      if (pointerStart.distanceTo(new THREE.Vector2(event.clientX, event.clientY)) > 6) return;
-      const bounds = renderer.domElement.getBoundingClientRect();
-      const pointer = new THREE.Vector2(((event.clientX - bounds.left) / bounds.width) * 2 - 1, -((event.clientY - bounds.top) / bounds.height) * 2 + 1);
-      const raycaster = new THREE.Raycaster(); raycaster.setFromCamera(pointer, camera);
-      const hits = raycaster.intersectObjects(scene.children, true);
-      const belongsTo = (child: THREE.Object3D, parent: THREE.Object3D | null) => { let current: THREE.Object3D | null = child; while (current) { if (current === parent) return true; current = current.parent; } return false; };
-      const detailsDisplay = environment?.getObjectByName("museum-info-display") ?? null;
-      const artifactDisplay = environment?.getObjectByName("artifact-exhibit") ?? null;
-      const artifactFocusTarget = modelRef.current ?? artifactDisplay;
-      const artifactHit = hits.some(({ object }) => belongsTo(object, modelRef.current) || belongsTo(object, artifactDisplay));
-      const detailsHit = detailsDisplay && hits.some(({ object }) => belongsTo(object, detailsDisplay));
-      if (artifactHit && artifactFocusTarget) focusObject(artifactFocusTarget, "artifact");
-      else if (detailsHit && detailsDisplay) focusObject(detailsDisplay, "details");
-    };
-    renderer.domElement.addEventListener("pointerdown", onPointerDown);
-    renderer.domElement.addEventListener("pointerup", onPointerUp);
     frame = requestAnimationFrame(animate);
-    return () => { cancelAnimationFrame(frame); observer.disconnect(); renderer.domElement.removeEventListener("pointerdown", onPointerDown); renderer.domElement.removeEventListener("pointerup", onPointerUp); controls.dispose(); if (modelRef.current) disposeObject(modelRef.current); if (environment) disposeObject(environment); renderer.dispose(); renderer.domElement.remove(); sceneRef.current = null; cameraRef.current = null; controlsRef.current = null; modelRef.current = null; environmentRef.current = null; cameraMoveRef.current = null; };
+    return () => { cancelAnimationFrame(frame); observer.disconnect(); controls.dispose(); if (modelRef.current) disposeObject(modelRef.current); if (environment) disposeObject(environment); renderer.dispose(); renderer.domElement.remove(); sceneRef.current = null; cameraRef.current = null; controlsRef.current = null; modelRef.current = null; environmentRef.current = null; cameraMoveRef.current = null; };
   }, [showMuseumEnvironment, museumLayout, focusObject]);
 
   useEffect(() => {
     const scene = sceneRef.current;
     if (!scene) return;
-    scene.children.filter((child) => child instanceof THREE.Light || child.name === "artifact-spotlight-target").forEach((child) => scene.remove(child));
-    const activeLights = lightTemperature && lightDirection ? buildLighting(scene, lightTemperature, lightDirection) : getLightingPreset(presetKey).build(scene);
+    scene.children.filter((child) => child.userData.artifactLight || child.name === "artifact-light-target" || child.name === "artifact-spotlight-target").forEach((child) => scene.remove(child));
+    const artifactCenter = modelRef.current
+      ? new THREE.Box3().setFromObject(modelRef.current).getCenter(new THREE.Vector3())
+      : new THREE.Vector3();
+    const activeLights = lightTemperature && lightDirection ? buildLighting(scene, lightTemperature, lightDirection, artifactCenter) : getLightingPreset(presetKey).build(scene, artifactCenter);
     activeLights.forEach((light: THREE.Light) => { light.castShadow = true; });
     const hint = getLightingPreset(presetKey).fallbackMaterial;
     modelRef.current?.traverse((child) => { if (child instanceof THREE.Mesh && child.userData.usesPresetFallbackMaterial) { const old = child.material as THREE.Material; child.material = new THREE.MeshStandardMaterial({ ...hint }); disposeMaterial(old); } });
@@ -203,7 +192,7 @@ export default function LightingStudioViewer({ src, format, presetKey = "raking-
     loadModel(src, format, presetRef.current).then((object) => {
       if (!active) { disposeObject(object); return; }
       if (modelRef.current) { scene.remove(modelRef.current); disposeObject(modelRef.current); }
-      object.traverse((child) => { if (child instanceof THREE.Mesh) { child.castShadow = true; child.receiveShadow = true; } });
+      object.traverse((child) => { child.layers.set(1); if (child instanceof THREE.Mesh) { child.castShadow = true; child.receiveShadow = true; } });
       // Uploaded models often carry an off-centre authoring pivot. Align their
       // visible bounds—not that pivot—with the centre of the museum case.
       const rawCenter = new THREE.Box3().setFromObject(object).getCenter(new THREE.Vector3());
@@ -219,5 +208,5 @@ export default function LightingStudioViewer({ src, format, presetKey = "raking-
   }, [src, format, showMuseumEnvironment, museumLayout]);
 
   if (failed) return <div role="alert" className={`relative flex h-full items-center justify-center overflow-hidden bg-cream-dark p-8 text-center ${className}`}>{poster && <div className="absolute inset-0 opacity-35"><PlaceholderImage src={poster} alt={title} label={title} sizes="(min-width: 768px) 50vw, 100vw" /></div>}<div className="relative"><p className="font-display text-2xl italic">The model is unavailable</p><p className="mt-3 text-sm text-stone">We couldn’t prepare this 3D view. Try the artifact photo instead.</p></div></div>;
-  return <div className={`relative h-full min-h-64 w-full overflow-hidden bg-cream-dark ${className}`}><div ref={hostRef} className="absolute inset-0" aria-label={`Interactive 3D model of ${title}`} />{!loaded && <div className="pointer-events-none absolute inset-x-5 bottom-5" role="status" aria-label={`Loading 3D model: ${progress}%`}><div className="h-px bg-cream/30"><span className="block h-full bg-cream transition-[width]" style={{ width: `${progress}%` }} /></div><p className="mt-2 text-[9px] tracking-label text-cream/75 uppercase">Preparing 3D view · {progress}%</p></div>}{loaded && <div className="absolute bottom-3 left-3 flex flex-wrap gap-2"><button type="button" aria-pressed={rotating} onClick={() => setRotating((value) => !value)} className="bg-cream/95 px-3 py-2 text-[9px] tracking-label uppercase shadow">{rotating ? "Stop rotation" : "Auto rotate"}</button>{museumLayout === "details" ? <><button type="button" aria-pressed={focused === "artifact"} onClick={() => modelRef.current && focusObject(modelRef.current, "artifact")} className="bg-cream/95 px-3 py-2 text-[9px] tracking-label uppercase shadow">Focus artifact</button><button type="button" aria-pressed={focused === "details"} onClick={() => { const display = environmentRef.current?.getObjectByName("museum-info-display"); if (display) focusObject(display, "details"); }} className="bg-cream/95 px-3 py-2 text-[9px] tracking-label uppercase shadow">View details</button><button type="button" aria-pressed={focused === "both"} onClick={resetView} className="bg-cream/95 px-3 py-2 text-[9px] tracking-label uppercase shadow">View all</button></> : <button type="button" aria-pressed={focused === "both"} onClick={resetView} className="bg-cream/95 px-3 py-2 text-[9px] tracking-label uppercase shadow">Focus artifact</button>}</div>}</div>;
+  return <div className={`relative h-full min-h-64 w-full overflow-hidden bg-cream-dark ${className}`}><div ref={hostRef} className="absolute inset-0" aria-label={`Interactive 3D model of ${title}`} />{!loaded && <div className="pointer-events-none absolute inset-x-5 bottom-5" role="status" aria-label={`Loading 3D model: ${progress}%`}><div className="h-px bg-cream/30"><span className="block h-full bg-cream transition-[width]" style={{ width: `${progress}%` }} /></div><p className="mt-2 text-[9px] tracking-label text-cream/75 uppercase">Preparing 3D view · {progress}%</p></div>}{loaded && <div className="absolute bottom-3 left-3 flex flex-wrap gap-2"><button type="button" aria-pressed={rotating} onClick={() => setRotating((value) => !value)} className="bg-cream/95 px-3 py-2 text-[9px] tracking-label uppercase shadow">{rotating ? "Stop rotation" : "Auto rotate"}</button>{museumLayout === "details" ? <><button type="button" aria-pressed={focused === "artifact"} onClick={() => { const exhibit = environmentRef.current?.getObjectByName("artifact-exhibit"); const target = focusArtifactWithExhibit ? exhibit ?? modelRef.current : modelRef.current; if (target) focusObject(target, "artifact"); }} className="bg-cream/95 px-3 py-2 text-[9px] tracking-label uppercase shadow">Focus artifact</button><button type="button" aria-pressed={focused === "details"} onClick={() => { const display = environmentRef.current?.getObjectByName("museum-info-display"); if (display) focusObject(display, "details"); }} className="bg-cream/95 px-3 py-2 text-[9px] tracking-label uppercase shadow">View details</button><button type="button" aria-pressed={focused === "both"} onClick={resetView} className="bg-cream/95 px-3 py-2 text-[9px] tracking-label uppercase shadow">View all</button></> : <button type="button" aria-pressed={focused === "both"} onClick={resetView} className="bg-cream/95 px-3 py-2 text-[9px] tracking-label uppercase shadow">Focus artifact</button>}</div>}</div>;
 }

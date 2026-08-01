@@ -51,7 +51,7 @@ export default async function ModerationPage() {
     <>
       <Navbar hasHeroBackground={false} />
       <main className="min-h-[65vh] bg-cream px-6 py-16 text-ink md:px-10">
-        <div className="mx-auto max-w-5xl">
+        <div className="mx-auto max-w-6xl">
           <div className="flex items-center gap-3">
             <p className="text-[10px] tracking-label uppercase text-stone">Moderation</p>
             <span className="bg-ink px-2.5 py-1 text-[9px] tracking-label uppercase text-white">Curator</span>

@@ -102,22 +102,24 @@ export default function ModerationQueue({ initialItems }: { initialItems: Modera
             </button>
 
             {expanded && (
-              <div id={`moderation-detail-${item.id}`} className="fixed inset-x-0 top-20 z-20" tabIndex={-1}>
+              <div id={`moderation-detail-${item.id}`} className="border-t border-line" tabIndex={-1}>
                 <ArtifactStageFullscreen
-                  immersiveDetails={item.mediaType === "MODEL_3D"}
-                  splitDetails={item.mediaType === "VIDEO"}
-                  overlayLabel={`Moderation details for ${item.title}`}
+                  studioSplit
+                  overlayLabel={`Moderation controls for ${item.title}`}
                   viewer={item.mediaType === "MODEL_3D" && previewTemperature && previewDirection && item.modelFormat
-                    ? <LightingStudioViewer src={item.fileUrl} format={item.modelFormat} lightTemperature={previewTemperature} lightDirection={previewDirection} title={item.title} poster={item.thumbnailUrl ?? undefined} museumLayout="details" plaqueOrigin={item.origin} panelDetails={{ uploadType: "Curator Lighting Study · Pending", title: item.title, uploader: item.ownerName, description: item.description, material: item.material, origin: item.origin, license: item.license, price: item.price === null ? "Free" : `$${item.price.toFixed(2)}` }} />
-                    : <video className="h-full w-full bg-black object-contain" controls src={item.fileUrl}>Your browser does not support video playback.</video>}
-                  overlayActions={item.mediaType === "MODEL_3D" && previewTemperature && previewDirection ? <div className="hidden md:block"><button type="button" onClick={() => setExpandedId(null)} className="text-[10px] tracking-label uppercase text-cream/70">Close ×</button><div className="mt-3 max-h-[45vh] overflow-y-auto"><LightingPresetPicker temperature={previewTemperature} direction={previewDirection} onTemperatureChange={(value) => setPreviewTemperatures((current) => ({ ...current, [item.id]: value }))} onDirectionChange={(value) => setPreviewDirections((current) => ({ ...current, [item.id]: value }))} /></div><div className="mt-4 flex flex-wrap justify-end gap-3"><button type="button" disabled={pendingId === item.id} onClick={() => setDialog({ id: item.id, decision: "REJECTED" })} className="border border-red-500 px-5 py-2.5 text-[10px] tracking-label uppercase text-red-300 disabled:opacity-50">Reject</button><button type="button" disabled={pendingId === item.id} onClick={() => setDialog({ id: item.id, decision: "CHANGES_REQUESTED" })} className="border border-white/30 px-5 py-2.5 text-[10px] tracking-label uppercase disabled:opacity-50">Request Changes</button><button type="button" disabled={pendingId === item.id} onClick={() => moderate(item.id, "APPROVED")} className="bg-cream px-5 py-2.5 text-[10px] tracking-label uppercase text-ink disabled:opacity-50">Approve</button></div></div> : undefined}
+                    ? <LightingStudioViewer src={item.fileUrl} format={item.modelFormat} lightTemperature={previewTemperature} lightDirection={previewDirection} title={item.title} poster={item.thumbnailUrl ?? undefined} />
+                    : <video className="h-full w-full bg-black object-contain" controls poster={item.thumbnailUrl ?? undefined} src={item.fileUrl}>Your browser does not support video playback.</video>}
                   overlay={<div>
-                    <button type="button" onClick={() => setExpandedId(null)} className="float-right text-[10px] tracking-label uppercase text-stone">Close ×</button>
-                    <p className="text-[9px] tracking-label uppercase text-stone">{categoryName}</p>
-                    <h2 className="font-display mt-2 text-2xl italic">{item.title}</h2>
-                    <p className="mt-2 text-xs text-stone">{item.ownerName} · {item.ownerEmail}</p>
-                    {previewTemperature && previewDirection && <div className="mt-5"><span className="inline-block border border-line bg-cream-dark px-3 py-1.5 text-[9px] tracking-label uppercase text-charcoal">Contributor&apos;s choice: {getLightTemperature(item.lightTemperature ?? previewTemperature).name} · {getLightDirection(item.lightDirection ?? previewDirection).name}</span><div className="mt-4"><LightingPresetPicker temperature={previewTemperature} direction={previewDirection} onTemperatureChange={(value) => setPreviewTemperatures((current) => ({ ...current, [item.id]: value }))} onDirectionChange={(value) => setPreviewDirections((current) => ({ ...current, [item.id]: value }))} /></div></div>}
-                    <div className="mt-5 divide-y divide-line border-t border-b border-line">
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <p className="text-[9px] tracking-label uppercase text-stone">Curator review · {categoryName}</p>
+                        <h2 className="font-display mt-3 text-3xl italic">{item.title}</h2>
+                        <p className="mt-2 text-xs leading-relaxed text-stone">Submitted by {item.ownerName} · {item.ownerEmail}</p>
+                      </div>
+                      <button type="button" onClick={() => setExpandedId(null)} className="shrink-0 text-[10px] tracking-label uppercase text-stone hover:text-ink">Close ×</button>
+                    </div>
+                    {previewTemperature && previewDirection && <div className="mt-6"><p className="text-xs leading-relaxed text-stone">Preview the model under each museum lighting combination before making a decision.</p><span className="mt-4 inline-block border border-line bg-cream-dark px-3 py-1.5 text-[9px] tracking-label uppercase text-charcoal">Contributor&apos;s choice: {getLightTemperature(item.lightTemperature ?? previewTemperature).name} · {getLightDirection(item.lightDirection ?? previewDirection).name}</span><div className="mt-5"><LightingPresetPicker stepped temperature={previewTemperature} direction={previewDirection} onTemperatureChange={(value) => setPreviewTemperatures((current) => ({ ...current, [item.id]: value }))} onDirectionChange={(value) => setPreviewDirections((current) => ({ ...current, [item.id]: value }))} /></div></div>}
+                    <div className="mt-6 divide-y divide-line border-y border-line">
                   <DetailRow label="Public Description">{item.description}</DetailRow>
                   <DetailRow label="Origin / Provenance">{item.origin}</DetailRow>
                   <DetailRow label="Primary Material">{item.material}</DetailRow>
@@ -125,10 +127,10 @@ export default function ModerationQueue({ initialItems }: { initialItems: Modera
                   <DetailRow label="License">{item.license}</DetailRow>
                   <DetailRow label="Price">{item.price === null ? "Free" : `$${item.price.toFixed(2)}`}</DetailRow>
                     </div>
-                    <div className="mt-6 flex flex-wrap justify-end gap-3 border-t border-line pt-5">
+                    <div className="mt-6 grid gap-3 sm:grid-cols-3">
                   <button type="button" disabled={pendingId === item.id} onClick={() => setDialog({ id: item.id, decision: "REJECTED" })} className="border border-red-900 px-5 py-2.5 text-[10px] tracking-label uppercase text-red-900 hover:bg-red-900 hover:text-white disabled:opacity-50">Reject</button>
                   <button type="button" disabled={pendingId === item.id} onClick={() => setDialog({ id: item.id, decision: "CHANGES_REQUESTED" })} className="border border-line px-5 py-2.5 text-[10px] tracking-label uppercase hover:border-ink disabled:opacity-50">Request Changes</button>
-                  <button type="button" disabled={pendingId === item.id} onClick={() => moderate(item.id, "APPROVED")} className="bg-ink px-5 py-2.5 text-[10px] tracking-label uppercase text-white disabled:opacity-50">Approve</button>
+                  <button type="button" disabled={pendingId === item.id} onClick={() => moderate(item.id, "APPROVED")} className="bg-ink px-5 py-2.5 text-[10px] tracking-label uppercase text-cream hover:bg-charcoal disabled:opacity-50">Approve</button>
                     </div>
                   </div>}
                 />

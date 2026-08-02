@@ -1,9 +1,9 @@
 "use client";
 
-import { upload } from "@vercel/blob/client";
+import { uploadPresigned } from "@vercel/blob/client";
 
 export async function uploadMediaDirect(file: File) {
-  return upload(`uploads/${file.name}`, file, {
+  return uploadPresigned(`uploads/${file.name}`, file, {
     access: "public",
     handleUploadUrl: "/api/blob-upload",
   });

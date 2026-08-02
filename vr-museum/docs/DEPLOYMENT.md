@@ -32,16 +32,9 @@ are optional until those providers are enabled.
 ## Build and database
 
 Vercel uses `npm run vercel-build`, which generates Prisma Client, applies the
-checked-in PostgreSQL migrations, and builds Next.js. Seed sample catalog data
-once, after the first successful deployment:
-
-```powershell
-vercel env pull .env.production.local --environment=production
-npx prisma db seed
-```
-
-Delete `.env.production.local` after seeding if it is no longer needed; it is
-ignored by Git.
+checked-in PostgreSQL migrations, idempotently seeds the catalog, and builds
+Next.js. Seeding runs before page generation so a new database can deploy
+without copying its sensitive connection string to a developer machine.
 
 ## Provider callbacks
 

@@ -41,6 +41,7 @@ export default auth((request) => {
 export const config = {
   matcher: [
     "/moderation/:path*",
+    "/upload/:path*",
     "/checkout/:path*",
     "/assets/:path*",
     "/support/:path*",

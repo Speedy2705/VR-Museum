@@ -15,7 +15,7 @@ export default function MissionSplit() {
 
         <p className="mt-7 max-w-md text-sm leading-relaxed text-charcoal/80">
           Most historical artifacts sit in storage or behind thick glass,
-          accessible to a tiny fraction of the world. NAME changes that —
+          accessible to a tiny fraction of the world. ViswaRoop changes that —
           giving every curator the tools to bring their objects into a shared
           virtual space where anyone, anywhere, can study them in detail.
         </p>

@@ -19,15 +19,15 @@ const inter = Inter({
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.AUTH_URL ?? "http://localhost:3000"),
   title: {
-    default: "NAME — Virtual Museum of Artifacts",
-    template: "%s | NAME",
+    default: "ViswaRoop — Explore. Experience. Own History.",
+    template: "%s | ViswaRoop",
   },
   description:
     "Upload and explore historically significant artifacts in an immersive virtual museum.",
   openGraph: {
     type: "website",
-    siteName: "NAME",
-    title: "NAME — Virtual Museum of Artifacts",
+    siteName: "ViswaRoop",
+    title: "ViswaRoop — Explore. Experience. Own History.",
     description:
       "Explore historically significant artifacts in an immersive virtual museum.",
     images: ["/images/hero-vr-banner.png"],

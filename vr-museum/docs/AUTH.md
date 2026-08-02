@@ -1,6 +1,6 @@
 # Authentication setup
 
-NAME supports credentials, Google, and Apple sign-in through Auth.js and the
+ViswaRoop supports credentials, Google, and Apple sign-in through Auth.js and the
 Prisma adapter. The canonical profile roles are Artist, Curator,
 Archaeologist, Researcher, and Visitor.
 

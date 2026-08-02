@@ -9,7 +9,7 @@ import CTASection from "@/components/sections/CTASection";
 import { pageImages } from "@/lib/media";
 import type { Metadata } from "next";
 
-export const metadata: Metadata = { title: "About", description: "Learn how NAME makes historical artifacts accessible in virtual reality." };
+export const metadata: Metadata = { title: "About", description: "Learn how ViswaRoop makes historical artifacts accessible in virtual reality." };
 
 export default function AboutPage() {
   return (

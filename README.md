@@ -1,4 +1,4 @@
-# NAME — Virtual Museum Marketplace
+# ViswaRoop — Explore. Experience. Own History.
 
 An immersive, editorially styled museum experience for exploring curated
 artifact collections, purchasing licensed digital artifacts, and uploading new

@@ -10,7 +10,7 @@ export default function TermsPage() {
           <p className="text-[11px] tracking-label uppercase text-stone">Legal</p>
           <h1 className="font-display mt-4 text-5xl">Terms of Use</h1>
           <p className="mt-8 leading-8 text-stone">
-            By using NAME, you agree to provide accurate account and listing information, respect
+            By using ViswaRoop, you agree to provide accurate account and listing information, respect
             artifact rights and provenance, and use purchased digital assets only under their
             stated license. Museum access may be limited to protect users and collections.
           </p>

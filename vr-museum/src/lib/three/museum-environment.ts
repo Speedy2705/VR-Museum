@@ -23,6 +23,27 @@ function createPlaqueTexture(title: string, origin: string) {
   return texture;
 }
 
+function createBrandTexture() {
+  const canvas = document.createElement("canvas");
+  canvas.width = 1600; canvas.height = 420;
+  const context = canvas.getContext("2d");
+  if (!context) return null;
+
+  context.clearRect(0, 0, canvas.width, canvas.height);
+  context.textAlign = "center"; context.textBaseline = "middle";
+  context.shadowColor = "rgba(0,0,0,.72)"; context.shadowBlur = 18; context.shadowOffsetY = 9;
+  context.fillStyle = "#d2ae69"; context.font = "600 188px Georgia, serif";
+  context.fillText("ViswaRoop", 800, 157, 1480);
+  context.shadowColor = "rgba(0,0,0,.45)"; context.shadowBlur = 8; context.shadowOffsetY = 4;
+  context.fillStyle = "#e8dcc4"; context.font = "500 46px Arial, sans-serif";
+  context.fillText("EXPLORE.  EXPERIENCE.  OWN HISTORY.", 800, 326, 1420);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.anisotropy = 8;
+  return texture;
+}
+
 function createInfoTexture(details: MuseumPanelDetails) {
   const canvas = document.createElement("canvas");
   canvas.width = 1200; canvas.height = 1500;
@@ -117,6 +138,25 @@ export function createMuseumEnvironment(options: MuseumEnvironmentOptions = {}):
   wallGlow.position.set(backdropX, options.showInfoDisplay ? 0.05 : 0.65, -3.6);
   wallGlow.name = "wall-glow";
 
+  // A dimensional gallery signature: warm brass lettering mounted on the rear
+  // wall, positioned as part of the exhibit instead of as a UI overlay.
+  const brandTexture = createBrandTexture();
+  const brandSign = new THREE.Group();
+  brandSign.name = "viswaroop-gallery-sign";
+  brandSign.position.set(backdropX, options.showInfoDisplay ? 2.32 : 2.45, -3.52);
+  const signBacking = new THREE.Mesh(
+    new THREE.PlaneGeometry(options.showInfoDisplay ? 5.7 : 4.8, 1.3),
+    new THREE.MeshStandardMaterial({ color: 0x211f1c, roughness: 0.72, metalness: 0.08 }),
+  );
+  signBacking.name = "brand-sign-backing";
+  const signFace = new THREE.Mesh(
+    new THREE.PlaneGeometry(options.showInfoDisplay ? 5.55 : 4.65, 1.22),
+    new THREE.MeshBasicMaterial({ map: brandTexture ?? undefined, transparent: true, toneMapped: false }),
+  );
+  signFace.name = "brand-sign-lettering";
+  signFace.position.z = 0.012;
+  brandSign.add(signBacking, signFace);
+
   if (options.showInfoDisplay) {
     const display = new THREE.Group();
     display.name = "museum-info-display";
@@ -183,6 +223,6 @@ export function createMuseumEnvironment(options: MuseumEnvironmentOptions = {}):
   }
 
   exhibit.add(platform, pedestal, caseMesh, plaque);
-  group.add(floor, exhibit, wallGlow);
+  group.add(floor, exhibit, wallGlow, brandSign);
   return group;
 }

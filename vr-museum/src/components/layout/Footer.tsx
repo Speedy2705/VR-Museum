@@ -69,9 +69,9 @@ export default function Footer() {
     <footer className="bg-ink px-10 pt-20 pb-8 text-white">
       <div className="mx-auto grid max-w-[1600px] grid-cols-2 gap-12 md:grid-cols-4">
         <div>
-          <p className="font-display text-lg tracking-[0.3em]">NAME</p>
+          <p className="font-display text-lg tracking-[0.2em]">ViswaRoop</p>
           <p className="mt-4 text-xs leading-relaxed text-white/45">
-            Virtual Museum of Artifacts
+            Explore. Experience. Own History.
             <br />
             Est. 2025
             <br />
@@ -103,7 +103,7 @@ export default function Footer() {
       </div>
 
       <div className="mx-auto mt-16 flex max-w-[1600px] flex-col items-center justify-between gap-4 border-t border-line-dark pt-6 md:flex-row">
-        <p className="text-xs text-white/40">© 2025 NAME. All rights reserved.</p>
+        <p className="text-xs text-white/40">© 2025 ViswaRoop. All rights reserved.</p>
         <div className="flex items-center gap-5">
           {socials.map((s) => (
             <Link

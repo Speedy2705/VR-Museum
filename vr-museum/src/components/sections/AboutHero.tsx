@@ -34,7 +34,7 @@ export default function AboutHero() {
         </h1>
 
         <p className="mt-6 max-w-md text-sm leading-relaxed text-white/65">
-          NAME is a platform for artists, archaeologists, and museum curators
+          ViswaRoop is a platform for artists, archaeologists, and museum curators
           to share 3D scans of historical artifacts — and present them to the
           world in an immersive VR museum with physically accurate lighting.
         </p>

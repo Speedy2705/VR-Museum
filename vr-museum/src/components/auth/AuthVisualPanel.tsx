@@ -15,7 +15,7 @@ export default function AuthVisualPanel() {
       <div className="absolute inset-0 bg-black/40" />
 
       <p className="font-display absolute top-8 left-8 text-xs tracking-[0.3em] text-white/70">
-        NAME
+        ViswaRoop
       </p>
 
       <div className="absolute bottom-14 left-8 max-w-sm">

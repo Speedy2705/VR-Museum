@@ -179,7 +179,7 @@ export default function Navbar({ hasHeroBackground = false }: NavbarProps) {
           href="/"
           className="font-display flex-1 text-center text-lg tracking-[0.25em] text-current xl:flex-none xl:text-xl xl:tracking-[0.3em]"
         >
-          NAME
+          ViswaRoop
         </Link>
 
         <div className="flex shrink-0 items-center justify-end gap-3 sm:gap-5 xl:flex-1 xl:gap-7">

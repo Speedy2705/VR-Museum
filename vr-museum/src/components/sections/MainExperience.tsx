@@ -44,7 +44,7 @@ export default function MainExperience() {
         </h2>
 
         <p className="mt-7 max-w-md text-sm leading-relaxed text-white/60">
-          NAME places every uploaded artifact inside a photorealistic museum.
+          ViswaRoop places every uploaded artifact inside a photorealistic museum.
           You walk through it in full virtual reality — moving around each
           pedestal, leaning in to examine surface texture, and switching the
           studio lighting in real time.

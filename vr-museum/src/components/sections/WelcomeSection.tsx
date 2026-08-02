@@ -15,7 +15,7 @@ export default function WelcomeSection() {
         </h2>
 
         <p className="mt-7 max-w-md text-sm leading-relaxed text-charcoal/80">
-          NAME is built for artists, archaeologists, and museum curators who
+          ViswaRoop is built for artists, archaeologists, and museum curators who
           want their objects seen. Upload a 3D scan or model — we place it in
           a museum environment with studio-grade lighting, curate it alongside
           the broader collection, and open it to the world in VR.

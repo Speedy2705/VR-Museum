@@ -8,6 +8,17 @@ import { storeDisplayPhoto, storeUploadFile } from "@/server/upload-media";
 
 export const dynamic = "force-dynamic";
 
+function assertProductionBlobUrl(value: unknown) {
+  if (process.env.NEXT_PUBLIC_BLOB_UPLOADS !== "true") return;
+  if (typeof value !== "string") {
+    throw new ServiceError("A stored media URL is required", "INVALID_BLOB_URL", 400);
+  }
+  const url = new URL(value);
+  if (url.protocol !== "https:" || !url.hostname.endsWith(".public.blob.vercel-storage.com")) {
+    throw new ServiceError("Media must come from the configured upload store", "INVALID_BLOB_URL", 400);
+  }
+}
+
 export async function POST(request: Request) {
   try {
     const user = await requirePermission(request, "upload");
@@ -68,12 +79,16 @@ export async function POST(request: Request) {
           displayPhotoFilename: storedPhoto.filename,
         },
       };
+    } else if (
+      process.env.NEXT_PUBLIC_BLOB_UPLOADS === "true" &&
+      request.headers.get("content-type")?.includes("application/json")
+    ) {
+      rawInput = await request.json();
+      const input = rawInput as Record<string, unknown>;
+      assertProductionBlobUrl(input.fileUrl);
+      assertProductionBlobUrl(input.thumbnailUrl);
     } else {
-      throw new ServiceError(
-        "Uploads must use multipart/form-data with a model or video file",
-        "MULTIPART_REQUIRED",
-        415,
-      );
+      throw new ServiceError("Uploads must use the configured media transport", "UNSUPPORTED_MEDIA_TYPE", 415);
     }
     const input = uploadSchema.parse(rawInput);
     return apiSuccess(await createUpload(user.id, input), {

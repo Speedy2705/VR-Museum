@@ -1,6 +1,6 @@
 import "dotenv/config";
 
-import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
+import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../generated/prisma/client";
 import { uploadedAssets } from "../data/assets";
 import { collections } from "../data/collections";
@@ -9,9 +9,8 @@ import { marketplaceProducts } from "../data/marketplace";
 import { getArtifactModel, getArtifactVideo } from "./media";
 import { ARTIFACT_CATEGORIES, type CollectionSlug } from "./artifact-categories";
 
-const adapter = new PrismaBetterSqlite3({
-  url: process.env.DATABASE_URL ?? "file:./dev.db",
-});
+if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL is required");
+const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
 
 const collectionForMaterial: Record<string, string> = {

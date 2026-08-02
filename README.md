@@ -28,19 +28,20 @@ owner-scoped asset workspace.
 
 ## Local setup
 
-Requirements: Node.js 20+, npm, and a local SQLite-compatible environment.
+Requirements: Node.js 20+, npm, and PostgreSQL.
 
 ```bash
 npm install
 copy .env.example .env
 npm run prisma:generate
+npx prisma migrate deploy
 npm run prisma:seed
 npm run dev
 ```
 
 Open `http://localhost:3000`. Set `NEXTAUTH_SECRET` in `.env` to a strong random
-value. The example database URL uses local SQLite; deployment and production
-environment configuration are intentionally outside this repository milestone.
+value and point `DATABASE_URL` to PostgreSQL. See
+[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for the Vercel production runbook.
 
 ## Quality checks
 
@@ -63,7 +64,7 @@ Next.js App Router pages and components
                  ↓
       Domain services (src/server/services)
                  ↓
-        Prisma singleton and SQLite
+       Prisma singleton and PostgreSQL
 ```
 
 - `src/app` contains routes, layouts, metadata, loading/error states, and API

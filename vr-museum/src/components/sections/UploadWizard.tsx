@@ -31,6 +31,7 @@ import {
   modelFormatFromExtension,
   validateUploadFile,
 } from "@/lib/upload-file-policy";
+import { uploadMediaDirect } from "@/lib/blob-upload.client";
 
 type ArtifactType = "3d-model" | "video-scan";
 type PriceMode = "free" | "paid";
@@ -185,6 +186,51 @@ export default function UploadWizard() {
     form.set("license", license);
 
     try {
+      if (process.env.NEXT_PUBLIC_BLOB_UPLOADS === "true") {
+        const [stored, storedPhoto] = await Promise.all([
+          uploadMediaDirect(file),
+          uploadMediaDirect(photo),
+        ]);
+        const response = await fetch("/api/upload", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            title: name,
+            description,
+            category,
+            fileUrl: stored.url,
+            thumbnailUrl: storedPhoto.url,
+            mediaType: type === "video-scan" ? "VIDEO" : "MODEL_3D",
+            modelFormat: type === "3d-model" ? modelFormat : null,
+            lightingPreset: type === "3d-model" ? lighting : null,
+            lightTemperature: type === "3d-model" ? lightTemperature : null,
+            lightDirection: type === "3d-model" ? lightDirection : null,
+            metadata: {
+              type,
+              origin,
+              material,
+              price: priceMode === "paid" ? Number(price) : null,
+              license,
+              description,
+              originalFilename: file.name,
+              storedFilename: stored.pathname,
+              contentType: file.type,
+              size: file.size,
+              displayPhotoFilename: storedPhoto.pathname,
+            },
+          }),
+        });
+        const body = (await response.json()) as {
+          success: boolean;
+          data?: { id: string };
+          error?: { message: string };
+        };
+        if (!body.success) throw new Error(body.error?.message ?? "Upload failed");
+        museumToast.success("Upload submitted", "Your artifact has been sent to the moderation queue.");
+        router.push(`/assets?uploadId=${encodeURIComponent(body.data?.id ?? "")}`);
+        router.refresh();
+        return;
+      }
       const response = await fetch("/api/upload", {
         method: "POST",
         body: form,

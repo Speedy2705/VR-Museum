@@ -1,5 +1,7 @@
 import type { FileStorage } from "@/server/storage/storage";
+import { BlobStorage } from "@/server/storage/vercel-blob.storage";
 import { LocalDiskStorage } from "@/server/storage/local-disk.storage";
 
-// Swap this binding for an S3/Cloudinary implementation in production.
-export const fileStorage: FileStorage = new LocalDiskStorage();
+export const fileStorage: FileStorage = process.env.BLOB_READ_WRITE_TOKEN
+  ? new BlobStorage()
+  : new LocalDiskStorage();

@@ -29,18 +29,16 @@ Prisma Client → database
 
 ## Database environments
 
-Local development uses SQLite with `DATABASE_URL="file:./dev.db"`. Prisma 7
-uses the official `@prisma/adapter-better-sqlite3` driver adapter at runtime.
-The local database file and all `.env` files are ignored by Git.
+All environments use PostgreSQL through Prisma's `@prisma/adapter-pg` adapter.
+Production should use a pooled serverless connection string in `DATABASE_URL`.
+The active PostgreSQL migration history is in `prisma/migrations`; the retired
+local SQLite history is retained in `prisma/migrations-sqlite-archive` only for
+reference and must not be deployed.
 
-Production will use PostgreSQL. Before the production deployment batch:
-
-1. Change the Prisma datasource provider to `postgresql`.
-2. Install and configure `@prisma/adapter-pg` in the Prisma singleton.
-3. Point `DATABASE_URL` at the production PostgreSQL instance.
-4. Generate and apply a PostgreSQL migration history.
-
-SQLite and PostgreSQL migration histories should not be mixed.
+Uploads use local disk when `BLOB_READ_WRITE_TOKEN` is absent. Vercel
+deployments set that token through a connected Blob store and enable direct
+browser uploads with `NEXT_PUBLIC_BLOB_UPLOADS=true`, avoiding the Vercel
+Function request-body limit for large model and video files.
 
 ## Authentication
 

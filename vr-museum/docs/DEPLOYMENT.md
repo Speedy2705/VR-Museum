@@ -1,0 +1,79 @@
+# Production deployment
+
+The supported production target is Vercel with Prisma Postgres and Vercel
+Blob. Import the GitHub repository into Vercel and set the project root to
+`vr-museum`.
+
+## Required Vercel integrations
+
+Create and connect these resources from the project's Storage tab:
+
+1. Prisma Postgres, which supplies `DATABASE_URL`.
+2. Vercel Blob, which supplies `BLOB_READ_WRITE_TOKEN`.
+
+Add these variables to Production and Preview:
+
+```text
+AUTH_SECRET=<one cryptographically random 32-byte-or-longer value>
+NEXTAUTH_SECRET=<the same value, retained for compatibility>
+AUTH_TRUST_HOST=true
+NEXT_PUBLIC_BLOB_UPLOADS=true
+```
+
+Set `AUTH_URL` only after the production hostname is known:
+
+```text
+AUTH_URL=https://your-project.vercel.app
+```
+
+Never copy `.env` into Git. Payment and OAuth variables from `.env.example`
+are optional until those providers are enabled.
+
+## Build and database
+
+Vercel uses `npm run vercel-build`, which generates Prisma Client, applies the
+checked-in PostgreSQL migrations, and builds Next.js. Seed sample catalog data
+once, after the first successful deployment:
+
+```powershell
+vercel env pull .env.production.local --environment=production
+npx prisma db seed
+```
+
+Delete `.env.production.local` after seeding if it is no longer needed; it is
+ignored by Git.
+
+## Provider callbacks
+
+If Google sign-in is enabled, register:
+
+```text
+https://YOUR_DOMAIN/api/auth/callback/google
+```
+
+If Apple sign-in is enabled, register:
+
+```text
+https://YOUR_DOMAIN/api/auth/callback/apple
+```
+
+Stripe's webhook endpoint is:
+
+```text
+https://YOUR_DOMAIN/api/payments/webhook
+```
+
+Razorpay's webhook endpoint is:
+
+```text
+https://YOUR_DOMAIN/api/payments/razorpay-webhook
+```
+
+Use test-mode payment keys until the complete checkout flow has been verified.
+
+## Release verification
+
+After deployment, test sign-up/sign-in, catalog pages, an authorized upload,
+moderation, cart and checkout. Then add a custom domain under Settings >
+Domains, update `AUTH_URL`, OAuth callbacks, and payment webhooks to that
+domain, and redeploy.

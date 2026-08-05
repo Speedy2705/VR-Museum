@@ -43,14 +43,14 @@ const uploadBaseSchema = z.object({
 export const uploadSchema = uploadBaseSchema.superRefine((input, context) => {
   const legacyType = input.metadata.type;
   if (
-    (input.mediaType === "MODEL_3D" && legacyType !== "3d-model") ||
+    (input.mediaType === "MODEL_3D" && legacyType !== "3d-model" && legacyType !== "image-to-3d") ||
     (input.mediaType === "VIDEO" && legacyType !== "video-scan") ||
     input.mediaType === "IMAGE"
   ) {
     context.addIssue({
       code: "custom",
       path: ["metadata", "type"],
-      message: "Upload type must be a 3D model or video scan",
+      message: "Upload type must be a 3D model, image-generated model, or video scan",
     });
   }
   const mediaUrlResult = input.mediaType === "MODEL_3D"

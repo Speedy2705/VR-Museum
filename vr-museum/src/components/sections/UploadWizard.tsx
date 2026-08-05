@@ -34,7 +34,8 @@ import {
 import { uploadMediaDirect } from "@/lib/blob-upload.client";
 import { languageNames, locales, type Locale } from "@/lib/i18n";
 
-type ArtifactType = "3d-model" | "video-scan";
+type ArtifactType = "3d-model" | "video-scan" | "image-to-3d";
+type SourceView = "front" | "side" | "back";
 type PriceMode = "free" | "paid";
 type UploadTranslation = { title: string; description: string; origin: string; material: string };
 
@@ -74,6 +75,12 @@ const typeOptions: {
     name: "Video Scan",
     desc: "Upload a turntable, walkthrough, or photogrammetry source video",
     formats: ALLOWED_VIDEO_EXTENSIONS.join(" "),
+  },
+  {
+    key: "image-to-3d",
+    name: "Create 3D from Images",
+    desc: "Generate a textured 3D model with Meshy from front, side, and back views",
+    formats: "3 JPG, PNG, or WEBP images",
   },
 ];
 
@@ -126,6 +133,9 @@ export default function UploadWizard() {
   const [fileName, setFileName] = useState<string | null>(null);
   const [photo, setPhoto] = useState<File | null>(null);
   const [rejectedFile, setRejectedFile] = useState<{ name: string; reason: string } | null>(null);
+  const [sourceImages, setSourceImages] = useState<Partial<Record<SourceView, File>>>({});
+  const [generationProgress, setGenerationProgress] = useState<number | null>(null);
+  const [generating, setGenerating] = useState(false);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [origin, setOrigin] = useState("");
@@ -147,6 +157,7 @@ export default function UploadWizard() {
   const selectedType = typeOptions.find((option) => option.key === type);
   const selectedCategory = category ? getCategoryByKey(category) : undefined;
   const modelFormat = file ? modelFormatFromExtension(extensionOf(file.name)) : null;
+  const isModelType = type === "3d-model" || type === "image-to-3d";
   useEffect(() => {
     return () => {
       if (fileUrlRef.current) URL.revokeObjectURL(fileUrlRef.current);
@@ -170,11 +181,52 @@ export default function UploadWizard() {
     const value = translations[locale];
     return value?.title.trim() && value.description.trim().length >= 40 && value.origin.trim() && value.material.trim();
   });
-  const canReview = name.trim().length > 0 && material.trim().length > 0 && origin.trim().length > 0 && description.trim().length >= 40 && allTranslationsComplete && file !== null && photo !== null && category !== null && (type !== "3d-model" || (lightTemperature !== null && lightDirection !== null));
-  const canContinueFromStudio = file !== null && (type !== "3d-model" || (modelFormat !== null && lightTemperature !== null && lightDirection !== null));
+  const canReview = name.trim().length > 0 && material.trim().length > 0 && origin.trim().length > 0 && description.trim().length >= 40 && allTranslationsComplete && file !== null && photo !== null && category !== null && (!isModelType || (lightTemperature !== null && lightDirection !== null));
+  const canContinueFromStudio = file !== null && (!isModelType || (modelFormat !== null && lightTemperature !== null && lightDirection !== null));
+
+  async function generateModel() {
+    const views: SourceView[] = ["front", "side", "back"];
+    if (views.some((view) => !sourceImages[view])) {
+      museumToast.warning("Three views are required", "Add front, side, and back images of the same object.");
+      return;
+    }
+    setGenerating(true);
+    setGenerationProgress(0);
+    setError("");
+    try {
+      const form = new FormData();
+      views.forEach((view) => form.set(view, sourceImages[view]!));
+      const startedResponse = await fetch("/api/meshy/multi-image", { method: "POST", body: form });
+      const started = await startedResponse.json() as { success: boolean; data?: { taskId: string }; error?: { message: string } };
+      if (!started.success || !started.data?.taskId) throw new Error(started.error?.message ?? "Could not start 3D generation");
+      const taskId = started.data.taskId;
+      for (let attempt = 0; attempt < 180; attempt += 1) {
+        await new Promise((resolve) => window.setTimeout(resolve, 5000));
+        const statusResponse = await fetch(`/api/meshy/multi-image/${encodeURIComponent(taskId)}`, { cache: "no-store" });
+        const statusBody = await statusResponse.json() as { success: boolean; data?: { status: string; progress: number; error: string | null }; error?: { message: string } };
+        if (!statusBody.success || !statusBody.data) throw new Error(statusBody.error?.message ?? "Could not check generation status");
+        setGenerationProgress(statusBody.data.progress);
+        if (statusBody.data.status === "FAILED" || statusBody.data.status === "CANCELED") throw new Error(statusBody.data.error ?? "Meshy could not generate this model");
+        if (statusBody.data.status !== "SUCCEEDED") continue;
+        const download = await fetch(`/api/meshy/multi-image/${encodeURIComponent(taskId)}/download`);
+        if (!download.ok) throw new Error("The generated model could not be downloaded");
+        const generated = new File([await download.blob()], `meshy-${taskId}.glb`, { type: "model/gltf-binary" });
+        updateFile(generated);
+        setFileName(generated.name);
+        setGenerationProgress(100);
+        museumToast.success("3D model created", "Review the generated model and choose its museum lighting.");
+        return;
+      }
+      throw new Error("Meshy generation timed out. Please try again.");
+    } catch (generationError) {
+      setError(notifyError(generationError, "3D generation failed. Please try different images."));
+    } finally {
+      setGenerating(false);
+    }
+  }
 
   async function submitUpload() {
-    if (!file || !photo || !type || !category || (type === "3d-model" && (!lightTemperature || !lightDirection))) {
+    if (!file || !photo || !type || !category || (isModelType && (!lightTemperature || !lightDirection))) {
       museumToast.warning("Upload details are incomplete", "Choose an artifact file and a display photo before submitting.");
       return;
     }
@@ -189,8 +241,8 @@ export default function UploadWizard() {
     form.set("material", material);
     form.set("type", type);
     form.set("origin", origin);
-    if (type === "3d-model" && lighting) form.set("lighting", lighting);
-    if (type === "3d-model" && lightTemperature && lightDirection) { form.set("lightTemperature", lightTemperature); form.set("lightDirection", lightDirection); }
+    if (isModelType && lighting) form.set("lighting", lighting);
+    if (isModelType && lightTemperature && lightDirection) { form.set("lightTemperature", lightTemperature); form.set("lightDirection", lightDirection); }
     form.set("price", priceMode === "paid" ? price : "");
     form.set("license", license);
     const localizedContent = { en: { title: name, description, origin, material }, ...translations };
@@ -212,10 +264,10 @@ export default function UploadWizard() {
             fileUrl: stored.url,
             thumbnailUrl: storedPhoto.url,
             mediaType: type === "video-scan" ? "VIDEO" : "MODEL_3D",
-            modelFormat: type === "3d-model" ? modelFormat : null,
-            lightingPreset: type === "3d-model" ? lighting : null,
-            lightTemperature: type === "3d-model" ? lightTemperature : null,
-            lightDirection: type === "3d-model" ? lightDirection : null,
+            modelFormat: isModelType ? modelFormat : null,
+            lightingPreset: isModelType ? lighting : null,
+            lightTemperature: isModelType ? lightTemperature : null,
+            lightDirection: isModelType ? lightDirection : null,
             metadata: {
               type,
               origin,
@@ -323,7 +375,7 @@ export default function UploadWizard() {
             className="mt-8"
           >
             <p className="text-sm text-stone">What are you contributing?</p>
-            <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-3">
               {typeOptions.map((opt) => (
                 <button
                   key={opt.key}
@@ -335,7 +387,7 @@ export default function UploadWizard() {
                       setRejectedFile(null);
                     }
                     setType(opt.key);
-                    if (opt.key === "3d-model" && category) { setLighting(getDefaultLightingForCategory(category)); setLightTemperature(getDefaultTemperatureForCategory(category)); setLightDirection(getDefaultDirectionForCategory(category)); }
+                    if (opt.key !== "video-scan" && category) { setLighting(getDefaultLightingForCategory(category)); setLightTemperature(getDefaultTemperatureForCategory(category)); setLightDirection(getDefaultDirectionForCategory(category)); }
                   }}
                   className={`border px-5 py-5 text-left transition-colors ${
                     type === opt.key
@@ -358,7 +410,7 @@ export default function UploadWizard() {
               type="button"
               onClick={() => {
                 if (!type) {
-                  museumToast.warning("Choose an upload type", "Select a 3D model or video scan to continue.");
+                  museumToast.warning("Choose an upload type", "Select a 3D model, three-view generation, or video scan to continue.");
                   return;
                 }
                 setStep(2);
@@ -394,7 +446,7 @@ export default function UploadWizard() {
                     const suggestedMaterial = opt.key === "community-uploads" ? "" : primaryMaterialByDomain[opt.key];
                     setMaterialChoice(suggestedMaterial);
                     setMaterial(suggestedMaterial);
-                    if (type === "3d-model") { setLighting(getDefaultLightingForCategory(opt.key)); setLightTemperature(getDefaultTemperatureForCategory(opt.key)); setLightDirection(getDefaultDirectionForCategory(opt.key)); }
+                    if (type !== "video-scan") { setLighting(getDefaultLightingForCategory(opt.key)); setLightTemperature(getDefaultTemperatureForCategory(opt.key)); setLightDirection(getDefaultDirectionForCategory(opt.key)); }
                   }}
                   className={`border px-5 py-5 text-left transition-colors ${
                     category === opt.key ? "border-ink bg-cream-dark" : "border-line hover:border-stone"
@@ -432,7 +484,7 @@ export default function UploadWizard() {
             className="mt-8"
           >
             {step === 3 && <>
-            <label className="block cursor-pointer border border-dashed border-line px-6 py-14 text-center hover:border-stone">
+            {type !== "image-to-3d" && <label className="block cursor-pointer border border-dashed border-line px-6 py-14 text-center hover:border-stone">
               <input
                 type="file"
                 accept={acceptedFiles}
@@ -475,7 +527,41 @@ export default function UploadWizard() {
               <p className="mt-3 text-[10px] tracking-label text-stone uppercase">
                 Accepted: {acceptedExtensions.join(", ")} — max {maxFileSizeLabel}
               </p>
-            </label>
+            </label>}
+            {type === "image-to-3d" && (
+              <div className="border border-line bg-cream-dark/40 p-5">
+                <div>
+                  <p className="text-[10px] tracking-label text-stone uppercase">Meshy three-view capture</p>
+                  <h2 className="font-display mt-2 text-2xl italic text-ink">Show the same object from three sides</h2>
+                  <p className="mt-2 text-xs leading-relaxed text-stone">Use a plain background, even lighting, and keep the object at a similar scale in every frame.</p>
+                </div>
+                <div className="mt-5 grid gap-3 sm:grid-cols-3">
+                  {(["front", "side", "back"] as SourceView[]).map((view) => (
+                    <label key={view} className="cursor-pointer border border-dashed border-line bg-cream px-4 py-6 text-center hover:border-stone">
+                      <span className="text-[10px] tracking-label text-stone uppercase">{view} view</span>
+                      <span className="mt-2 block truncate text-xs text-ink">{sourceImages[view]?.name ?? "Choose image"}</span>
+                      <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={(event) => {
+                        const selected = event.target.files?.[0];
+                        if (!selected) return;
+                        if (selected.size > 10 * 1024 * 1024) {
+                          museumToast.error("Image rejected", "Each source image must be 10 MB or smaller.");
+                          event.target.value = "";
+                          return;
+                        }
+                        setSourceImages((current) => ({ ...current, [view]: selected }));
+                        updateFile(null);
+                        setFileName(null);
+                        setGenerationProgress(null);
+                      }} />
+                    </label>
+                  ))}
+                </div>
+                <button type="button" onClick={generateModel} disabled={generating || (["front", "side", "back"] as SourceView[]).some((view) => !sourceImages[view])} className="mt-5 w-full bg-ink px-5 py-3.5 text-[11px] tracking-label text-cream uppercase disabled:cursor-not-allowed disabled:opacity-40">
+                  {generating ? `Generating model${generationProgress !== null ? ` · ${generationProgress}%` : "…"}` : file ? "Regenerate 3D Model" : "Generate 3D Model with Meshy"}
+                </button>
+                {generating && <p className="mt-3 text-center text-xs text-stone">Meshy generation can take several minutes. Keep this page open.</p>}
+              </div>
+            )}
             {rejectedFile && (
               <div role="alert" className="mt-4 border border-red-900/25 bg-red-950/5 px-5 py-4">
                 <p className="text-xs font-medium text-red-900">{rejectedFile.name}</p>
@@ -483,7 +569,7 @@ export default function UploadWizard() {
               </div>
             )}
 
-            {type === "3d-model" && fileUrl && modelFormat && lightTemperature && lightDirection && (
+            {isModelType && fileUrl && modelFormat && lightTemperature && lightDirection && (
               <div className="mt-6">
                 <ArtifactStageFullscreen
                   studioSplit
@@ -726,7 +812,7 @@ export default function UploadWizard() {
               Review your submission before it reaches a museum curator
             </p>
 
-            {fileUrl && type === "3d-model" && modelFormat && lightTemperature && lightDirection && (
+            {fileUrl && isModelType && modelFormat && lightTemperature && lightDirection && (
               <div className="mt-6 -mx-6 md:-mx-10">
                 <ArtifactStageFullscreen immersiveDetails hideOverlayActions viewer={<LightingStudioViewer src={fileUrl} format={modelFormat} lightTemperature={lightTemperature} lightDirection={lightDirection} title={name || fileName || "Uploaded artifact"} museumLayout="details" focusArtifactWithExhibit plaqueOrigin={origin || "Origin pending"} panelDetails={{ uploadType: "Upload Review · Draft", title: name || fileName || "Uploaded artifact", uploader: "Museum Contributor", description, material: material || selectedCategory?.name || "Artifact", origin: origin || "Not specified", license: selectedLicense?.name ?? "Creator-specified", price: priceMode === "free" ? "Free" : `$${price}` }} />} overlay={<div><p className="text-[9px] tracking-label text-stone uppercase">Step 5 of 5 · Review</p><h2 className="font-display mt-3 text-2xl italic">{name}</h2><p className="mt-2 text-xs text-stone">{selectedCategory?.name} · {getLightTemperature(lightTemperature).name} · {getLightDirection(lightDirection).name}</p><p className="mt-4 text-sm leading-relaxed text-charcoal/80">{description}</p></div>} />
               </div>
@@ -757,7 +843,7 @@ export default function UploadWizard() {
                   File
                 </span>
                 <span className="text-sm text-ink">
-                  {fileName ?? "No file selected"}
+                  {type === "image-to-3d" ? "Meshy-generated GLB" : fileName ?? "No file selected"}
                 </span>
               </div>
               <div className="flex items-center justify-between py-3.5">
@@ -773,7 +859,7 @@ export default function UploadWizard() {
                   Lighting
                 </span>
                 <span className="text-sm text-ink">
-                  {type === "3d-model" && lightTemperature && lightDirection ? `${getLightTemperature(lightTemperature).name} · ${getLightDirection(lightDirection).name}` : "Embedded in video"}
+                  {isModelType && lightTemperature && lightDirection ? `${getLightTemperature(lightTemperature).name} · ${getLightDirection(lightDirection).name}` : "Embedded in video"}
                 </span>
               </div>
               <div className="flex items-center justify-between py-3.5">

@@ -34,14 +34,14 @@ export async function POST(request: Request) {
         );
       }
       const type = form.get("type");
-      if (type !== "3d-model" && type !== "video-scan") {
+      if (type !== "3d-model" && type !== "video-scan" && type !== "image-to-3d") {
         throw new ServiceError(
           "Choose a valid upload type",
           "INVALID_UPLOAD_TYPE",
           400,
         );
       }
-      const { stored, modelFormat } = await storeUploadFile(file, type);
+      const { stored, modelFormat } = await storeUploadFile(file, type === "image-to-3d" ? "3d-model" : type);
       const photo = form.get("photo");
       if (!(photo instanceof File)) {
         throw new ServiceError(

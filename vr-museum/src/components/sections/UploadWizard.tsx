@@ -79,7 +79,7 @@ const typeOptions: {
   {
     key: "image-to-3d",
     name: "Create 3D from Images",
-    desc: "Generate a textured 3D model with Meshy from front, side, and back views",
+    desc: "Generate a textured 3D model with Tripo from front, side, and back views",
     formats: "3 JPG, PNG, or WEBP images",
   },
 ];
@@ -196,28 +196,28 @@ export default function UploadWizard() {
     try {
       const form = new FormData();
       views.forEach((view) => form.set(view, sourceImages[view]!));
-      const startedResponse = await fetch("/api/meshy/multi-image", { method: "POST", body: form });
+      const startedResponse = await fetch("/api/tripo/multi-image", { method: "POST", body: form });
       const started = await startedResponse.json() as { success: boolean; data?: { taskId: string }; error?: { message: string } };
       if (!started.success || !started.data?.taskId) throw new Error(started.error?.message ?? "Could not start 3D generation");
       const taskId = started.data.taskId;
       for (let attempt = 0; attempt < 180; attempt += 1) {
         await new Promise((resolve) => window.setTimeout(resolve, 5000));
-        const statusResponse = await fetch(`/api/meshy/multi-image/${encodeURIComponent(taskId)}`, { cache: "no-store" });
+        const statusResponse = await fetch(`/api/tripo/multi-image/${encodeURIComponent(taskId)}`, { cache: "no-store" });
         const statusBody = await statusResponse.json() as { success: boolean; data?: { status: string; progress: number; error: string | null }; error?: { message: string } };
         if (!statusBody.success || !statusBody.data) throw new Error(statusBody.error?.message ?? "Could not check generation status");
         setGenerationProgress(statusBody.data.progress);
-        if (statusBody.data.status === "FAILED" || statusBody.data.status === "CANCELED") throw new Error(statusBody.data.error ?? "Meshy could not generate this model");
-        if (statusBody.data.status !== "SUCCEEDED") continue;
-        const download = await fetch(`/api/meshy/multi-image/${encodeURIComponent(taskId)}/download`);
+        if (statusBody.data.status === "failed" || statusBody.data.status === "cancelled") throw new Error(statusBody.data.error ?? "Tripo could not generate this model");
+        if (statusBody.data.status !== "success") continue;
+        const download = await fetch(`/api/tripo/multi-image/${encodeURIComponent(taskId)}/download`);
         if (!download.ok) throw new Error("The generated model could not be downloaded");
-        const generated = new File([await download.blob()], `meshy-${taskId}.glb`, { type: "model/gltf-binary" });
+        const generated = new File([await download.blob()], `tripo-${taskId}.glb`, { type: "model/gltf-binary" });
         updateFile(generated);
         setFileName(generated.name);
         setGenerationProgress(100);
         museumToast.success("3D model created", "Review the generated model and choose its museum lighting.");
         return;
       }
-      throw new Error("Meshy generation timed out. Please try again.");
+      throw new Error("Tripo generation timed out. Please try again.");
     } catch (generationError) {
       setError(notifyError(generationError, "3D generation failed. Please try different images."));
     } finally {
@@ -531,7 +531,7 @@ export default function UploadWizard() {
             {type === "image-to-3d" && (
               <div className="border border-line bg-cream-dark/40 p-5">
                 <div>
-                  <p className="text-[10px] tracking-label text-stone uppercase">Meshy three-view capture</p>
+                  <p className="text-[10px] tracking-label text-stone uppercase">Tripo three-view capture</p>
                   <h2 className="font-display mt-2 text-2xl italic text-ink">Show the same object from three sides</h2>
                   <p className="mt-2 text-xs leading-relaxed text-stone">Use a plain background, even lighting, and keep the object at a similar scale in every frame.</p>
                 </div>
@@ -557,9 +557,9 @@ export default function UploadWizard() {
                   ))}
                 </div>
                 <button type="button" onClick={generateModel} disabled={generating || (["front", "side", "back"] as SourceView[]).some((view) => !sourceImages[view])} className="mt-5 w-full bg-ink px-5 py-3.5 text-[11px] tracking-label text-cream uppercase disabled:cursor-not-allowed disabled:opacity-40">
-                  {generating ? `Generating model${generationProgress !== null ? ` · ${generationProgress}%` : "…"}` : file ? "Regenerate 3D Model" : "Generate 3D Model with Meshy"}
+                  {generating ? `Generating model${generationProgress !== null ? ` · ${generationProgress}%` : "…"}` : file ? "Regenerate 3D Model" : "Generate 3D Model with Tripo"}
                 </button>
-                {generating && <p className="mt-3 text-center text-xs text-stone">Meshy generation can take several minutes. Keep this page open.</p>}
+                {generating && <p className="mt-3 text-center text-xs text-stone">Tripo generation can take several minutes. Keep this page open.</p>}
               </div>
             )}
             {rejectedFile && (
@@ -843,7 +843,7 @@ export default function UploadWizard() {
                   File
                 </span>
                 <span className="text-sm text-ink">
-                  {type === "image-to-3d" ? "Meshy-generated GLB" : fileName ?? "No file selected"}
+                  {type === "image-to-3d" ? "Tripo-generated GLB" : fileName ?? "No file selected"}
                 </span>
               </div>
               <div className="flex items-center justify-between py-3.5">

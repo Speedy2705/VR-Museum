@@ -18,6 +18,14 @@ import { marketplaceQuerySchema, marketplaceUpdateSchema } from "./marketplace";
 import { artifactListQuerySchema, artifactSchema } from "./artifact";
 import { collectionSchema } from "./collection";
 import { moderationSchema, uploadSchema, uploadUpdateSchema } from "./upload";
+import { locales } from "@/lib/i18n";
+
+const translations = Object.fromEntries(locales.map((locale) => [locale, {
+  title: `Artifact ${locale}`,
+  description: `A complete localized artifact description for curator review in the ${locale} language.`,
+  origin: `Origin ${locale}`,
+  material: `Material ${locale}`,
+}]));
 
 describe("user validators", () => {
   it("requires complete, valid checkout profile details", () => {
@@ -140,6 +148,7 @@ describe("catalog and upload validators", () => {
         type: "3d-model",
         description: "A detailed public description long enough for moderation review.",
       },
+      translations,
     });
     expect(upload.metadata).toMatchObject({ description: expect.any(String) });
     expect(uploadUpdateSchema.safeParse({}).success).toBe(false);

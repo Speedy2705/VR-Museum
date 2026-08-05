@@ -23,6 +23,7 @@ type UploadForListing = {
   lightDirection: string | null;
   collectionSlug: string | null;
   metadata: unknown;
+  translations: unknown;
 };
 
 async function createCommunityListing(
@@ -79,6 +80,7 @@ async function createCommunityListing(
       modelFormat: upload.modelFormat,
       primaryMediaType: upload.mediaType,
       description: String(metadata.description ?? "A curator-approved community artifact."),
+      translations: upload.translations as Prisma.InputJsonValue,
       collectionId: collection.id,
       price: price > 0 ? price : null,
       isForSale: true,
@@ -95,6 +97,7 @@ async function createCommunityListing(
       modelFormat: upload.modelFormat,
       primaryMediaType: upload.mediaType,
       description: String(metadata.description ?? "A curator-approved community artifact."),
+      translations: upload.translations as Prisma.InputJsonValue,
       collectionId: collection.id,
       price: price > 0 ? price : null,
       isForSale: true,
@@ -137,6 +140,7 @@ export function createUpload(userId: string, input: UploadInput) {
       lightDirection: input.lightDirection,
       collectionSlug: input.category,
       metadata: input.metadata as Prisma.InputJsonObject,
+      translations: input.translations as Prisma.InputJsonObject,
       status: "PENDING",
     },
   });

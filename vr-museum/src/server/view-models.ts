@@ -4,6 +4,8 @@ import type {
   UploadedAssetView,
 } from "@/types/catalog";
 import { communityArtifactSlug, communityListingId } from "@/server/services/upload.service";
+import { translationFor } from "@/lib/localized-content";
+import type { Locale } from "@/lib/i18n";
 
 type ListingRecord = {
   id: string;
@@ -19,6 +21,7 @@ type ListingRecord = {
     modelFormat: string | null;
     primaryMediaType: "IMAGE" | "VIDEO" | "MODEL_3D";
     description: string;
+    translations: unknown;
     price: unknown;
   };
   seller: {
@@ -27,14 +30,15 @@ type ListingRecord = {
   };
 };
 
-export function toMarketplaceView(listing: ListingRecord): MarketplaceView {
+export function toMarketplaceView(listing: ListingRecord, locale: Locale = "en"): MarketplaceView {
+  const localized = translationFor(listing.artifact.translations, locale);
   const [period = "", material = "Artifact"] =
     listing.artifact.subtitle.split(" · ");
   return {
     listingId: listing.id,
     source: "museum",
     slug: listing.artifact.slug,
-    title: listing.artifact.title,
+    title: String(localized.title ?? listing.artifact.title),
     artist: listing.seller.name ?? "Museum Contributor",
     sellerRole:
       listing.seller.role === "ARTIST" ||
@@ -48,7 +52,7 @@ export function toMarketplaceView(listing: ListingRecord): MarketplaceView {
     license: "Digital Artifact License",
     price:
       listing.artifact.price === null ? null : Number(listing.price),
-    description: listing.artifact.description,
+    description: String(localized.description ?? listing.artifact.description),
     image: listing.artifact.image,
     video: listing.artifact.videoUrl ?? undefined,
     model:
@@ -78,27 +82,29 @@ export function publicUploadToMarketplaceView(upload: {
   mediaType: "IMAGE" | "VIDEO" | "MODEL_3D";
   modelFormat: string | null;
   metadata: unknown;
+  translations: unknown;
   owner: { id: string; name: string | null };
-}): MarketplaceView {
+}, locale: Locale = "en"): MarketplaceView {
   const metadata =
     upload.metadata && typeof upload.metadata === "object"
       ? upload.metadata as Record<string, unknown>
       : {};
   const rawPrice = metadata.price;
+  const localized = translationFor(upload.translations, locale);
   return {
     listingId: communityListingId(upload.id),
     source: "community",
     href: `/community/${upload.id}`,
     uploaderId: upload.owner.id,
     slug: communityArtifactSlug(upload.id),
-    title: upload.title,
+    title: String(localized.title ?? upload.title),
     artist: upload.owner.name ?? "Museum community member",
-    material: upload.category,
-    period: String(metadata.period ?? metadata.origin ?? "Contemporary scan"),
+    material: String(localized.material ?? upload.category),
+    period: String(localized.origin ?? metadata.period ?? metadata.origin ?? "Contemporary scan"),
     lighting: String(metadata.lighting ?? "Studio"),
     license: String(metadata.license ?? "Creator-specified"),
     price: typeof rawPrice === "number" && rawPrice > 0 ? rawPrice : null,
-    description: String(metadata.description ?? "An approved community-contributed 3D artifact."),
+    description: String(localized.description ?? metadata.description ?? "An approved community-contributed 3D artifact."),
     image: upload.thumbnailUrl ?? "",
     video: upload.mediaType === "VIDEO" ? upload.fileUrl : undefined,
     model:
@@ -166,17 +172,19 @@ export function toUploadedAssetView(upload: {
   curatorComment: string | null;
   collectionSlug: string | null;
   metadata: unknown;
+  translations: unknown;
   views?: number;
   earnings?: number;
-}): UploadedAssetView {
+}, locale: Locale = "en"): UploadedAssetView {
   const metadata =
     upload.metadata && typeof upload.metadata === "object"
       ? (upload.metadata as Record<string, unknown>)
       : {};
+  const localized = translationFor(upload.translations, locale);
   return {
     id: upload.id,
     slug: String(metadata.slug ?? upload.id),
-    title: upload.title,
+    title: String(localized.title ?? upload.title),
     status:
       upload.status === "APPROVED"
         ? "live"
@@ -185,13 +193,13 @@ export function toUploadedAssetView(upload: {
         : upload.status === "REJECTED"
           ? "rejected"
           : "under-review",
-    period: String(metadata.period ?? metadata.origin ?? "Awaiting review"),
+    period: String(localized.origin ?? metadata.period ?? metadata.origin ?? "Awaiting review"),
     lightingPreset: upload.lightingPreset,
     lightTemperature: upload.lightTemperature,
     lightDirection: upload.lightDirection,
     curatorComment: upload.curatorComment,
     collectionSlug: upload.collectionSlug,
-    material: upload.category,
+    material: String(localized.material ?? upload.category),
     license: String(metadata.license ?? "Pending"),
     price: typeof metadata.price === "number" ? metadata.price : null,
     views: upload.views ?? 0,

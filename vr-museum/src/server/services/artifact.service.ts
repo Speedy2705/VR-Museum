@@ -1,8 +1,10 @@
 import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { ServiceError } from "@/lib/service-error";
+import { localizeRecord } from "@/lib/localized-content";
+import { getRequestLocale } from "@/lib/request-locale";
 
-export function listArtifacts(filters: {
+export async function listArtifacts(filters: {
   collection?: string;
   preset?: string;
   query?: string;
@@ -22,11 +24,16 @@ export function listArtifacts(filters: {
       { collection: { title: { contains: filters.query } } },
     ];
   }
-  return prisma.artifact.findMany({
+  const rows = await prisma.artifact.findMany({
     where,
     orderBy: { title: "asc" },
     include: { collection: true },
   });
+  const locale = await getRequestLocale();
+  return rows.map((row) => ({
+    ...localizeRecord(row, locale, ["title", "subtitle", "description"]),
+    collection: localizeRecord(row.collection, locale, ["title", "subtitle", "description", "category"]),
+  }));
 }
 
 export async function getArtifact(slug: string) {
@@ -43,5 +50,9 @@ export async function getArtifact(slug: string) {
   if (!artifact) {
     throw new ServiceError("Artifact not found", "NOT_FOUND", 404);
   }
-  return artifact;
+  const locale = await getRequestLocale();
+  return {
+    ...localizeRecord(artifact, locale, ["title", "subtitle", "description"]),
+    collection: localizeRecord(artifact.collection, locale, ["title", "subtitle", "description", "category"]),
+  };
 }

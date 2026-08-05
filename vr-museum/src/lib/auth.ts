@@ -6,6 +6,7 @@ import Credentials from "next-auth/providers/credentials";
 import { prisma } from "@/lib/prisma";
 import { ServiceError } from "@/lib/service-error";
 import { credentialsSchema, userRoleSchema } from "@/lib/validators/user";
+import { defaultLocale, isLocale } from "@/lib/i18n";
 import { oauthProviders } from "@/lib/oauth-providers";
 import { hasPermission, type Permission } from "@/lib/role-policy";
 
@@ -55,6 +56,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           name: user.name,
           image: user.image,
           role: user.role,
+          locale: isLocale(user.locale) ? user.locale : defaultLocale,
         };
       },
     }),
@@ -70,9 +72,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (token.sub && (trigger === "update" || token.role === undefined)) {
         const profile = await prisma.user.findUnique({
           where: { id: token.sub },
-          select: { role: true },
+          select: { role: true, locale: true },
         });
         token.role = profile?.role ?? null;
+        token.locale = isLocale(profile?.locale) ? profile.locale : defaultLocale;
       }
       return token;
     },
@@ -81,6 +84,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         session.user.id = token.sub;
         const role = userRoleSchema.safeParse(token.role);
         session.user.role = role.success ? role.data : null;
+        session.user.locale = isLocale(token.locale) ? token.locale : defaultLocale;
       }
       return session;
     },

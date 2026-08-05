@@ -11,6 +11,8 @@ import { userRoles } from "@/lib/validators/user";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import { useRole } from "@/hooks/useRole";
 import BackButton from "@/components/layout/BackButton";
+import { LanguageSelector, useI18n } from "@/context/I18nContext";
+import { localizePath } from "@/lib/i18n";
 
 /*
  * Visual regression checklist
@@ -32,23 +34,23 @@ const NAVBAR_OVERLAY_BACKGROUND = "rgba(23, 19, 15, 0)";
 const NAVBAR_SOLID_BLUR = "blur(14px)";
 const NAVBAR_NO_BLUR = "blur(0px)";
 
-const leftLinks = [
-  { label: "Collections", href: "/collections" },
-  { label: "Marketplace", href: "/marketplace" },
-  { label: "About", href: "/about" },
-];
-
-const accountLinks = [
-  { label: "Your Assets", href: "/assets" },
-  { label: "Upload", href: "/upload" },
-  { label: "Queries & Feedback", href: "/support" },
-];
-
 type NavbarProps = {
   hasHeroBackground?: boolean;
 };
 
 export default function Navbar({ hasHeroBackground = false }: NavbarProps) {
+  const { locale, messages: t } = useI18n();
+  const href = (path: string) => localizePath(path, locale);
+  const leftLinks = [
+    { label: t.collections, href: "/collections" },
+    { label: t.marketplace, href: "/marketplace" },
+    { label: t.about, href: "/about" },
+  ];
+  const accountLinks = [
+    { label: t.assets, href: "/assets" },
+    { label: t.upload, href: "/upload" },
+    { label: t.support, href: "/support" },
+  ];
   const { data: session, status } = useSession();
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -153,7 +155,7 @@ export default function Navbar({ hasHeroBackground = false }: NavbarProps) {
         <button
           type="button"
           className="flex shrink-0 text-current xl:hidden"
-          aria-label={menuOpen ? "Close menu" : "Open menu"}
+          aria-label={menuOpen ? t.closeMenu : t.openMenu}
           aria-expanded={menuOpen}
           onClick={() => {
             setMenuOpen((value) => !value);
@@ -166,7 +168,7 @@ export default function Navbar({ hasHeroBackground = false }: NavbarProps) {
           {leftLinks.map((link) => (
             <li key={link.label}>
               <Link
-                href={link.href}
+                href={href(link.href)}
                 className="text-[11px] tracking-label uppercase text-current opacity-75 transition-opacity hover:opacity-100"
               >
                 {link.label}
@@ -176,7 +178,7 @@ export default function Navbar({ hasHeroBackground = false }: NavbarProps) {
         </ul>
 
         <Link
-          href="/"
+          href={href("/")}
           className="font-display flex-1 text-center text-lg tracking-[0.25em] text-current xl:flex-none xl:text-xl xl:tracking-[0.3em]"
         >
           ViswaRoop
@@ -188,7 +190,7 @@ export default function Navbar({ hasHeroBackground = false }: NavbarProps) {
               <button
                 type="button"
                 className="flex items-center rounded-full text-xs text-current outline-none opacity-80 ring-cream/60 hover:opacity-100 focus-visible:ring-2"
-                aria-label="Open account menu"
+                aria-label={t.accountMenu}
                 aria-haspopup="menu"
                 aria-expanded={accountOpen}
                 onClick={() => {
@@ -219,9 +221,9 @@ export default function Navbar({ hasHeroBackground = false }: NavbarProps) {
                     className="absolute top-full right-0 z-40 mt-3 w-64 border border-white/15 bg-ink p-2 text-white shadow-2xl"
                   >
                     <div className="px-3 py-3">
-                      <p className="font-display truncate text-base">{user.name ?? "Museum member"}</p>
+                      <p className="font-display truncate text-base">{user.name ?? t.account}</p>
                       <p className="mt-1 truncate text-xs text-white/50">
-                        {user.email ?? "Social account"}
+                        {user.email ?? t.mobileAccount}
                       </p>
                       {roleLabel && (
                         <p className="mt-2 text-[9px] tracking-label uppercase text-white/40">
@@ -234,7 +236,7 @@ export default function Navbar({ hasHeroBackground = false }: NavbarProps) {
                         <Link
                           key={link.href}
                           role="menuitem"
-                          href={link.href}
+                          href={href(link.href)}
                           onClick={() => setAccountOpen(false)}
                           className="block px-3 py-2.5 text-[11px] tracking-label uppercase text-white/70 transition-colors hover:bg-white/5 hover:text-white"
                         >
@@ -244,11 +246,11 @@ export default function Navbar({ hasHeroBackground = false }: NavbarProps) {
                       {canModerateUploads && (
                         <Link
                           role="menuitem"
-                          href="/moderation"
+                          href={href("/moderation")}
                           onClick={() => setAccountOpen(false)}
                           className="block px-3 py-2.5 text-[11px] tracking-label uppercase text-white/70 transition-colors hover:bg-white/5 hover:text-white"
                         >
-                          Moderate Uploads
+                          {t.moderate}
                         </Link>
                       )}
                     </div>
@@ -262,7 +264,7 @@ export default function Navbar({ hasHeroBackground = false }: NavbarProps) {
                         }}
                         className="w-full px-3 py-2.5 text-left text-[11px] tracking-label uppercase text-white/70 transition-colors hover:bg-white/5 hover:text-white"
                       >
-                        Sign Out
+                        {t.signOut}
                       </button>
                     </div>
                   </motion.div>
@@ -271,20 +273,21 @@ export default function Navbar({ hasHeroBackground = false }: NavbarProps) {
             </div>
           ) : status !== "loading" ? (
             <Link
-              href="/sign-in"
+              href={href("/sign-in")}
               className="hidden text-[11px] tracking-label uppercase text-current opacity-75 transition-opacity hover:opacity-100 xl:block"
             >
-              Sign In
+              {t.signIn}
             </Link>
           ) : null}
           <CartIcon />
+          <LanguageSelector authenticated={Boolean(user)} />
           <button
             type="button"
             onClick={() => {
               setSearchOpen((value) => !value);
               setAccountOpen(false);
             }}
-            aria-label={searchOpen ? "Close artifact search" : "Search artifacts"}
+            aria-label={t.search}
             aria-expanded={searchOpen}
             className="text-current opacity-80 hover:opacity-100"
           >
@@ -294,7 +297,7 @@ export default function Navbar({ hasHeroBackground = false }: NavbarProps) {
             </svg>
           </button>
           <VrEntryModal
-            label="Enter VR"
+            label={t.enterVr}
             compact
             variant={isSolid || hasHeroBackground ? "filled" : "dark"}
           />
@@ -309,7 +312,7 @@ export default function Navbar({ hasHeroBackground = false }: NavbarProps) {
             className="border-t border-white/10 bg-ink/95 px-6 py-4 backdrop-blur md:px-10"
           >
             <div className="relative mx-auto max-w-2xl">
-              <label htmlFor="navbar-search" className="sr-only">Search museum artifacts</label>
+              <label htmlFor="navbar-search" className="sr-only">{t.search}</label>
               <input
                 id="navbar-search"
                 autoFocus
@@ -322,18 +325,18 @@ export default function Navbar({ hasHeroBackground = false }: NavbarProps) {
                     setSearching(false);
                   }
                 }}
-                placeholder="Search artifacts, materials, or collections…"
+                placeholder={t.searchPlaceholder}
                 className="w-full border-b border-white/25 bg-transparent px-1 py-3 text-sm text-white placeholder:text-white/40 focus:border-white focus:outline-none"
               />
               {query.trim().length >= 2 && (
                 <div className="absolute top-full right-0 left-0 z-40 max-h-80 overflow-y-auto border border-line bg-cream text-ink shadow-xl">
                   {searching ? (
-                    <p className="px-5 py-5 text-sm text-stone">Searching…</p>
+                    <p className="px-5 py-5 text-sm text-stone">{t.searching}</p>
                   ) : results.length ? (
                     results.map((result) => (
                       <Link
                         key={result.slug}
-                        href={`/collections/${result.collection.slug}/${result.slug}`}
+                        href={href(`/collections/${result.collection.slug}/${result.slug}`)}
                         onClick={() => setSearchOpen(false)}
                         className="block border-b border-line px-5 py-4 last:border-0 hover:bg-cream-dark"
                       >
@@ -342,7 +345,7 @@ export default function Navbar({ hasHeroBackground = false }: NavbarProps) {
                       </Link>
                     ))
                   ) : (
-                    <p className="px-5 py-5 text-sm text-stone">No artifacts found.</p>
+                    <p className="px-5 py-5 text-sm text-stone">{t.noResults}</p>
                   )}
                 </div>
               )}
@@ -363,12 +366,12 @@ export default function Navbar({ hasHeroBackground = false }: NavbarProps) {
               {[
                 ...leftLinks,
                 ...(!user && status !== "loading"
-                  ? [{ label: "Sign In", href: "/sign-in" }]
+                  ? [{ label: t.signIn, href: "/sign-in" }]
                   : []),
               ].map((link) => (
                 <Link
                   key={link.href}
-                  href={link.href}
+                  href={href(link.href)}
                   onClick={() => setMenuOpen(false)}
                   className="text-[11px] tracking-label uppercase text-white/80"
                 >
@@ -381,12 +384,12 @@ export default function Navbar({ hasHeroBackground = false }: NavbarProps) {
       </AnimatePresence>
       <ConfirmDialog
         open={signOutOpen}
-        title="Sign out of the museum?"
-        description="Your cart and account data will remain safely stored for your next visit."
-        confirmLabel="Sign Out"
+        title={t.signOutTitle}
+        description={t.signOutDescription}
+        confirmLabel={t.signOut}
         tone="important"
         onCancel={() => setSignOutOpen(false)}
-        onConfirm={() => signOut({ redirectTo: "/" })}
+        onConfirm={() => signOut({ redirectTo: href("/") })}
       />
     </motion.header>
     {!hasHeroBackground && <div aria-hidden="true" className="h-20 shrink-0" />}

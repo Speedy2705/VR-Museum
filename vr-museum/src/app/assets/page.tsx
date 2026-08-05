@@ -15,20 +15,22 @@ import {
 import type { Metadata } from "next";
 import BillingProfileForm from "@/components/account/BillingProfileForm";
 import { getBillingProfile } from "@/server/services/user.service";
+import { getRequestLocale } from "@/lib/request-locale";
 
 export const metadata: Metadata = { title: "Your Assets", description: "Manage purchased and uploaded museum assets." };
 
 export default async function AssetsPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/sign-in?returnTo=%2Fassets");
-  const [orders, uploads, billingProfile] = await Promise.all([
+  const [orders, uploads, billingProfile, locale] = await Promise.all([
     listOrders(user.id),
     listUploads(user.id),
     getBillingProfile(user.id),
+    getRequestLocale(),
   ]);
   const paidOrders = orders.filter((order) => order.paymentStatus === "PAID");
   const purchasedAssets = ordersToPurchasedAssets(paidOrders);
-  const uploadedAssets = uploads.map(toUploadedAssetView);
+  const uploadedAssets = uploads.map((upload) => toUploadedAssetView(upload, locale));
   const totalEarnings = uploadedAssets.reduce(
     (sum, upload) => sum + (upload.earnings ?? 0),
     0,

@@ -8,6 +8,7 @@ import {
 } from "@/server/services/marketplace.service";
 import { toMarketplaceView } from "@/server/view-models";
 import type { Metadata } from "next";
+import { getRequestLocale } from "@/lib/request-locale";
 
 export async function generateMetadata({
   params,
@@ -38,7 +39,7 @@ export default async function MarketplaceItemPage({
 }) {
   const { slug } = await params;
   const listing = await getMarketplaceListing(slug).catch(() => notFound());
-  const product = toMarketplaceView(listing);
+  const product = toMarketplaceView(listing, await getRequestLocale());
 
   return (
     <>

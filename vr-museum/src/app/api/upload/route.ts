@@ -78,6 +78,7 @@ export async function POST(request: Request) {
           size: stored.size,
           displayPhotoFilename: storedPhoto.filename,
         },
+        translations: JSON.parse(String(form.get("translations") ?? "{}")),
       };
     } else if (
       process.env.NEXT_PUBLIC_BLOB_UPLOADS === "true" &&

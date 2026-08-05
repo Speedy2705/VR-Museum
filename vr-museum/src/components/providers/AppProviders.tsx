@@ -6,11 +6,13 @@ import type { ReactNode } from "react";
 import { CartProvider } from "@/context/CartContext";
 import PageTransition from "@/components/motion/PageTransition";
 import { Toaster } from "sonner";
+import { I18nProvider } from "@/context/I18nContext";
+import type { Locale } from "@/lib/i18n";
 
-export default function AppProviders({ children }: { children: ReactNode }) {
+export default function AppProviders({ children, locale }: { children: ReactNode; locale: Locale }) {
   return (
     <SessionProvider>
-      <CartProvider>
+      <I18nProvider locale={locale}><CartProvider>
         <PageTransition>{children}</PageTransition>
         <Toaster
           position="bottom-right"
@@ -27,7 +29,7 @@ export default function AppProviders({ children }: { children: ReactNode }) {
             },
           }}
         />
-      </CartProvider>
+      </CartProvider></I18nProvider>
     </SessionProvider>
   );
 }

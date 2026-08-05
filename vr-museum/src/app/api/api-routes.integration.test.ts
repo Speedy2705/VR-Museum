@@ -52,6 +52,14 @@ import { POST as checkout } from "./checkout/route";
 import { POST as upload } from "./upload/route";
 import { PATCH as moderateUpload } from "./moderation/uploads/[id]/route";
 import { ServiceError } from "@/lib/service-error";
+import { locales } from "@/lib/i18n";
+
+const uploadTranslations = JSON.stringify(Object.fromEntries(locales.map((locale) => [locale, {
+  title: `Artifact ${locale}`,
+  description: `A complete localized artifact description for curator review in the ${locale} language.`,
+  origin: `Origin ${locale}`,
+  material: `Material ${locale}`,
+}])));
 
 function jsonRequest(path: string, body: unknown, ip: string) {
   return new Request(`http://localhost${path}`, {
@@ -213,6 +221,9 @@ describe("key API routes", () => {
     form.set("lightDirection", "spotlight");
     form.set("type", "3d-model");
     form.set("description", "A documented bronze artifact scan with sufficient provenance for public curator review.");
+    form.set("origin", "Historical collection");
+    form.set("material", "Bronze");
+    form.set("translations", uploadTranslations);
     form.set(
       "file",
       new File(
@@ -245,6 +256,9 @@ describe("key API routes", () => {
     form.set("category", "forged-in-time");
     form.set("type", "video-scan");
     form.set("description", "A complete turntable recording of the artifact for photogrammetry and curator review.");
+    form.set("origin", "Historical collection");
+    form.set("material", "Bronze");
+    form.set("translations", uploadTranslations);
     form.set(
       "file",
       new File(

@@ -1,0 +1,4 @@
+ALTER TABLE "User" ADD COLUMN "locale" TEXT NOT NULL DEFAULT 'en';
+ALTER TABLE "Collection" ADD COLUMN "translations" JSONB NOT NULL DEFAULT '{}';
+ALTER TABLE "Artifact" ADD COLUMN "translations" JSONB NOT NULL DEFAULT '{}';
+ALTER TABLE "UploadedAsset" ADD COLUMN "translations" JSONB NOT NULL DEFAULT '{}';

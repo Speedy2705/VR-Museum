@@ -4,11 +4,13 @@ import Footer from "@/components/layout/Footer";
 import ProductCard from "@/components/marketplace/ProductCard";
 import { prisma } from "@/lib/prisma";
 import { publicUploadToMarketplaceView } from "@/server/view-models";
+import { getRequestLocale } from "@/lib/request-locale";
 
 export default async function CommunityCreatorPage({ params }: {
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const locale = await getRequestLocale();
   const creator = await prisma.user.findUnique({
     where: { id },
     select: {
@@ -30,7 +32,7 @@ export default async function CommunityCreatorPage({ params }: {
           <h1 className="font-display mt-3 text-4xl italic">{creator.name ?? "Museum community member"}</h1>
           <div className="mt-10 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
             {creator.uploadedAssets.map((upload) => (
-              <ProductCard key={upload.id} product={publicUploadToMarketplaceView(upload)} imageSizes="(min-width: 1024px) 25vw, 50vw" />
+              <ProductCard key={upload.id} product={publicUploadToMarketplaceView(upload, locale)} imageSizes="(min-width: 1024px) 25vw, 50vw" />
             ))}
           </div>
         </div>

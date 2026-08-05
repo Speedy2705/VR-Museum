@@ -9,6 +9,7 @@ import { publicUploadToMarketplaceView, toMarketplaceView } from "@/server/view-
 import { Suspense } from "react";
 import { GridSectionSkeleton } from "@/components/ui/PageSkeleton";
 import type { Metadata } from "next";
+import { getRequestLocale } from "@/lib/request-locale";
 
 export const metadata: Metadata = {
   title: "Digital Artifact Marketplace",
@@ -18,10 +19,11 @@ export const metadata: Metadata = {
 
 async function MarketplaceResults({ page }: { page: number }) {
   const result = await listMarketplace({ page, limit: 12 });
+  const locale = await getRequestLocale();
   const marketplaceProducts = result.items.map((entry) =>
     entry.source === "museum"
-      ? toMarketplaceView(entry.item)
-      : publicUploadToMarketplaceView(entry.item),
+      ? toMarketplaceView(entry.item, locale)
+      : publicUploadToMarketplaceView(entry.item, locale),
   );
   const featured = marketplaceProducts.slice(0, 3);
 

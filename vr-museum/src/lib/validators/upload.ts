@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { locales } from "@/lib/i18n";
 import { ARTIFACT_CATEGORIES } from "@/lib/artifact-categories";
 import {
   artifactMediaTypeSchema,
@@ -15,6 +16,15 @@ const categorySchema = z.enum(categoryKeys);
 const lightingPresetSchema = z.enum(["warm-diffuse", "directional-spot", "cool-ambient", "backlit-halo", "raking-light"]);
 const lightTemperatureSchema = z.enum(["warm-white", "cool-white", "artificial-daylight"]);
 const lightDirectionSchema = z.enum(["spotlight", "top-light", "front-facing", "raking-light", "backlight"]);
+const localizedUploadSchema = z.object({
+  title: z.string().trim().min(1).max(200),
+  description: z.string().trim().min(40).max(2_000),
+  origin: z.string().trim().min(1).max(200),
+  material: z.string().trim().min(1).max(120),
+});
+const translationsSchema = z.object(Object.fromEntries(
+  locales.map((locale) => [locale, localizedUploadSchema]),
+) as Record<(typeof locales)[number], typeof localizedUploadSchema>);
 
 const uploadBaseSchema = z.object({
   title: z.string().trim().min(1).max(200),
@@ -27,6 +37,7 @@ const uploadBaseSchema = z.object({
   lightTemperature: lightTemperatureSchema.nullable().optional(),
   lightDirection: lightDirectionSchema.nullable().optional(),
   metadata: z.record(z.string(), z.json()).default({}),
+  translations: translationsSchema,
 });
 
 export const uploadSchema = uploadBaseSchema.superRefine((input, context) => {

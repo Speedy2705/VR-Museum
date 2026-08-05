@@ -11,7 +11,7 @@ export async function generateMetadata({
   params: Promise<{ artifact: string }>;
 }): Promise<Metadata> {
   const { artifact: slug } = await params;
-  const artifact = await getArtifact(slug).catch(() => null);
+  const artifact = await getArtifact(slug, "en").catch(() => null);
   if (!artifact) return { title: "Artifact not found" };
   return {
     title: artifact.title,
@@ -21,7 +21,7 @@ export async function generateMetadata({
 }
 
 export async function generateStaticParams() {
-  return (await listArtifacts({})).map((artifact) => ({
+  return (await listArtifacts({}, "en")).map((artifact) => ({
     slug: artifact.collection.slug,
     artifact: artifact.slug,
   }));

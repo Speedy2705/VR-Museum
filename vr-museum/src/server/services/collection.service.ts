@@ -2,8 +2,9 @@ import { prisma } from "@/lib/prisma";
 import { ServiceError } from "@/lib/service-error";
 import { localizeRecord } from "@/lib/localized-content";
 import { getRequestLocale } from "@/lib/request-locale";
+import type { Locale } from "@/lib/i18n";
 
-export async function listCollections() {
+export async function listCollections(localeOverride?: Locale) {
   const rows = await prisma.collection.findMany({
     orderBy: { title: "asc" },
     include: {
@@ -20,13 +21,13 @@ export async function listCollections() {
       },
     },
   });
-  const locale = await getRequestLocale();
+  const locale = localeOverride ?? await getRequestLocale();
   return rows.map((row) => localizeRecord(row, locale, ["title", "subtitle", "description", "category"]));
 }
 
-export async function listPublicCollections() {
+export async function listPublicCollections(localeOverride?: Locale) {
   const [collections, approvedCount, latest] = await Promise.all([
-    listCollections(),
+    listCollections(localeOverride),
     prisma.uploadedAsset.count({ where: { status: "APPROVED" } }),
     prisma.uploadedAsset.findFirst({
       where: { status: "APPROVED", thumbnailUrl: { not: null } },
@@ -124,7 +125,7 @@ export async function getCommunityCollection(page = 1, limit = 12) {
   };
 }
 
-export async function getCollection(slug: string) {
+export async function getCollection(slug: string, localeOverride?: Locale) {
   const collection = await prisma.collection.findUnique({
     where: { slug },
     include: { artifacts: { orderBy: { title: "asc" } } },
@@ -132,7 +133,7 @@ export async function getCollection(slug: string) {
   if (!collection) {
     throw new ServiceError("Collection not found", "NOT_FOUND", 404);
   }
-  const locale = await getRequestLocale();
+  const locale = localeOverride ?? await getRequestLocale();
   return {
     ...localizeRecord(collection, locale, ["title", "subtitle", "description", "category"]),
     artifacts: collection.artifacts.map((artifact) => localizeRecord(artifact, locale, ["title", "subtitle", "description"])),

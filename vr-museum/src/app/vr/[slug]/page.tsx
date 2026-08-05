@@ -4,7 +4,7 @@ import ArtifactMediaStage from "@/components/media/ArtifactMediaStage";
 import { getArtifact, listArtifacts } from "@/server/services/artifact.service";
 
 export async function generateStaticParams() {
-  return (await listArtifacts({})).map((artifact) => ({ slug: artifact.slug }));
+  return (await listArtifacts({}, "en")).map((artifact) => ({ slug: artifact.slug }));
 }
 
 export default async function VrArtifactPage({ params }: { params: Promise<{ slug: string }> }) {

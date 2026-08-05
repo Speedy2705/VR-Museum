@@ -28,7 +28,7 @@ export async function generateMetadata({
       description: "Curator-approved 3D artifacts contributed by museum community creators.",
     };
   }
-  const collection = await getCollection(slug).catch(() => null);
+  const collection = await getCollection(slug, "en").catch(() => null);
   if (!collection) return { title: "Collection not found" };
   return {
     title: collection.title,
@@ -38,7 +38,7 @@ export async function generateMetadata({
 }
 
 export async function generateStaticParams() {
-  return (await listPublicCollections()).map((collection) => ({
+  return (await listPublicCollections("en")).map((collection) => ({
     slug: collection.slug,
   }));
 }

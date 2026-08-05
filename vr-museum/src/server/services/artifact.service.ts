@@ -3,12 +3,13 @@ import { prisma } from "@/lib/prisma";
 import { ServiceError } from "@/lib/service-error";
 import { localizeRecord } from "@/lib/localized-content";
 import { getRequestLocale } from "@/lib/request-locale";
+import type { Locale } from "@/lib/i18n";
 
 export async function listArtifacts(filters: {
   collection?: string;
   preset?: string;
   query?: string;
-}) {
+}, localeOverride?: Locale) {
   const where: Prisma.ArtifactWhereInput = {};
   if (filters.collection) {
     where.collection = { slug: filters.collection };
@@ -29,14 +30,14 @@ export async function listArtifacts(filters: {
     orderBy: { title: "asc" },
     include: { collection: true },
   });
-  const locale = await getRequestLocale();
+  const locale = localeOverride ?? await getRequestLocale();
   return rows.map((row) => ({
     ...localizeRecord(row, locale, ["title", "subtitle", "description"]),
     collection: localizeRecord(row.collection, locale, ["title", "subtitle", "description", "category"]),
   }));
 }
 
-export async function getArtifact(slug: string) {
+export async function getArtifact(slug: string, localeOverride?: Locale) {
   const artifact = await prisma.artifact.findUnique({
     where: { slug },
     include: {
@@ -50,7 +51,7 @@ export async function getArtifact(slug: string) {
   if (!artifact) {
     throw new ServiceError("Artifact not found", "NOT_FOUND", 404);
   }
-  const locale = await getRequestLocale();
+  const locale = localeOverride ?? await getRequestLocale();
   return {
     ...localizeRecord(artifact, locale, ["title", "subtitle", "description"]),
     collection: localizeRecord(artifact.collection, locale, ["title", "subtitle", "description", "category"]),

@@ -8,11 +8,12 @@ import PageTransition from "@/components/motion/PageTransition";
 import { Toaster } from "sonner";
 import { I18nProvider } from "@/context/I18nContext";
 import type { Locale } from "@/lib/i18n";
+import CachedPageTranslator from "@/components/providers/CachedPageTranslator";
 
 export default function AppProviders({ children, locale }: { children: ReactNode; locale: Locale }) {
   return (
     <SessionProvider>
-      <I18nProvider locale={locale}><CartProvider>
+      <I18nProvider locale={locale}><CachedPageTranslator /><CartProvider>
         <PageTransition>{children}</PageTransition>
         <Toaster
           position="bottom-right"

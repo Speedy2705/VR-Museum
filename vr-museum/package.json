@@ -15,6 +15,7 @@
     "prisma:studio": "prisma studio",
     "prisma:seed": "tsx src/lib/seed.ts",
     "seed:audit": "tsx scripts/audit-seed.mts"
+    ,"translations:generate": "node --env-file=.env.local scripts/generate-translations.mjs"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.3",

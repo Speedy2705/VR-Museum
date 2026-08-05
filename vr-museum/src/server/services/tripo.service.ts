@@ -1,6 +1,6 @@
 import { ServiceError } from "@/lib/service-error";
 
-const TRIPO_ENDPOINT = "https://openapi.tripo3d.com/v3";
+const TRIPO_ENDPOINT = "https://api.tripo3d.ai/v2/openapi";
 const ALLOWED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 const MAX_IMAGE_SIZE = 10 * 1024 * 1024;
 
@@ -44,30 +44,34 @@ async function uploadImage(image: File) {
   if (!ALLOWED_IMAGE_TYPES.has(image.type) || !image.size || image.size > MAX_IMAGE_SIZE) {
     throw new ServiceError("Each view must be a JPG, PNG, or WebP image no larger than 10 MB", "INVALID_SOURCE_IMAGE", 400);
   }
-  const presigned = await tripoRequest("/files/presign", {
+  const form = new FormData();
+  form.set("file", image);
+  const response = await fetch(`${TRIPO_ENDPOINT}/upload/sts`, {
     method: "POST",
-    body: JSON.stringify({ format: imageFormat(image) }),
+    headers: { Authorization: `Bearer ${apiKey()}` },
+    body: form,
+    cache: "no-store",
   });
-  if (typeof presigned.presigned_url !== "string" || typeof presigned.file_token !== "string") {
+  const body = await response.json().catch(() => null) as TripoEnvelope | null;
+  if (!response.ok || body?.code !== 0 || typeof body.data?.image_token !== "string") {
+    const message = typeof body?.message === "string" ? body.message : "A source image could not be uploaded to Tripo";
+    throw new ServiceError(message, "TRIPO_UPLOAD_FAILED", response.status >= 500 ? 502 : response.status || 502);
+  }
+  if (typeof body.data.image_token !== "string") {
     throw new ServiceError("Tripo did not return an image upload token", "TRIPO_INVALID_RESPONSE", 502);
   }
-  const uploaded = await fetch(presigned.presigned_url, {
-    method: "PUT",
-    headers: { "content-type": "application/octet-stream" },
-    body: image,
-  });
-  if (!uploaded.ok) throw new ServiceError("A source image could not be uploaded to Tripo", "TRIPO_UPLOAD_FAILED", 502);
-  return presigned.file_token;
+  return { type: imageFormat(image), file_token: body.data.image_token };
 }
 
 export async function createMultiImageTask(images: File[]) {
   if (images.length !== 3) throw new ServiceError("Exactly three views are required", "INVALID_IMAGE_COUNT", 400);
   const [front, side, back] = await Promise.all(images.map(uploadImage));
-  const result = await tripoRequest("/generation/multiview-to-model", {
+  const result = await tripoRequest("/task", {
     method: "POST",
     body: JSON.stringify({
-      inputs: [{ front }, { right: side }, { back }],
-      model: "v3.1-20260211",
+      type: "multiview_to_model",
+      files: [front, {}, back, side],
+      model_version: "v3.1-20260211",
       texture: true,
       pbr: true,
     }),
@@ -77,17 +81,22 @@ export async function createMultiImageTask(images: File[]) {
 }
 
 export async function getMultiImageTask(taskId: string) {
-  if (!/^task_[a-zA-Z0-9-]{3,120}$/.test(taskId)) throw new ServiceError("Invalid Tripo task ID", "INVALID_TASK_ID", 400);
-  return tripoRequest(`/tasks/${encodeURIComponent(taskId)}`);
+  if (!/^[a-zA-Z0-9-]{8,120}$/.test(taskId)) throw new ServiceError("Invalid Tripo task ID", "INVALID_TASK_ID", 400);
+  return tripoRequest(`/task/${encodeURIComponent(taskId)}`);
 }
 
 export async function downloadGeneratedGlb(taskId: string) {
   const task = await getMultiImageTask(taskId);
   const output = task.output as Record<string, unknown> | undefined;
-  if (task.status !== "success" || typeof output?.model_url !== "string") {
+  const modelUrl = typeof output?.pbr_model === "string"
+    ? output.pbr_model
+    : typeof output?.model === "string"
+      ? output.model
+      : null;
+  if (task.status !== "success" || !modelUrl) {
     throw new ServiceError("The generated model is not ready yet", "MODEL_NOT_READY", 409);
   }
-  const response = await fetch(output.model_url, { cache: "no-store" });
+  const response = await fetch(modelUrl, { cache: "no-store" });
   if (!response.ok) throw new ServiceError("The generated model could not be downloaded", "TRIPO_DOWNLOAD_FAILED", 502);
   return response;
 }

@@ -4,7 +4,8 @@ import { extname, join } from "node:path";
 const sourceRoots = ["src/app", "src/components", "src/lib", "src/data"];
 const targets = ["hi", "mr", "bn", "ta", "te", "gu", "pa", "ur", "es", "fr", "de", "ar", "zh", "ja", "ko"];
 const cacheUrl = new URL("../src/translations/cache.json", import.meta.url);
-const apiKey = process.env.GOOGLE_TRANSLATE_API_KEY;
+const apiKey = process.env.GROQ_API_KEY;
+const model = process.env.GROQ_TRANSLATION_MODEL ?? "openai/gpt-oss-120b";
 
 async function files(path) {
   const entries = await readdir(new URL(`../${path}/`, import.meta.url), { withFileTypes: true });
@@ -46,19 +47,49 @@ async function extract() {
   return [...phrases].sort((a, b) => a.localeCompare(b));
 }
 
-function decodeEntities(value) {
-  return value.replaceAll("&quot;", '"').replaceAll("&#39;", "'").replaceAll("&amp;", "&").replaceAll("&lt;", "<").replaceAll("&gt;", ">");
-}
-
 async function translateBatch(phrases, target) {
-  const response = await fetch(`https://translation.googleapis.com/language/translate/v2?key=${encodeURIComponent(apiKey)}`, {
+  const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ q: phrases, source: "en", target, format: "text" }),
+    headers: { "content-type": "application/json", authorization: `Bearer ${apiKey}` },
+    body: JSON.stringify({
+      model,
+      temperature: 0,
+      reasoning_effort: "low",
+      max_completion_tokens: 12000,
+      response_format: {
+        type: "json_schema",
+        json_schema: {
+          name: "translation_batch",
+          strict: true,
+          schema: {
+            type: "object",
+            properties: {
+              translations: {
+                type: "array",
+                items: { type: "string" },
+                minItems: phrases.length,
+                maxItems: phrases.length,
+              },
+            },
+            required: ["translations"],
+            additionalProperties: false,
+          },
+        },
+      },
+      messages: [
+        { role: "system", content: "You are a professional museum website translator. Translate accurately and naturally. Preserve brand names, URLs, file extensions, placeholders, interpolation tokens, punctuation, and HTML entities. Return only valid JSON with one key named translations whose value is an array of strings in exactly the input order. Never add explanations." },
+        { role: "user", content: JSON.stringify({ sourceLanguage: "en", targetLanguage: target, phrases }) },
+      ],
+    }),
   });
-  if (!response.ok) throw new Error(`Google Translation failed for ${target}: ${response.status} ${await response.text()}`);
+  if (!response.ok) throw new Error(`Groq translation failed for ${target}: ${response.status} ${await response.text()}`);
   const body = await response.json();
-  return body.data.translations.map((item) => decodeEntities(item.translatedText));
+  const parsed = JSON.parse(body.choices?.[0]?.message?.content ?? "{}");
+  if (!Array.isArray(parsed.translations) || parsed.translations.length !== phrases.length || parsed.translations.some((item) => typeof item !== "string" || !item.trim())) {
+    const received = Array.isArray(parsed.translations) ? parsed.translations.length : typeof parsed.translations;
+    throw new Error(`Groq returned an invalid translation batch for ${target}: expected ${phrases.length}, received ${received}`);
+  }
+  return parsed.translations;
 }
 
 const phrases = await extract();
@@ -66,17 +97,18 @@ const cache = JSON.parse(await readFile(cacheUrl, "utf8"));
 cache.en = Object.fromEntries(phrases.map((phrase) => [phrase, phrase]));
 if (!apiKey) {
   await writeFile(cacheUrl, `${JSON.stringify(cache, null, 2)}\n`);
-  throw new Error("GOOGLE_TRANSLATE_API_KEY is required. English phrases were extracted; no paid API calls were made.");
+  throw new Error("GROQ_API_KEY is required. English phrases were extracted; no API calls were made.");
 }
 for (const target of targets) {
   cache[target] ??= {};
   const missing = phrases.filter((phrase) => !cache[target][phrase]);
-  for (let index = 0; index < missing.length; index += 100) {
-    const batch = missing.slice(index, index + 100);
+  for (let index = 0; index < missing.length; index += 30) {
+    const batch = missing.slice(index, index + 30);
     const translated = await translateBatch(batch, target);
     batch.forEach((phrase, offset) => { cache[target][phrase] = translated[offset]; });
+    await writeFile(cacheUrl, `${JSON.stringify(cache, null, 2)}\n`);
+    process.stdout.write(`${target}: ${Math.min(index + batch.length, missing.length)}/${missing.length}\n`);
   }
-  process.stdout.write(`${target}: ${missing.length} new translations\n`);
 }
 await writeFile(cacheUrl, `${JSON.stringify(cache, null, 2)}\n`);
 process.stdout.write(`Cached ${phrases.length} phrases across ${targets.length + 1} languages.\n`);

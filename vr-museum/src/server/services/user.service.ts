@@ -5,12 +5,19 @@ import { prisma } from "@/lib/prisma";
 import { ServiceError } from "@/lib/service-error";
 
 export async function registerUser(input: RegisterInput) {
-  const email = input.email;
-  const existing = await prisma.user.findUnique({ where: { email } });
-  if (existing) {
+  const email = input.email || null;
+  const phone = input.phone || null;
+  if (email && await prisma.user.findUnique({ where: { email } })) {
     throw new ServiceError(
       "An account with this email already exists",
       "EMAIL_TAKEN",
+      409,
+    );
+  }
+  if (phone && await prisma.user.findUnique({ where: { phone } })) {
+    throw new ServiceError(
+      "An account with this mobile number already exists",
+      "PHONE_TAKEN",
       409,
     );
   }
@@ -21,6 +28,7 @@ export async function registerUser(input: RegisterInput) {
   const user = await prisma.user.create({
     data: {
       email,
+      phone,
       name: input.name,
       passwordHash,
       role: input.role,
@@ -28,6 +36,7 @@ export async function registerUser(input: RegisterInput) {
     select: {
       id: true,
       email: true,
+      phone: true,
       name: true,
       image: true,
       role: true,

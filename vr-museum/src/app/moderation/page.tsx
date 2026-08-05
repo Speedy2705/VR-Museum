@@ -59,7 +59,7 @@ export default async function ModerationPage() {
           <h1 className="font-display mt-4 text-4xl italic">Curatorial review</h1>
           <div className="mt-10">
             <h2 className="font-display mb-5 text-2xl italic">Queries and feedback ({support.length})</h2>
-            <SupportQueue initialItems={support.map((item) => ({ id: item.id, type: item.type, subject: item.subject, message: item.message, requester: item.requester.name ?? "Museum member", email: item.requester.email, createdAt: item.createdAt.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) }))} />
+            <SupportQueue initialItems={support.map((item) => ({ id: item.id, type: item.type, subject: item.subject, message: item.message, requester: item.requester.name ?? "Museum member", email: item.requester.email ?? "Mobile-only account", createdAt: item.createdAt.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) }))} />
           </div>
           <div className="mt-12 border-t border-line pt-10">
             <h2 className="font-display mb-5 text-2xl italic">Reported artifacts ({reports.length})</h2>
@@ -85,7 +85,7 @@ export default async function ModerationPage() {
                   title: upload.title,
                   category: upload.category as CollectionSlug,
                   ownerName: upload.owner.name ?? "Museum member",
-                  ownerEmail: upload.owner.email,
+                  ownerEmail: upload.owner.email ?? "Mobile-only account",
                   lightTemperature: upload.lightTemperature as LightTemperatureKey | null,
                   lightDirection: upload.lightDirection as LightDirectionKey | null,
                   fileUrl: upload.fileUrl,

@@ -18,7 +18,7 @@ export default async function CheckoutPage() {
       <main>
         <CheckoutForm initialProfile={{
           name: profile.name ?? "",
-          email: profile.email,
+          email: profile.email ?? "",
           phone: profile.phone ?? "",
           addressLine1: profile.addressLine1 ?? "",
           addressLine2: profile.addressLine2 ?? "",

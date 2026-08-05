@@ -204,13 +204,16 @@ Creates a credentials user and hashes the password with bcrypt.
 ```json
 {
   "name": "Ada Curator",
-  "email": "ada@example.com",
+  "phone": "+919876543210",
+  "role": "CURATOR",
   "password": "at-least-8-characters"
 }
 ```
 
-Names are 1–120 characters, passwords are 8–128 characters, and email
-addresses must be unique. Returns the public user fields with `201`.
+Names are 1–120 characters and passwords are 8–128 characters. At least one
+of `email` or `phone` is required; both are accepted and each must be unique.
+Phones use E.164 form with a leading `+` and international country code.
+Returns the public user fields with `201`.
 
 ### `GET|POST /api/auth/[...nextauth]`
 
@@ -223,7 +226,8 @@ the standard Auth.js endpoints, including:
 - `POST /api/auth/callback/credentials`
 - `POST /api/auth/signout`
 
-Credentials sign-in accepts the registered email and password. Auth.js manages
+Credentials sign-in accepts the registered email or canonical international
+mobile number (for example, `+919876543210`) and password. Auth.js manages
 the exact request and response shapes for these endpoints.
 
 ## Common status codes

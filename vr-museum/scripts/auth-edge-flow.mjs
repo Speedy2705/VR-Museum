@@ -45,7 +45,7 @@ async function login(api, email, password) {
     headers: { "content-type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({
       csrfToken: csrf.csrfToken,
-      email,
+      identifier: email,
       password,
       callbackUrl: `${baseUrl}/assets`,
     }),

@@ -89,7 +89,7 @@ export default async function AssetsPage() {
             </p>
             <BillingProfileForm initialProfile={{
               name: billingProfile.name ?? "",
-              email: billingProfile.email,
+              email: billingProfile.email ?? "",
               phone: billingProfile.phone ?? "",
               addressLine1: billingProfile.addressLine1 ?? "",
               addressLine2: billingProfile.addressLine2 ?? "",

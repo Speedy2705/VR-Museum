@@ -31,14 +31,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     ...oauthProviders,
     Credentials({
       credentials: {
-        email: { label: "Email", type: "email" },
+        identifier: { label: "Email or mobile number", type: "text" },
         password: { label: "Password", type: "password" },
       },
       authorize: async (credentials) => {
         const parsed = credentialsSchema.safeParse(credentials);
         if (!parsed.success) return null;
-        const { email, password } = parsed.data;
-        const user = await prisma.user.findUnique({ where: { email } });
+        const { identifier, password } = parsed.data;
+        const user = identifier.startsWith("+")
+          ? await prisma.user.findUnique({ where: { phone: identifier } })
+          : await prisma.user.findUnique({ where: { email: identifier } });
 
         if (
           !user?.passwordHash ||

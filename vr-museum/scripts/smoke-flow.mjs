@@ -52,7 +52,7 @@ await json("/api/auth/register", {
 const csrf = await (await request("/api/auth/csrf")).json();
 const signInBody = new URLSearchParams({
   csrfToken: csrf.csrfToken,
-  email,
+  identifier: email,
   password,
   callbackUrl: `${baseUrl}/marketplace`,
 });

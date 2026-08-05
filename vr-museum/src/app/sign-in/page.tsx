@@ -25,7 +25,7 @@ export default function SignInPage() {
     setError("");
     const data = new FormData(event.currentTarget);
     const credentials = credentialsSchema.safeParse({
-      email: data.get("email"),
+      identifier: data.get("identifier"),
       password: data.get("password"),
     });
     if (!credentials.success) {
@@ -41,8 +41,8 @@ export default function SignInPage() {
         redirect: false,
       });
       if (result?.error) {
-        setError("Invalid email or password");
-        museumToast.error("Sign-in failed", "Invalid email or password.");
+        setError("Invalid email/mobile number or password");
+        museumToast.error("Sign-in failed", "Invalid email/mobile number or password.");
         setSubmitting(false);
         return;
       }
@@ -78,10 +78,10 @@ export default function SignInPage() {
               className="mt-9 flex flex-col gap-6"
             >
               <FormField
-                label="Email"
-                type="email"
-                name="email"
-                placeholder="you@studio.com"
+                label="Email or mobile number"
+                type="text"
+                name="identifier"
+                placeholder="you@studio.com or +919876543210"
               />
               <div>
                 <PasswordField placeholder="••••••••" />

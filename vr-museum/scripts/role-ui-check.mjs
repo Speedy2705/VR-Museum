@@ -14,7 +14,7 @@ for (const role of roles) {
   if (!registration.ok()) throw new Error(`${role}: registration failed (${registration.status()})`);
   const page = await context.newPage();
   await page.goto(`${baseUrl}/sign-in?returnTo=/marketplace`, { waitUntil: "domcontentloaded" });
-  await page.getByLabel("Email").fill(email);
+  await page.getByLabel("Email or mobile number").fill(email);
   await page.getByPlaceholder("••••••••").fill(password);
   await page.getByRole("button", { name: "Sign In", exact: true }).click();
   await page.waitForURL("**/marketplace");

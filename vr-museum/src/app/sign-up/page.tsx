@@ -27,6 +27,7 @@ export default function SignUpPage() {
     const parsed = registerSchema.safeParse({
       name: String(data.get("name") ?? ""),
       email: String(data.get("email") ?? ""),
+      phone: String(data.get("phone") ?? ""),
       password: String(data.get("password") ?? ""),
       role: String(data.get("role") ?? ""),
     });
@@ -52,6 +53,8 @@ export default function SignUpPage() {
         const message =
           body.error?.code === "EMAIL_TAKEN"
             ? "An account with this email already exists"
+            : body.error?.code === "PHONE_TAKEN"
+              ? "An account with this mobile number already exists"
             : (body.error?.message ?? "Unable to create account");
         setError(message);
         museumToast.error("Account could not be created", message);
@@ -59,7 +62,7 @@ export default function SignUpPage() {
         return;
       }
       const result = await signIn("credentials", {
-        email: credentials.email,
+        identifier: credentials.email || credentials.phone,
         password: credentials.password,
         redirect: false,
       });
@@ -105,11 +108,20 @@ export default function SignUpPage() {
                 placeholder="Jane Doe"
               />
               <FormField
-                label="Email"
+                label="Email (optional)"
                 type="email"
                 name="email"
                 placeholder="you@studio.com"
               />
+              <FormField
+                label="Mobile number (optional)"
+                type="tel"
+                name="phone"
+                placeholder="+919876543210"
+              />
+              <p className="-mt-4 text-xs leading-relaxed text-stone">
+                Enter at least one. Mobile numbers must include the international country code.
+              </p>
               <PasswordField placeholder="••••••••" />
 
               <div>

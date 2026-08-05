@@ -92,6 +92,7 @@ describe("key API routes", () => {
         "/api/auth/register",
         {
           email: "CURATOR@EXAMPLE.COM",
+          phone: "",
           name: " Curator ",
           password: "museum-pass",
           role: "CURATOR",
@@ -103,6 +104,7 @@ describe("key API routes", () => {
     expect(response.status).toBe(201);
     expect(mocks.registerUser).toHaveBeenCalledWith({
       email: "curator@example.com",
+      phone: "",
       name: "Curator",
       password: "museum-pass",
       role: "CURATOR",

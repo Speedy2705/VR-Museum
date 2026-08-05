@@ -11,6 +11,7 @@ import {
   billingProfileSchema,
   emailSchema,
   passwordSchema,
+  phoneSchema,
   registerSchema,
 } from "./user";
 import { marketplaceQuerySchema, marketplaceUpdateSchema } from "./marketplace";
@@ -60,9 +61,12 @@ describe("user validators", () => {
 
   it("rejects malformed credentials and unsafe password lengths", () => {
     expect(
-      credentialsSchema.safeParse({ email: "bad", password: "short" }).success,
+      credentialsSchema.safeParse({ identifier: "bad", password: "short" }).success,
     ).toBe(false);
     expect(passwordSchema.safeParse("x".repeat(129)).success).toBe(false);
+    expect(phoneSchema.parse("+91 98765-43210")).toBe("+919876543210");
+    expect(phoneSchema.safeParse("9876543210").success).toBe(false);
+    expect(registerSchema.safeParse({ name: "Ada", email: "", phone: "", password: "museum-pass", role: "VISITOR" }).success).toBe(false);
   });
 });
 

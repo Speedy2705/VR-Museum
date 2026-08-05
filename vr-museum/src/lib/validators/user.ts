@@ -11,8 +11,18 @@ export const passwordSchema = z
   .min(8, "Password must be at least 8 characters")
   .max(128, "Password must be at most 128 characters");
 
+export const phoneSchema = z
+  .string()
+  .trim()
+  .transform((phone) => phone.replace(/[\s().-]/g, ""))
+  .pipe(
+    z
+      .string()
+      .regex(/^\+[1-9]\d{6,14}$/, "Enter a valid international number including country code"),
+  );
+
 export const credentialsSchema = z.object({
-  email: emailSchema,
+  identifier: z.union([emailSchema, phoneSchema]),
   password: passwordSchema,
 });
 
@@ -39,10 +49,7 @@ const requiredCheckoutText = (label: string, max = 120) =>
 export const billingProfileSchema = z.object({
   name: requiredCheckoutText("Full name"),
   email: emailSchema,
-  phone: z.string().trim()
-    .min(7, "Enter a valid phone number")
-    .max(30, "Phone number is too long")
-    .regex(/^[+()\d\s.-]+$/, "Enter a valid phone number"),
+  phone: phoneSchema,
   addressLine1: requiredCheckoutText("Address line 1", 200),
   addressLine2: z.string().trim().max(200).default(""),
   city: requiredCheckoutText("City"),
@@ -52,7 +59,8 @@ export const billingProfileSchema = z.object({
 });
 
 export const registerSchema = z.object({
-  email: emailSchema,
+  email: z.union([emailSchema, z.literal("")]).optional(),
+  phone: z.union([phoneSchema, z.literal("")]).optional(),
   name: z
     .string()
     .trim()
@@ -60,6 +68,14 @@ export const registerSchema = z.object({
     .max(120, "Name must be at most 120 characters"),
   password: passwordSchema,
   role: userRoleSchema,
+}).superRefine((value, context) => {
+  if (!value.email && !value.phone) {
+    context.addIssue({
+      code: "custom",
+      path: ["email"],
+      message: "Enter an email address or mobile number",
+    });
+  }
 });
 
 export type CredentialsInput = z.infer<typeof credentialsSchema>;

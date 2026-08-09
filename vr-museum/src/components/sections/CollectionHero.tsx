@@ -29,10 +29,10 @@ export default function CollectionHero({
       <div className="relative z-10 w-full px-10 pb-10 md:px-16">
         <Breadcrumbs light items={[{ label: "Collections", href: "/collections" }, { label: title }]} />
 
-        <h1 className="font-display mt-5 text-5xl text-white italic md:text-[52px]">
+        <h1 data-no-translate className="font-display mt-5 text-5xl text-white italic md:text-[52px]">
           {title}
         </h1>
-        <p className="mt-3 text-[11px] tracking-label text-white/55 uppercase">
+        <p data-no-translate className="mt-3 text-[11px] tracking-label text-white/55 uppercase">
           {subtitle}
         </p>
       </div>

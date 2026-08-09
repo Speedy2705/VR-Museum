@@ -40,6 +40,12 @@ deployments set that token through a connected Blob store and enable direct
 browser uploads with `NEXT_PUBLIC_BLOB_UPLOADS=true`, avoiding the Vercel
 Function request-body limit for large model and video files.
 
+Meshy three-view generation is the exception to the local-disk fallback:
+Meshy's Multi-Image API requires public JPG/PNG URLs, so
+`MESHY_API_KEY` and `BLOB_READ_WRITE_TOKEN` must both be configured. The service
+records source Blob URLs by Meshy task ID and removes them after a terminal
+task status.
+
 ## Authentication
 
 `src/lib/auth.ts` is reserved for the future Auth.js configuration and

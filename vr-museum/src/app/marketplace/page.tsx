@@ -10,17 +10,20 @@ import { Suspense } from "react";
 import { GridSectionSkeleton } from "@/components/ui/PageSkeleton";
 import type { Metadata } from "next";
 import { getRequestLocale } from "@/lib/request-locale";
+import { getLocalizedArtifact } from "@/server/services/content-translation.service";
+import { localizedMetadata } from "@/lib/localized-metadata";
 
-export const metadata: Metadata = {
-  title: "Digital Artifact Marketplace",
-  description: "Browse licensed, studio-grade 3D scans of historical artifacts.",
-  openGraph: { images: ["/images/marketplace-hero.png"] },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return { ...await localizedMetadata("Digital Artifact Marketplace", "Browse licensed, studio-grade 3D scans of historical artifacts."), openGraph: { images: ["/images/marketplace-hero.png"] } };
+}
 
 async function MarketplaceResults({ page }: { page: number }) {
   const result = await listMarketplace({ page, limit: 12 });
   const locale = await getRequestLocale();
-  const marketplaceProducts = result.items.map((entry) =>
+  const localizedItems = await Promise.all(result.items.map(async (entry) => entry.source === "museum"
+    ? { ...entry, item: { ...entry.item, artifact: await getLocalizedArtifact(entry.item.artifact, locale) } }
+    : entry));
+  const marketplaceProducts = localizedItems.map((entry) =>
     entry.source === "museum"
       ? toMarketplaceView(entry.item, locale)
       : publicUploadToMarketplaceView(entry.item, locale),

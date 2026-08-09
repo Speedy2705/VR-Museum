@@ -18,6 +18,9 @@ AUTH_SECRET=<one cryptographically random 32-byte-or-longer value>
 NEXTAUTH_SECRET=<the same value, retained for compatibility>
 AUTH_TRUST_HOST=true
 NEXT_PUBLIC_BLOB_UPLOADS=true
+MESHY_API_KEY=<server-only key from https://www.meshy.ai/settings/api>
+GEMINI_API_KEY=<server-only key from https://aistudio.google.com/app/apikey>
+GEMINI_TRANSLATION_MODEL=gemini-3.5-flash-lite
 ```
 
 Set `AUTH_URL` only after the production hostname is known:
@@ -26,8 +29,10 @@ Set `AUTH_URL` only after the production hostname is known:
 AUTH_URL=https://your-project.vercel.app
 ```
 
-Never copy `.env` into Git. Payment and OAuth variables from `.env.example`
-are optional until those providers are enabled.
+Never copy `.env` into Git. Meshy requires the connected public Blob store
+because its Multi-Image endpoint consumes public JPG/PNG URLs. Payment and
+OAuth variables from `.env.example` are optional until those providers are
+enabled.
 
 ## Build and database
 

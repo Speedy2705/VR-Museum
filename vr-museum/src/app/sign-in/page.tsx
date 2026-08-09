@@ -69,7 +69,7 @@ export default function SignInPage() {
             </Link>
 
             <p className="mt-10 text-[10px] tracking-label uppercase text-stone">
-              Welcome Back
+              Welcome Back Aryan
             </p>
             <h1 className="font-display mt-3 text-4xl italic">Sign in</h1>
 

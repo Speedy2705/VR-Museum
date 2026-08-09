@@ -41,7 +41,18 @@ npm run dev
 
 Open `http://localhost:3000`. Set `NEXTAUTH_SECRET` in `.env` to a strong random
 value and point `DATABASE_URL` to PostgreSQL. See
-[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for the Vercel production runbook.
+[vr-museum/docs/DEPLOYMENT.md](vr-museum/docs/DEPLOYMENT.md) for the Vercel production runbook.
+
+Multilingual UI copy is translated at runtime with the Google Gemini API. See
+[vr-museum/docs/TRANSLATIONS.md](vr-museum/docs/TRANSLATIONS.md) for API-key setup
+and the translation workflow.
+
+Three-view image-to-3D generation uses Meshy's Multi-Image to 3D API and public
+source images in Vercel Blob. Create a server API key in
+[Meshy API settings](https://www.meshy.ai/settings/api), set `MESHY_API_KEY` and
+`BLOB_READ_WRITE_TOKEN`, and never expose either value with a `NEXT_PUBLIC_`
+prefix. The source JPG/PNG views are removed from Blob after Meshy reaches a
+terminal task state.
 
 ## Quality checks
 
@@ -52,7 +63,7 @@ npx tsc --noEmit
 npm run build
 ```
 
-See [docs/TESTING.md](docs/TESTING.md) for the authenticated smoke flow,
+See [vr-museum/docs/TESTING.md](vr-museum/docs/TESTING.md) for the authenticated smoke flow,
 browser regression crawl, and the latest performance checkpoint.
 
 ## Architecture

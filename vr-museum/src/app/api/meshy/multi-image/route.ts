@@ -2,7 +2,7 @@ import { apiSuccess } from "@/lib/api-response";
 import { requirePermission } from "@/lib/auth";
 import { handleRouteError } from "@/lib/route-error";
 import { ServiceError } from "@/lib/service-error";
-import { createMultiImageTask } from "@/server/services/tripo.service";
+import { createMultiImageTask } from "@/server/services/meshy.service";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +16,6 @@ export async function POST(request: Request) {
     }
     return apiSuccess(await createMultiImageTask(images as File[]), { status: 202, message: "3D generation started" });
   } catch (error) {
-    return handleRouteError(error, "POST /api/tripo/multi-image");
+    return handleRouteError(error, "POST /api/meshy/multi-image");
   }
 }

@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import path from "node:path";
-import { put } from "@vercel/blob";
+import { del, put } from "@vercel/blob";
 
 import { MAX_UPLOAD_FILE_SIZE } from "@/lib/upload-file-policy";
 import type { FileStorage } from "@/server/storage/storage";
@@ -26,5 +26,9 @@ export class BlobStorage implements FileStorage {
       contentType: file.type || "application/octet-stream",
       size: file.size,
     };
+  }
+
+  async delete(urls: string | string[]) {
+    await del(urls);
   }
 }

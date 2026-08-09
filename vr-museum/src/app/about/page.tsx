@@ -8,8 +8,9 @@ import StudioPresets from "@/components/sections/StudioPresets";
 import CTASection from "@/components/sections/CTASection";
 import { pageImages } from "@/lib/media";
 import type { Metadata } from "next";
+import { localizedMetadata } from "@/lib/localized-metadata";
 
-export const metadata: Metadata = { title: "About", description: "Learn how ViswaRoop makes historical artifacts accessible in virtual reality." };
+export function generateMetadata(): Promise<Metadata> { return localizedMetadata("About", "Learn how ViswaRoop makes historical artifacts accessible in virtual reality."); }
 
 export default function AboutPage() {
   return (

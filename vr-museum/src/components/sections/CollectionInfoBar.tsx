@@ -14,7 +14,7 @@ export default function CollectionInfoBar({
   return (
     <section className="grid grid-cols-1 md:grid-cols-[1fr_420px]">
       <div className="bg-cream px-10 py-10 md:px-16">
-        <p className="max-w-2xl text-sm leading-relaxed text-charcoal/80">
+        <p data-no-translate className="max-w-2xl text-sm leading-relaxed text-charcoal/80">
           {description}
         </p>
       </div>

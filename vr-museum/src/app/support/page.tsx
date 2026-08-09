@@ -4,8 +4,10 @@ import Footer from "@/components/layout/Footer";
 import SupportCenter from "@/components/support/SupportCenter";
 import { getCurrentUser } from "@/lib/auth";
 import { listUserSupportRequests } from "@/server/services/support.service";
+import type { Metadata } from "next";
+import { localizedMetadata } from "@/lib/localized-metadata";
 
-export const metadata = { title: "Queries & Feedback", description: "Ask the museum a question or share feedback." };
+export function generateMetadata(): Promise<Metadata> { return localizedMetadata("Queries & Feedback", "Ask the museum a question or share feedback."); }
 
 export default async function SupportPage() {
   const user = await getCurrentUser();

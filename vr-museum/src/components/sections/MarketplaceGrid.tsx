@@ -91,9 +91,9 @@ export default function MarketplaceGrid({ items, pagination }: MarketplaceGridPr
         )}
         {pagination.pages > 1 && (
           <nav aria-label="Marketplace pages" className="mt-12 flex items-center justify-center gap-4">
-            {pagination.page > 1 && <Link href={`/marketplace?page=${pagination.page - 1}`} className="border border-line px-5 py-2.5 text-[10px] tracking-label uppercase">← Previous</Link>}
+            {pagination.page > 1 && <Link href={`/marketplace?page=${pagination.page - 1}`} className="border border-line px-5 py-2.5 text-[10px] tracking-label uppercase"><span className="inline-block rtl:-scale-x-100">←</span> Previous</Link>}
             <span className="text-xs text-stone">Page {pagination.page} of {pagination.pages}</span>
-            {pagination.page < pagination.pages && <Link href={`/marketplace?page=${pagination.page + 1}`} className="border border-line px-5 py-2.5 text-[10px] tracking-label uppercase">Next →</Link>}
+            {pagination.page < pagination.pages && <Link href={`/marketplace?page=${pagination.page + 1}`} className="border border-line px-5 py-2.5 text-[10px] tracking-label uppercase">Next <span className="inline-block rtl:-scale-x-100">→</span></Link>}
           </nav>
         )}
       </div>

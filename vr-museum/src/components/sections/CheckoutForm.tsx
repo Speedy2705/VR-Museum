@@ -54,7 +54,7 @@ function CheckoutField({ field, label, profile, setValue, error, onBlur, type = 
   return (
     <div>
       <label htmlFor={`checkout-${field}`} className="text-[10px] tracking-label uppercase text-stone">
-        {label}{required && <span className="ml-1 text-red-700">*</span>}
+        {label}{required && <span className="ms-1 text-red-700">*</span>}
       </label>
       <input
         id={`checkout-${field}`}
@@ -77,7 +77,7 @@ function CheckoutField({ field, label, profile, setValue, error, onBlur, type = 
 }
 
 function Spinner() {
-  return <span aria-hidden className="mr-2 inline-block h-3 w-3 animate-spin rounded-full border border-current border-t-transparent" />;
+  return <span aria-hidden className="me-2 inline-block h-3 w-3 animate-spin rounded-full border border-current border-t-transparent" />;
 }
 
 function CardPayment({ orderId, onError, onSuccess }: {
@@ -98,7 +98,7 @@ function CardPayment({ orderId, onError, onSuccess }: {
         if (event.complete) setElementError("");
       }} />
       {elementError && (
-        <p role="alert" className="border-l-2 border-red-700 pl-3 text-sm text-red-700">
+        <p role="alert" className="border-s-2 border-red-700 ps-3 text-sm text-red-700">
           {elementError}
         </p>
       )}
@@ -337,7 +337,7 @@ export default function CheckoutForm({ initialProfile }: { initialProfile: Billi
               </div>
             </section>
 
-            {error && <p role="alert" className="border-l-2 border-red-700 pl-3 text-sm text-red-700">{error}</p>}
+            {error && <p role="alert" className="border-s-2 border-red-700 ps-3 text-sm text-red-700">{error}</p>}
             {!cardIntent && (
               <button
                 type="submit"
@@ -349,7 +349,7 @@ export default function CheckoutForm({ initialProfile }: { initialProfile: Billi
                   : `Pay with UPI — $${total.toFixed(2)} (converted to INR)`}
               </button>
             )}
-            <p className="text-center text-[10px] text-stone">
+            <p data-no-translate className="text-center text-[10px] text-stone">
               🔒 Payment details are handled by Stripe or Razorpay and never stored here.
             </p>
           </div>

@@ -12,11 +12,10 @@ import SupportQueue from "@/components/moderation/SupportQueue";
 import { listOpenSupportRequests } from "@/server/services/support.service";
 import type { CollectionSlug, LightDirectionKey, LightTemperatureKey } from "@/lib/artifact-categories";
 import type { ModelFormat } from "@/lib/three/loaders";
+import type { Metadata } from "next";
+import { localizedMetadata } from "@/lib/localized-metadata";
 
-export const metadata = {
-  title: "Upload Moderation",
-  description: "Review artifact uploads awaiting curatorial approval.",
-};
+export function generateMetadata(): Promise<Metadata> { return localizedMetadata("Upload Moderation", "Review artifact uploads awaiting curatorial approval."); }
 
 type ReviewMetadata = {
   description: string;

@@ -218,7 +218,7 @@ export default function Navbar({ hasHeroBackground = false }: NavbarProps) {
                     initial={reduceMotion ? false : { opacity: 0, y: -8 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={reduceMotion ? undefined : { opacity: 0, y: -8 }}
-                    className="absolute top-full right-0 z-40 mt-3 w-64 border border-white/15 bg-ink p-2 text-white shadow-2xl"
+                    className="absolute top-full end-0 z-40 mt-3 w-64 border border-white/15 bg-ink p-2 text-white shadow-2xl"
                   >
                     <div className="px-3 py-3">
                       <p className="font-display truncate text-base">{user.name ?? t.account}</p>
@@ -262,7 +262,7 @@ export default function Navbar({ hasHeroBackground = false }: NavbarProps) {
                           setAccountOpen(false);
                           setSignOutOpen(true);
                         }}
-                        className="w-full px-3 py-2.5 text-left text-[11px] tracking-label uppercase text-white/70 transition-colors hover:bg-white/5 hover:text-white"
+                        className="w-full px-3 py-2.5 text-start text-[11px] tracking-label uppercase text-white/70 transition-colors hover:bg-white/5 hover:text-white"
                       >
                         {t.signOut}
                       </button>
@@ -329,7 +329,7 @@ export default function Navbar({ hasHeroBackground = false }: NavbarProps) {
                 className="w-full border-b border-white/25 bg-transparent px-1 py-3 text-sm text-white placeholder:text-white/40 focus:border-white focus:outline-none"
               />
               {query.trim().length >= 2 && (
-                <div className="absolute top-full right-0 left-0 z-40 max-h-80 overflow-y-auto border border-line bg-cream text-ink shadow-xl">
+                <div className="absolute top-full inset-x-0 z-40 max-h-80 overflow-y-auto border border-line bg-cream text-ink shadow-xl">
                   {searching ? (
                     <p className="px-5 py-5 text-sm text-stone">{t.searching}</p>
                   ) : results.length ? (

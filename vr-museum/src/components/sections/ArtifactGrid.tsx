@@ -55,10 +55,10 @@ export default function ArtifactGrid({
                 />
                 <Tag className="absolute top-3 left-3">{item.preset}</Tag>
               </div>
-              <h3 className="motion-underline mt-3 w-fit text-sm text-ink">
+              <h3 data-no-translate className="motion-underline mt-3 w-fit text-sm text-ink">
                 {item.title}
               </h3>
-              <p className="mt-1 text-xs text-stone">{item.subtitle}</p>
+              <p data-no-translate className="mt-1 text-xs text-stone">{item.subtitle}</p>
               {item.attribution && <p className="mt-1 text-xs text-stone">{item.attribution}</p>}
             </Link>
             </MotionCard>

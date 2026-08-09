@@ -102,15 +102,15 @@ model User {
 }
 
 model Collection {
-  id          String     @id @default(cuid())
-  slug        String     @unique
-  title       String
-  subtitle    String
-  description String
-  heroImage   String
-  category    String
-  translations Json                 @default("{}")
-  artifacts   Artifact[]
+  id           String     @id @default(cuid())
+  slug         String     @unique
+  title        String
+  subtitle     String
+  description  String
+  heroImage    String
+  category     String
+  translations Json       @default("{}")
+  artifacts    Artifact[]
 }
 
 model Artifact {
@@ -203,28 +203,28 @@ model OrderItem {
 }
 
 model UploadedAsset {
-  id             String            @id @default(cuid())
-  ownerId        String
-  title          String
-  category       String
-  fileUrl        String
-  thumbnailUrl   String?
-  mediaType      ArtifactMediaType @default(MODEL_3D)
-  modelFormat    String?
-  status         AssetStatus       @default(PENDING)
-  lightingPreset String?
+  id               String            @id @default(cuid())
+  ownerId          String
+  title            String
+  category         String
+  fileUrl          String
+  thumbnailUrl     String?
+  mediaType        ArtifactMediaType @default(MODEL_3D)
+  modelFormat      String?
+  status           AssetStatus       @default(PENDING)
+  lightingPreset   String?
   lightTemperature String?
   lightDirection   String?
-  curatorComment String?
-  curatorId      String?
-  reviewedAt     DateTime?
-  collectionSlug String?
-  metadata       Json
-  translations   Json              @default("{}")
-  views          Int               @default(0)
-  owner          User              @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  curator        User?             @relation("UploadCurator", fields: [curatorId], references: [id], onDelete: SetNull)
-  reports        ArtifactReport[]
+  curatorComment   String?
+  curatorId        String?
+  reviewedAt       DateTime?
+  collectionSlug   String?
+  metadata         Json
+  translations     Json              @default("{}")
+  views            Int               @default(0)
+  owner            User              @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  curator          User?             @relation("UploadCurator", fields: [curatorId], references: [id], onDelete: SetNull)
+  reports          ArtifactReport[]
 
   @@unique([ownerId, title])
   @@index([ownerId])
@@ -301,4 +301,26 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+model TranslationCache {
+  id             String   @id @default(cuid())
+  locale         String
+  sourceHash     String
+  sourceText     String
+  translatedText String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([locale, sourceHash])
+  @@index([locale])
+}
+
+model MeshySourceUpload {
+  taskId    String    @id
+  blobUrls  String[]
+  createdAt DateTime  @default(now())
+  cleanedAt DateTime?
+
+  @@index([cleanedAt])
 }

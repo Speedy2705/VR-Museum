@@ -16,8 +16,11 @@ import type { Metadata } from "next";
 import BillingProfileForm from "@/components/account/BillingProfileForm";
 import { getBillingProfile } from "@/server/services/user.service";
 import { getRequestLocale } from "@/lib/request-locale";
+import { getLocalizedArtifact } from "@/server/services/content-translation.service";
+import { mapWithConcurrency } from "@/server/concurrency";
+import { localizedMetadata } from "@/lib/localized-metadata";
 
-export const metadata: Metadata = { title: "Your Assets", description: "Manage purchased and uploaded museum assets." };
+export function generateMetadata(): Promise<Metadata> { return localizedMetadata("Your Assets", "Manage purchased and uploaded museum assets."); }
 
 export default async function AssetsPage() {
   const user = await getCurrentUser();
@@ -29,7 +32,18 @@ export default async function AssetsPage() {
     getRequestLocale(),
   ]);
   const paidOrders = orders.filter((order) => order.paymentStatus === "PAID");
-  const purchasedAssets = ordersToPurchasedAssets(paidOrders);
+  const paidItems = paidOrders.flatMap((order) => order.items);
+  const localizedArtifacts = await mapWithConcurrency(paidItems, 8, (item) =>
+    getLocalizedArtifact(item.listing.artifact, locale));
+  let localizedIndex = 0;
+  const localizedOrders = paidOrders.map((order) => ({
+    ...order,
+    items: order.items.map((item) => ({
+      ...item,
+      listing: { ...item.listing, artifact: localizedArtifacts[localizedIndex++] },
+    })),
+  }));
+  const purchasedAssets = ordersToPurchasedAssets(localizedOrders, locale);
   const uploadedAssets = uploads.map((upload) => toUploadedAssetView(upload, locale));
   const totalEarnings = uploadedAssets.reduce(
     (sum, upload) => sum + (upload.earnings ?? 0),

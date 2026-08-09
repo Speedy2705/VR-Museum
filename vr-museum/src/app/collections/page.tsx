@@ -8,16 +8,20 @@ import { listPublicCollections } from "@/server/services/collection.service";
 import { Suspense } from "react";
 import { GridSectionSkeleton } from "@/components/ui/PageSkeleton";
 import type { Metadata } from "next";
+import { getRequestLocale } from "@/lib/request-locale";
+import { getLocalizedCollection } from "@/server/services/content-translation.service";
+import { mapWithConcurrency } from "@/server/concurrency";
+import { localizedMetadata } from "@/lib/localized-metadata";
 
-export const metadata: Metadata = {
-  title: "Collections",
-  description: "Browse virtual museum collections grouped by material, culture, and era.",
-  openGraph: { images: ["/images/gallery-interior.png"] },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return { ...await localizedMetadata("Collections", "Browse virtual museum collections grouped by material, culture, and era."), openGraph: { images: ["/images/gallery-interior.png"] } };
+}
 export const dynamic = "force-dynamic";
 
 async function CollectionResults() {
-  const collections = await listPublicCollections();
+  const [rows, locale] = await Promise.all([listPublicCollections("en"), getRequestLocale()]);
+  const collections = await mapWithConcurrency(rows, 8, async (collection) =>
+    "translations" in collection ? getLocalizedCollection(collection, locale) : collection);
   return <CollectionsGrid items={collections} />;
 }
 

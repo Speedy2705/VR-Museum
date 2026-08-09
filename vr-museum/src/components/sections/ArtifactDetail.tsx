@@ -40,10 +40,10 @@ export default function ArtifactDetail({
   const details = (
     <div>
       <Breadcrumbs items={[{ label: "Collections", href: "/collections" }, { label: collectionTitle, href: backHref }, { label: title }]} />
-      <h1 className="font-display mt-5 text-3xl italic md:text-[34px]">{title}</h1>
-      <p className="mt-2 text-xs tracking-wide text-stone uppercase">{location}</p>
-      <p className="mt-6 text-sm leading-relaxed text-charcoal/80">{description}</p>
-      <div className="mt-6 divide-y divide-line border-t border-line">{specs.map((spec) => <div key={spec.label} className="flex items-center justify-between py-3"><span className="text-[10px] tracking-label text-stone uppercase">{spec.label}</span><span className="text-sm text-ink">{spec.value}</span></div>)}</div>
+      <h1 data-no-translate className="font-display mt-5 text-3xl italic md:text-[34px]">{title}</h1>
+      <p data-no-translate className="mt-2 text-xs tracking-wide text-stone uppercase">{location}</p>
+      <p data-no-translate className="mt-6 text-sm leading-relaxed text-charcoal/80">{description}</p>
+      <div className="mt-6 divide-y divide-line border-t border-line">{specs.map((spec) => <div key={spec.label} className="flex items-center justify-between py-3"><span className="text-[10px] tracking-label text-stone uppercase">{spec.label}</span><span data-no-translate className="text-sm text-ink">{spec.value}</span></div>)}</div>
       <div className="mt-5 border border-line px-4 py-3"><p className="text-[10px] tracking-label text-stone uppercase">{preset.name}</p><p className="mt-2 text-xs leading-relaxed text-stone">{preset.note}</p></div>
     </div>
   );

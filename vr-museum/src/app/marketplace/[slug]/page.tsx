@@ -9,6 +9,8 @@ import {
 import { toMarketplaceView } from "@/server/view-models";
 import type { Metadata } from "next";
 import { getRequestLocale } from "@/lib/request-locale";
+import { getLocalizedArtifact } from "@/server/services/content-translation.service";
+import { getLocalizedUiPhrases } from "@/server/services/ui-translation.service";
 
 export async function generateMetadata({
   params,
@@ -17,10 +19,15 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const listing = await getMarketplaceListing(slug).catch(() => null);
-  if (!listing) return { title: "Listing not found" };
+  const locale = await getRequestLocale();
+  if (!listing) return { title: (await getLocalizedUiPhrases(locale, ["Listing not found"]))[0] };
+  const [artifact, [marketplace]] = await Promise.all([
+    getLocalizedArtifact(listing.artifact, locale),
+    getLocalizedUiPhrases(locale, ["Marketplace"]),
+  ]);
   return {
-    title: `${listing.artifact.title} — Marketplace`,
-    description: listing.artifact.description,
+    title: `${artifact.title} — ${marketplace}`,
+    description: artifact.description,
     openGraph: { images: listing.artifact.image ? [listing.artifact.image] : [] },
   };
 }
@@ -39,7 +46,9 @@ export default async function MarketplaceItemPage({
 }) {
   const { slug } = await params;
   const listing = await getMarketplaceListing(slug).catch(() => notFound());
-  const product = toMarketplaceView(listing, await getRequestLocale());
+  const locale = await getRequestLocale();
+  const localizedArtifact = await getLocalizedArtifact(listing.artifact, locale);
+  const product = toMarketplaceView({ ...listing, artifact: localizedArtifact }, locale);
 
   return (
     <>

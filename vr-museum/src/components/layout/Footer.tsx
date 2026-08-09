@@ -103,7 +103,7 @@ export default function Footer() {
       </div>
 
       <div className="mx-auto mt-16 flex max-w-[1600px] flex-col items-center justify-between gap-4 border-t border-line-dark pt-6 md:flex-row">
-        <p className="text-xs text-white/40">© 2025 ViswaRoop. All rights reserved.</p>
+        <p data-no-translate className="text-xs text-white/40">© 2025 ViswaRoop. All rights reserved.</p>
         <div className="flex items-center gap-5">
           {socials.map((s) => (
             <Link

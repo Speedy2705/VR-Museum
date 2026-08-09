@@ -1,7 +1,7 @@
 import { apiSuccess } from "@/lib/api-response";
 import { requirePermission } from "@/lib/auth";
 import { handleRouteError } from "@/lib/route-error";
-import { getMultiImageTask } from "@/server/services/tripo.service";
+import { getMultiImageTask } from "@/server/services/meshy.service";
 
 export const dynamic = "force-dynamic";
 
@@ -12,10 +12,10 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     const task = await getMultiImageTask(id);
     return apiSuccess({
       status: task.status,
-      progress: typeof task.progress === "number" ? task.progress : 0,
-      error: typeof task.message === "string" ? task.message : null,
+      progress: task.progress,
+      error: task.task_error?.message ?? null,
     });
   } catch (error) {
-    return handleRouteError(error, "GET /api/tripo/multi-image/[id]");
+    return handleRouteError(error, "GET /api/meshy/multi-image/[id]");
   }
 }

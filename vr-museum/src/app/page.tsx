@@ -8,13 +8,21 @@ import CollectionGrid from "@/components/sections/CollectionGrid";
 import CTASection from "@/components/sections/CTASection";
 import { listArtifacts } from "@/server/services/artifact.service";
 import { listCollections } from "@/server/services/collection.service";
+import { getRequestLocale } from "@/lib/request-locale";
+import { getLocalizedArtifact, getLocalizedCollection } from "@/server/services/content-translation.service";
+import { mapWithConcurrency } from "@/server/concurrency";
 
 export default async function Home() {
-  const [collectionRows, artifacts] = await Promise.all([
+  const [collectionRows, artifactRows, locale] = await Promise.all([
     listCollections(),
     listArtifacts({}),
+    getRequestLocale(),
   ]);
-  const collections = collectionRows.map((collection) => ({
+  const [localizedCollections, artifacts] = await Promise.all([
+    mapWithConcurrency(collectionRows, 8, (collection) => getLocalizedCollection(collection, locale)),
+    mapWithConcurrency(artifactRows, 8, (artifact) => getLocalizedArtifact(artifact, locale)),
+  ]);
+  const collections = localizedCollections.map((collection) => ({
     ...collection,
     count: collection._count.artifacts,
     video: collection.artifacts[0]?.videoUrl ?? undefined,

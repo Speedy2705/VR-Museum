@@ -8,8 +8,9 @@ import { hasPermission } from "@/lib/role-policy";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
+import { localizedMetadata } from "@/lib/localized-metadata";
 
-export const metadata: Metadata = { title: "Upload Artifact", description: "Contribute a 3D model or scan to the virtual museum." };
+export function generateMetadata(): Promise<Metadata> { return localizedMetadata("Upload Artifact", "Contribute a 3D model or scan to the virtual museum."); }
 
 export default async function UploadPage() {
   const user = await getCurrentUser();

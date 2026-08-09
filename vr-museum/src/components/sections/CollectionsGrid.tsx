@@ -63,14 +63,14 @@ export default function CollectionsGrid({ items }: CollectionsGridProps) {
                     sizes="(min-width: 640px) 50vw, 100vw"
                   />
                 </div>
-                <h3 className="font-display mt-5 text-2xl italic group-hover:underline">
+                <h3 data-no-translate className="font-display mt-5 text-2xl italic group-hover:underline">
                   {collection.title}
                 </h3>
               </Link>
-              <p className="mt-1.5 text-xs tracking-wide text-stone uppercase">
+              <p data-no-translate className="mt-1.5 text-xs tracking-wide text-stone uppercase">
                 {collection.subtitle} · {collection.count} Models
               </p>
-              <p className="mt-3 max-w-md text-sm leading-relaxed text-charcoal/75">
+              <p data-no-translate className="mt-3 max-w-md text-sm leading-relaxed text-charcoal/75">
                 {collection.description}
               </p>
               <Link

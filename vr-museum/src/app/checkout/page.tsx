@@ -5,8 +5,9 @@ import { getCurrentUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { getBillingProfile } from "@/server/services/user.service";
+import { localizedMetadata } from "@/lib/localized-metadata";
 
-export const metadata: Metadata = { title: "Secure Checkout", description: "Complete your digital artifact purchase securely." };
+export function generateMetadata(): Promise<Metadata> { return localizedMetadata("Secure Checkout", "Complete your digital artifact purchase securely."); }
 
 export default async function CheckoutPage() {
   const user = await getCurrentUser();

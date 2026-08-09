@@ -111,7 +111,7 @@ export default function CartView() {
                     by {item.artist}
                   </p>
                   <div className="mt-2 flex gap-2">
-                    <span className="border border-line px-2 py-1 text-[9px] tracking-label text-stone uppercase">
+                    <span data-no-translate className="border border-line px-2 py-1 text-[9px] tracking-label text-stone uppercase">
                       {item.material}
                     </span>
                     <span className="border border-line px-2 py-1 text-[9px] tracking-label text-stone uppercase">
@@ -175,7 +175,7 @@ export default function CartView() {
               </p>
             </div>
 
-            <div className="mt-4 border border-line bg-cream-dark px-5 py-4">
+            <div data-no-translate className="mt-4 border border-line bg-cream-dark px-5 py-4">
               <p className="text-[10px] tracking-label text-stone uppercase">
                 License Notice
               </p>

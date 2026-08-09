@@ -8,11 +8,15 @@ Run the deterministic test suite with:
 npm test
 ```
 
-Vitest covers the Zod request boundaries, cart subtotal and checkout fee
-calculations, and the register, Auth.js credentials callback, add-to-cart, and
-checkout Route Handlers. Route integration tests mock authentication and
-service boundaries so they remain fast and do not mutate the development
-database.
+Vitest covers Zod request boundaries, commerce calculations, core Route
+Handlers, Meshy task creation/polling/download behavior, the persistent UI
+translation cache, and artifact/collection translation merging and fallbacks.
+Route and service tests mock authentication, provider, Blob, Gemini, and Prisma
+boundaries so they remain deterministic and do not mutate external systems.
+
+Current checkpoint: 47 tests across 8 files. Credential-backed Meshy and
+translation durability checks remain explicit manual release checks; see
+`docs/FINAL_QA.md` for the latest results and environment prerequisites.
 
 The existing authenticated end-to-end smoke flow can be run against an already
 running app:

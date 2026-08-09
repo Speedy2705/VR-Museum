@@ -71,20 +71,18 @@ export default function ProductCard({ product, imageSizes }: ProductCardProps) {
             alt={product.title}
             sizes={imageSizes}
           />
-          <Tag className="absolute top-3 left-3">
-            {isFree ? "Free" : `$${product.price}`}
-          </Tag>
-          <span className="absolute right-3 bottom-3 bg-ink/70 px-2 py-1 text-[9px] tracking-label text-white uppercase">
+          <span data-no-translate><Tag className="absolute top-3 start-3">{isFree ? "Free" : `$${product.price}`}</Tag></span>
+          <span data-no-translate className="absolute end-3 bottom-3 bg-ink/70 px-2 py-1 text-[9px] tracking-label text-white uppercase">
             {product.license}
           </span>
         </div>
-        <h3 className="motion-underline mt-3 w-fit text-sm text-ink">
+        <h3 data-no-translate className="motion-underline mt-3 w-fit text-sm text-ink">
           {product.title}
         </h3>
-        <p className="mt-1 text-xs text-stone">
+        <p data-no-translate className="mt-1 text-xs text-stone">
           {product.source === "community" ? "Uploaded by" : "by"} {product.artist} · {product.period}
           {product.sellerRole && (
-            <span className="ml-2 border border-line px-1.5 py-0.5 text-[8px] tracking-label uppercase">
+            <span className="ms-2 border border-line px-1.5 py-0.5 text-[8px] tracking-label uppercase">
               Seller
             </span>
           )}

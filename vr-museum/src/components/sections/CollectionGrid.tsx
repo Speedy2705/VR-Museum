@@ -48,10 +48,10 @@ export default function CollectionGrid({
                   sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
                 />
               </div>
-              <h3 className="font-display mt-4 text-xl italic">
+              <h3 data-no-translate className="font-display mt-4 text-xl italic">
                 {item.title}
               </h3>
-              <p className="mt-1 text-xs text-stone">
+              <p data-no-translate className="mt-1 text-xs text-stone">
                 {item.subtitle.split(" · ")[0]} · {item.count} models
               </p>
               <Button

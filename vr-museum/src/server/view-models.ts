@@ -131,10 +131,11 @@ export function ordersToPurchasedAssets(
       listing: ListingRecord;
     }>;
   }>,
+  locale: Locale = "en",
 ): PurchasedAssetView[] {
   return orders.flatMap((order) =>
     order.items.map(({ id, listing }) => {
-      const item = toMarketplaceView(listing);
+      const item = toMarketplaceView(listing, locale);
       return {
         id,
         slug: item.slug,

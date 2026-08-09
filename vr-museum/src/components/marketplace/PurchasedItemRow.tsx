@@ -26,7 +26,7 @@ export default function PurchasedItemRow({ asset }: PurchasedItemRowProps) {
           by {asset.artist} · {asset.period}
         </p>
         <div className="mt-2.5 flex flex-wrap gap-1.5">
-          <span className="border border-line px-2 py-1 text-[9px] tracking-label text-stone uppercase">
+          <span data-no-translate className="border border-line px-2 py-1 text-[9px] tracking-label text-stone uppercase">
             {asset.license}
           </span>
           {asset.formats.map((f) => (

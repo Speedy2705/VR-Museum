@@ -13,6 +13,10 @@ import {
   listPublicCollections,
 } from "@/server/services/collection.service";
 import type { Metadata } from "next";
+import { getRequestLocale } from "@/lib/request-locale";
+import { getLocalizedArtifact, getLocalizedCollection } from "@/server/services/content-translation.service";
+import { mapWithConcurrency } from "@/server/concurrency";
+import { getLocalizedUiPhrases } from "@/server/services/ui-translation.service";
 
 export const dynamic = "force-dynamic";
 
@@ -22,17 +26,23 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
+  const locale = await getRequestLocale();
   if (slug === "community-uploads") {
+    const [title, description] = await getLocalizedUiPhrases(locale, [
+      "Community Uploads",
+      "Curator-approved 3D artifacts contributed by museum community creators.",
+    ]);
     return {
-      title: "Community Uploads",
-      description: "Curator-approved 3D artifacts contributed by museum community creators.",
+      title,
+      description,
     };
   }
   const collection = await getCollection(slug, "en").catch(() => null);
-  if (!collection) return { title: "Collection not found" };
+  if (!collection) return { title: (await getLocalizedUiPhrases(locale, ["Collection not found"]))[0] };
+  const localizedCollection = await getLocalizedCollection(collection, locale);
   return {
-    title: collection.title,
-    description: collection.description,
+    title: localizedCollection.title,
+    description: localizedCollection.description,
     openGraph: { images: collection.heroImage ? [collection.heroImage] : [] },
   };
 }
@@ -99,7 +109,13 @@ export default async function CollectionDetailPage({
       </>
     );
   }
-  const collection = await getCollection(slug).catch(() => notFound());
+  const locale = await getRequestLocale();
+  const rawCollection = await getCollection(slug, "en").catch(() => notFound());
+  const [localizedCollection, artifacts] = await Promise.all([
+    getLocalizedCollection(rawCollection, locale),
+    mapWithConcurrency(rawCollection.artifacts, 8, (artifact) => getLocalizedArtifact(artifact, locale)),
+  ]);
+  const collection = { ...localizedCollection, artifacts };
 
   const items: ArtifactCardData[] = collection.artifacts.map((a) => ({
     slug: a.slug,

@@ -3,7 +3,7 @@ import { apiError, apiSuccess } from "@/lib/api-response";
 import { locales } from "@/lib/i18n";
 import { prisma } from "@/lib/prisma";
 import { checkRateLimit, getRequestIdentity } from "@/lib/rate-limit";
-import { hashTranslationSource, normalizeTranslationSource } from "@/lib/translation-hash";
+import { hashTranslationSource, legacyTranslationSourceHash, normalizeTranslationSource } from "@/lib/translation-hash";
 import { GeminiTranslationError, translatePhrases } from "@/server/gemini-translation";
 
 const schema = z.object({
@@ -22,22 +22,32 @@ export async function POST(request: Request) {
   const requested = phrases.map((phrase) => ({
     phrase,
     sourceHash: hashTranslationSource(phrase),
+    legacyHash: legacyTranslationSourceHash(phrase),
     sourceText: normalizeTranslationSource(phrase),
   }));
   const cachedRows = await prisma.translationCache.findMany({
-    where: { locale, sourceHash: { in: [...new Set(requested.map(({ sourceHash }) => sourceHash))] } },
-    select: { sourceHash: true, translatedText: true },
+    where: { locale, sourceHash: { in: [...new Set(requested.flatMap(({ sourceHash, legacyHash }) => [sourceHash, legacyHash]))] } },
+    select: { sourceHash: true, sourceText: true, translatedText: true },
   });
-  const cachedByHash = new Map(cachedRows.map((row) => [row.sourceHash, row.translatedText]));
+  const cachedByHash = new Map(cachedRows.map((row) => [row.sourceHash, row]));
+  const migrationRows: { locale: typeof locale; sourceHash: string; sourceText: string; translatedText: string }[] = [];
   const missingByHash = new Map<string, { sourceHash: string; sourceText: string }>();
-  requested.forEach(({ phrase, sourceHash, sourceText }) => {
-    const cached = cachedByHash.get(sourceHash);
-    if (cached) translations[phrase] = cached;
+  requested.forEach(({ phrase, sourceHash, legacyHash, sourceText }) => {
+    const canonical = cachedByHash.get(sourceHash);
+    const legacy = cachedByHash.get(legacyHash);
+    const cached = canonical ?? (legacy && normalizeTranslationSource(legacy.sourceText ?? "") === sourceText ? legacy : undefined);
+    if (cached) {
+      translations[phrase] = cached.translatedText;
+      if (!canonical) migrationRows.push({ locale, sourceHash, sourceText, translatedText: cached.translatedText });
+    }
     else if (!missingByHash.has(sourceHash)) missingByHash.set(sourceHash, { sourceHash, sourceText });
   });
   const missingEntries = [...missingByHash.values()];
   const missing = missingEntries.map(({ sourceText }) => sourceText);
-  if (!missing.length) return apiSuccess({ translations });
+  if (!missing.length) {
+    if (migrationRows.length) await prisma.translationCache.createMany({ data: migrationRows, skipDuplicates: true });
+    return apiSuccess({ translations });
+  }
 
   let generated: string[];
   try {
@@ -61,6 +71,7 @@ export async function POST(request: Request) {
       newRows.push({ locale, sourceHash, sourceText, translatedText: value });
     }
   });
-  if (newRows.length) await prisma.translationCache.createMany({ data: newRows, skipDuplicates: true });
+  const rowsToPersist = [...migrationRows, ...newRows];
+  if (rowsToPersist.length) await prisma.translationCache.createMany({ data: rowsToPersist, skipDuplicates: true });
   return apiSuccess({ translations });
 }

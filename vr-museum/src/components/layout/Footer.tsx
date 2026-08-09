@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRole } from "@/hooks/useRole";
+import BrandLogo from "@/components/ui/BrandLogo";
 
 const columns = [
   {
@@ -24,6 +25,7 @@ const columns = [
     title: "Company",
     links: [
       { label: "About", href: "/about" },
+      { label: "Meet the Core Team", href: "/about#core-team" },
       { label: "Privacy", href: "/privacy" },
       { label: "Terms", href: "/terms" },
     ],
@@ -69,7 +71,7 @@ export default function Footer() {
     <footer className="bg-ink px-10 pt-20 pb-8 text-white">
       <div className="mx-auto grid max-w-[1600px] grid-cols-2 gap-12 md:grid-cols-4">
         <div>
-          <p className="font-display text-lg tracking-[0.2em]">ViswaRoop</p>
+          <BrandLogo variant="light" className="h-auto w-44" />
           <p className="mt-4 text-xs leading-relaxed text-white/45">
             Explore. Experience. Own History.
             <br />

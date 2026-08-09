@@ -12,7 +12,8 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import PlaceholderImage from "@/components/ui/PlaceholderImage";
 import type { LightDirectionKey, LightTemperatureKey, LightingPresetKey } from "@/lib/artifact-categories";
 import { buildLighting, getLightingPreset } from "@/lib/lighting-presets";
-import { createMuseumEnvironment, type MuseumPanelDetails } from "@/lib/three/museum-environment";
+import { fitModelToExhibit } from "@/lib/three/fit-model-to-exhibit";
+import { createMuseumEnvironment, MUSEUM_EXHIBIT_FIT, type MuseumPanelDetails } from "@/lib/three/museum-environment";
 import { loadModel, type ModelFormat, type ModelLoadError } from "@/lib/three/loaders";
 
 export type LightingStudioViewerProps = { src: string; format: ModelFormat; presetKey?: LightingPresetKey; lightTemperature?: LightTemperatureKey; lightDirection?: LightDirectionKey; title: string; poster?: string; onReady?: () => void; onError?: (message: string) => void; showMuseumEnvironment?: boolean; className?: string; museumLayout?: "centered" | "details"; focusArtifactWithExhibit?: boolean; plaqueOrigin?: string; panelDetails?: MuseumPanelDetails };
@@ -193,13 +194,12 @@ export default function LightingStudioViewer({ src, format, presetKey = "raking-
       if (!active) { disposeObject(object); return; }
       if (modelRef.current) { scene.remove(modelRef.current); disposeObject(modelRef.current); }
       object.traverse((child) => { child.layers.set(1); if (child instanceof THREE.Mesh) { child.castShadow = true; child.receiveShadow = true; } });
-      // Uploaded models often carry an off-centre authoring pivot. Align their
-      // visible bounds—not that pivot—with the centre of the museum case.
-      const rawCenter = new THREE.Box3().setFromObject(object).getCenter(new THREE.Vector3());
       const exhibitCenterX = museumLayout === "details" ? -2.35 : 0;
-      object.position.x += exhibitCenterX - rawCenter.x;
-      object.position.z -= rawCenter.z;
-      if (museumLayout === "details") object.rotation.y += 0.35;
+      fitModelToExhibit(object, {
+        ...MUSEUM_EXHIBIT_FIT,
+        centerX: exhibitCenterX,
+        centerZ: 0,
+      });
       modelRef.current = object; scene.add(object); frameObject(object, camera, controls, showMuseumEnvironment ? environmentRef.current : null, museumLayout === "details");
       originalViewRef.current = { position: camera.position.clone(), target: controls.target.clone(), minDistance: controls.minDistance, maxDistance: controls.maxDistance };
       setProgress(100); setLoaded(true); callbacksRef.current.onReady?.();

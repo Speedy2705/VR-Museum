@@ -1,6 +1,8 @@
 # Payments: Stripe cards and Razorpay UPI
 
-This integration is test-mode only. The server creates a pending order from
+Last verified against the payment routes and services on 2026-08-09.
+
+The documented configuration is for test mode. The server creates a pending order from
 authoritative cart prices and fulfills it only after a signed provider webhook.
 Browser-reported success never marks an order paid.
 
@@ -35,7 +37,7 @@ the webhook. Replace this fixed test conversion with a production FX policy.
 3. Confirm `Order.paymentStatus` and `Order.status` become `PAID`, the intent ID
    is stored, and the cart is cleared.
 
-Official test details: https://docs.stripe.com/testing
+Official test details: [Stripe testing](https://docs.stripe.com/testing).
 
 ## Razorpay UPI sandbox
 
@@ -47,8 +49,7 @@ Official test details: https://docs.stripe.com/testing
 3. Confirm the captured webhook marks the order paid, stores the payment ID,
    and clears the cart.
 
-Official test flow:
-https://razorpay.com/docs/payments/payment-gateway/web-integration/standard/integration-steps/
+Official test flow: [Razorpay Standard Checkout](https://razorpay.com/docs/payments/payment-gateway/web-integration/standard/integration-steps/).
 
 ## Direct API checks
 

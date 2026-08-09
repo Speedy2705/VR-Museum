@@ -1,244 +1,120 @@
-# API Reference
+# API reference
 
-The API is implemented with Next.js Route Handlers under `src/app/api`. Domain
-logic lives in `src/server/services`, and all application endpoints return one
-of these envelopes:
+Last verified against `src/app/api` on 2026-08-09.
+
+Application endpoints use Next.js Route Handlers. Successful and failed application responses use these envelopes:
 
 ```json
 { "success": true, "data": {}, "message": "Optional message" }
 ```
 
 ```json
-{
-  "success": false,
-  "error": {
-    "message": "Human-readable message",
-    "code": "MACHINE_CODE",
-    "details": {}
-  }
-}
+{ "success": false, "error": { "message": "Readable message", "code": "MACHINE_CODE", "details": {} } }
 ```
 
-Auth.js-owned endpoints under `/api/auth/*` use Auth.js response formats.
-Prisma `Decimal` values are serialized as JSON strings.
+Auth.js endpoints under `/api/auth/*` use Auth.js response formats. Prisma decimals serialize as strings. Zod validation failures return structured error details.
 
 ## Authentication
 
-Cart, checkout, order, and upload endpoints require an Auth.js session. During
-local development only, REST clients may send `x-user-id: <user id>` to test
-these endpoints without first establishing an Auth.js cookie session. This
-fallback is disabled when `NODE_ENV=production`.
+Protected endpoints require an Auth.js session and, where noted, an application permission. In non-production environments only, internal browser scripts and REST checks may use `x-user-id`; this fallback is disabled in production.
 
-The intentionally process-local rate limiter allows 5 registration attempts,
-20 Auth.js POST actions, and 5 checkout attempts per IP per minute. It is
-suitable for local/single-process development only; use a shared store before
-running multiple production instances.
+The rate limiter is process-local. Current one-minute limits include 5 registration attempts, 20 Auth.js POST requests, 5 checkout attempts, and 5 translation requests per client identity.
 
-## Collections
+## Public catalog
 
-### `GET /api/collections`
-
-Returns all collections with an artifact count. No payload.
-
-### `GET /api/collections/:slug`
-
-Returns one collection and its artifacts.
-
-## Artifacts
-
-### `GET /api/artifacts`
-
-Returns artifacts with their collection. Optional query parameters:
-
-| Parameter | Shape | Description |
+| Method | Path | Description |
 | --- | --- | --- |
-| `collection` | string | Exact collection slug |
-| `preset` | string | Exact lighting preset |
+| `GET` | `/api/health` | Database/application health status |
+| `GET` | `/api/collections` | All collections with artifact counts |
+| `GET` | `/api/collections/:slug` | One collection and its artifacts |
+| `GET` | `/api/artifacts` | Artifact list; accepts validated `collection`, `preset`, and search query filters |
+| `GET` | `/api/artifacts/:slug` | One artifact with collection and active listing data |
+| `GET` | `/api/marketplace` | Paginated active official and approved-community marketplace items |
+| `GET` | `/api/marketplace/:slug` | One active marketplace item |
+| `POST` | `/api/uploads/:id/view` | Increment an approved community upload's view count |
 
-Example: `/api/artifacts?collection=earth-fire&preset=Warm%20Diffuse`.
+Marketplace pagination accepts `page` (default `1`), `limit` (`1`–`100`, default `12`), and `search` (maximum 200 characters). Responses include `items` and `{ page, limit, total, pages }` pagination metadata.
 
-### `GET /api/artifacts/:slug`
+## Registration and profile
 
-Returns an artifact, collection, and active listings.
-
-## Marketplace
-
-### `GET /api/marketplace`
-
-Returns active listings and pagination metadata.
-
-| Parameter | Shape | Default | Description |
+| Method | Path | Access | Description |
 | --- | --- | --- | --- |
-| `page` | positive integer | `1` | Page number |
-| `limit` | integer, 1–100 | `12` | Items per page |
-| `search` | string, max 200 | — | Searches artifact title/description and seller name |
+| `GET/POST` | `/api/auth/[...nextauth]` | Auth.js | Provider/session actions |
+| `POST` | `/api/auth/register` | Public, rate-limited | Create a credentials user |
+| `GET` | `/api/profile` | Signed in | Read saved billing/contact details |
+| `PUT` | `/api/profile` | Signed in | Replace validated billing/contact details |
+| `PATCH` | `/api/profile` | Signed in | Complete the role profile |
+| `PUT` | `/api/profile/language` | Signed in | Persist `{ "locale": "..." }` |
 
-Response data shape:
+OAuth-created users without a role are redirected to profile completion before role-protected flows.
 
-```json
-{
-  "items": [],
-  "pagination": { "page": 1, "limit": 12, "total": 12, "pages": 1 }
-}
-```
+## Marketplace ownership
 
-### `GET /api/marketplace/:slug`
+`PATCH /api/marketplace/:slug` and `DELETE /api/marketplace/:slug` require the `sell` permission and listing ownership. Patch accepts validated price, three-letter currency, and/or status fields. Non-owners receive a not-found response so ownership is not disclosed.
 
-Returns the active listing whose artifact has the supplied slug.
+## Cart and orders
 
-### `PATCH|DELETE /api/marketplace/:slug`
+All cart/order methods require the corresponding purchase or order-view permission.
 
-Requires authentication and ownership of the listing. `PATCH` accepts one or
-more of `price`, three-letter `currency`, or `status`. Non-owners receive `404`
-so ownership is not disclosed.
+| Method | Path | Body/description |
+| --- | --- | --- |
+| `GET` | `/api/cart` | Current cart with listing/artifact/seller data |
+| `POST` | `/api/cart` | `{ "listingId": "...", "quantity": 1 }`; add or increment |
+| `PATCH` | `/api/cart` | `{ "itemId": "...", "quantity": 2 }`; set quantity |
+| `DELETE` | `/api/cart` | `{ "itemId": "..." }`; remove owned cart item |
+| `GET` | `/api/orders` | Current user's orders |
+| `GET` | `/api/orders/:id` | One current-user-owned order |
 
-## Cart
+## Checkout and payments
 
-All cart methods require authentication.
+| Method | Path | Description |
+| --- | --- | --- |
+| `POST` | `/api/checkout` | Create a pending order from authoritative cart prices; body contains validated `paymentMethod` (`CARD` or `UPI`) |
+| `POST` | `/api/payments/card/intent` | Create a Stripe PaymentIntent for the current cart/order |
+| `POST` | `/api/payments/upi/order` | Create a Razorpay UPI order |
+| `POST` | `/api/payments/webhook` | Stripe webhook; verifies the raw-body signature and payment facts |
+| `POST` | `/api/payments/razorpay-webhook` | Razorpay webhook; verifies signature and captured payment facts |
 
-### `GET /api/cart`
+A client-reported success never marks an order paid. Only a verified webhook performs idempotent fulfillment and cart clearing. See [PAYMENTS.md](PAYMENTS.md).
 
-Returns the current user's cart items with listing, artifact, and seller data.
+## Uploads and Blob
 
-### `POST /api/cart`
+Upload routes require the `upload` permission (Artist, Archaeologist, or Curator).
 
-Adds a listing or increments its existing quantity.
+| Method | Path | Description |
+| --- | --- | --- |
+| `POST` | `/api/blob-upload` | Issue/handle a signed direct Vercel Blob upload token |
+| `POST` | `/api/upload` | Create a multipart upload or register validated stored Blob URLs |
+| `GET` | `/api/upload/:id` | Read an owned upload |
+| `PATCH` | `/api/upload/:id` | Update/resubmit an eligible owned upload; multipart supported |
+| `DELETE` | `/api/upload/:id` | Delete an owned upload |
 
-```json
-{ "listingId": "listing-id", "quantity": 1 }
-```
+Models accept GLB, glTF, OBJ, or STL up to 150 MB. Videos accept MP4, MOV, or WebM up to 200 MB. A display image is required. Rejected uploads are terminal; `CHANGES_REQUESTED` uploads may be edited and resubmitted.
 
-`quantity` defaults to `1`. Returns `201`.
+## Meshy generation
 
-### `PATCH /api/cart`
+| Method | Path | Description |
+| --- | --- | --- |
+| `POST` | `/api/meshy/multi-image` | Submit exactly front/side/back JPG or PNG files; returns `202` |
+| `GET` | `/api/meshy/multi-image/:id` | Poll a task owned by the authorized flow |
+| `GET` | `/api/meshy/multi-image/:id/download` | Download ready GLB output |
 
-Sets a cart item's quantity.
+These routes require upload permission, `MESHY_API_KEY`, and public Vercel Blob storage.
 
-```json
-{ "itemId": "cart-item-id", "quantity": 2 }
-```
+## Translation
 
-### `DELETE /api/cart`
+`POST /api/translations` accepts a supported locale and a bounded phrase batch. It returns cached translations first, calls Gemini only for misses, and persists successful results in PostgreSQL. The API key never reaches the browser. See [TRANSLATIONS.md](TRANSLATIONS.md).
 
-Removes a cart item owned by the current user.
+## Reports, support, and moderation
 
-```json
-{ "itemId": "cart-item-id" }
-```
+| Method | Path | Access | Description |
+| --- | --- | --- | --- |
+| `POST` | `/api/reports` | Signed in | Report an official/community artifact |
+| `POST` | `/api/support` | Signed in | Create a query or feedback request |
+| `PATCH` | `/api/moderation/uploads/:id` | Curator | Approve, reject, or request changes |
+| `PATCH` | `/api/moderation/reports/:id` | Curator | Dismiss a report or remove content |
+| `PATCH` | `/api/moderation/support/:id` | Curator | Answer a support request |
 
-## Checkout
+## Error semantics
 
-### `POST /api/checkout`
-
-Requires authentication and an empty JSON object:
-
-```json
-{}
-```
-
-Inside one database transaction, checkout reloads the cart, verifies each
-listing is active and its artifact remains for sale, calculates the current
-total, stores each listing price in an `OrderItem`, creates a paid order, and
-clears the cart. Returns the order with `201`.
-
-## Orders
-
-All order endpoints require authentication and only return orders owned by the
-current user.
-
-### `GET /api/orders`
-
-Returns order history, newest first, including purchased listing and artifact
-data.
-
-### `GET /api/orders/:id`
-
-Returns one owned order and its items.
-
-## Uploads
-
-All upload endpoints require authentication.
-
-### `POST /api/upload`
-
-Creates an uploaded asset with `PENDING` status. The endpoint stores submission
-metadata. The Upload wizard sends `multipart/form-data` with a `file` plus
-`title`, `category`, `type`, `origin`, `collection`, `lighting`, `price`, and
-`license` fields. In development, the file is written under `public/uploads`
-through the `FileStorage` interface; an S3 or Cloudinary adapter can replace
-the local binding without changing the route.
-
-JSON submissions remain supported for trusted callers:
-
-```json
-{
-  "title": "Ceremonial Vessel",
-  "category": "Ceramic",
-  "fileUrl": "/uploads/ceremonial-vessel.glb",
-  "thumbnailUrl": "/uploads/ceremonial-vessel.png",
-  "metadata": {
-    "period": "5th century BCE",
-    "license": "CC-BY 4.0"
-  }
-}
-```
-
-`thumbnailUrl` is nullable/optional and `metadata` defaults to `{}`. Returns
-`201`.
-
-### `GET /api/upload/:id`
-
-Returns the current user's upload and moderation status.
-
-### `PATCH|DELETE /api/upload/:id`
-
-Requires authentication and ownership of the upload. `PATCH` accepts `title`,
-`category`, `thumbnailUrl`, or `metadata`.
-
-## Registration and Auth.js
-
-### `POST /api/auth/register`
-
-Creates a credentials user and hashes the password with bcrypt.
-
-```json
-{
-  "name": "Ada Curator",
-  "phone": "+919876543210",
-  "role": "CURATOR",
-  "password": "at-least-8-characters"
-}
-```
-
-Names are 1–120 characters and passwords are 8–128 characters. At least one
-of `email` or `phone` is required; both are accepted and each must be unique.
-Phones use E.164 form with a leading `+` and international country code.
-Returns the public user fields with `201`.
-
-### `GET|POST /api/auth/[...nextauth]`
-
-Auth.js catch-all handler using the Prisma adapter and JWT sessions. It exposes
-the standard Auth.js endpoints, including:
-
-- `GET /api/auth/session`
-- `GET /api/auth/providers`
-- `GET /api/auth/csrf`
-- `POST /api/auth/callback/credentials`
-- `POST /api/auth/signout`
-
-Credentials sign-in accepts the registered email or canonical international
-mobile number (for example, `+919876543210`) and password. Auth.js manages
-the exact request and response shapes for these endpoints.
-
-## Common status codes
-
-| Status | Meaning |
-| --- | --- |
-| `200` | Successful read/update/delete |
-| `201` | Resource created or checkout completed |
-| `400` | Invalid JSON or Zod validation failure |
-| `401` | Authentication required |
-| `404` | Resource absent or not owned by the current user |
-| `409` | Duplicate email, empty cart, or unavailable listing |
-| `429` | Auth or checkout rate limit rejected the request |
-| `500` | Unexpected server failure |
+Common statuses are `400` for validation/business-rule failures, `401` for missing authentication, `403` for insufficient role permission, `404` for missing or deliberately undisclosed owner-scoped resources, `409` for conflicts, `429` for rate limits, and `500` for unexpected/infrastructure failures.

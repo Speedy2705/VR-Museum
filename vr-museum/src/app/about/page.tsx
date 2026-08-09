@@ -3,6 +3,7 @@ import Footer from "@/components/layout/Footer";
 import AboutHero from "@/components/sections/AboutHero";
 import StatsBar from "@/components/sections/StatsBar";
 import MissionSplit from "@/components/sections/MissionSplit";
+import CoreTeam from "@/components/sections/CoreTeam";
 import HowItWorks from "@/components/sections/HowItWorks";
 import StudioPresets from "@/components/sections/StudioPresets";
 import CTASection from "@/components/sections/CTASection";
@@ -20,6 +21,7 @@ export default function AboutPage() {
         <AboutHero />
         <StatsBar />
         <MissionSplit />
+        <CoreTeam />
         <HowItWorks />
         <StudioPresets />
         <CTASection

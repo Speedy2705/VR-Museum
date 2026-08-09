@@ -1,5 +1,6 @@
 import PlaceholderImage from "@/components/ui/PlaceholderImage";
 import { pageImages } from "@/lib/media";
+import BrandLogo from "@/components/ui/BrandLogo";
 
 export default function AuthVisualPanel() {
   return (
@@ -14,9 +15,7 @@ export default function AuthVisualPanel() {
       />
       <div className="absolute inset-0 bg-black/40" />
 
-      <p className="font-display absolute top-8 left-8 text-xs tracking-[0.3em] text-white/70">
-        ViswaRoop
-      </p>
+      <BrandLogo variant="light" className="absolute top-6 left-8 h-auto w-36" />
 
       <div className="absolute bottom-14 left-8 max-w-sm">
         <h2 className="font-display text-3xl leading-[1.25] text-white italic md:text-4xl">

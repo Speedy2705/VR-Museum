@@ -14,7 +14,8 @@ import {
 } from "@/server/services/collection.service";
 import type { Metadata } from "next";
 import { getRequestLocale } from "@/lib/request-locale";
-import { getLocalizedArtifact, getLocalizedCollection } from "@/server/services/content-translation.service";
+import { getLocalizedArtifact, getLocalizedCollection, getLocalizedUpload } from "@/server/services/content-translation.service";
+import { translationFor } from "@/lib/localized-content";
 import { mapWithConcurrency } from "@/server/concurrency";
 import { getLocalizedUiPhrases } from "@/server/services/ui-translation.service";
 
@@ -65,14 +66,17 @@ export default async function CollectionDetailPage({
     const requested = Number((await searchParams).page ?? "1");
     const page = Number.isInteger(requested) && requested > 0 ? requested : 1;
     const community = await getCommunityCollection(page, 12);
-    const items: ArtifactCardData[] = community.artifacts.map((upload) => {
+    const locale = await getRequestLocale();
+    const localizedUploads = await mapWithConcurrency(community.artifacts, 8, (upload) => getLocalizedUpload(upload, locale));
+    const items: ArtifactCardData[] = localizedUploads.map((upload) => {
       const metadata = upload.metadata && typeof upload.metadata === "object"
         ? upload.metadata as Record<string, unknown>
         : {};
+      const localized = translationFor(upload.translations, locale);
       return {
         slug: upload.id,
-        title: upload.title,
-        subtitle: `${upload.category} · ${String(metadata.origin ?? "Community contribution")}`,
+        title: String(localized.title ?? upload.title),
+        subtitle: `${String(localized.material ?? metadata.material ?? upload.category)} · ${String(localized.origin ?? metadata.origin ?? "Community contribution")}`,
         preset: "Community Upload",
         image: upload.thumbnailUrl ?? undefined,
         video: upload.mediaType === "VIDEO" ? upload.fileUrl : undefined,

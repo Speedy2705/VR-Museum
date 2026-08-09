@@ -3,6 +3,7 @@ import PlaceholderImage from "@/components/ui/PlaceholderImage";
 import VrEntryModal from "@/components/ui/VrEntryModal";
 import { pageImages } from "@/lib/media";
 import SlideUp from "@/components/motion/SlideUp";
+import BrandLogo from "@/components/ui/BrandLogo";
 
 export default function Hero() {
   return (
@@ -21,6 +22,7 @@ export default function Hero() {
       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/30" />
 
       <SlideUp className="relative z-10 mx-auto flex max-w-3xl flex-col items-center px-6 text-center">
+        <BrandLogo variant="light" markOnly className="mb-6 h-auto w-40 drop-shadow-[0_8px_22px_rgba(0,0,0,0.4)]" priority />
         <p className="text-[11px] tracking-[0.35em] text-white/50 uppercase">
           Virtual Reality Museum
         </p>

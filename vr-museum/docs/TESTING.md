@@ -1,63 +1,61 @@
-# Testing and performance
+# Testing and verification
 
-## Automated coverage
+Last verified on 2026-08-09.
 
-Run the deterministic test suite with:
+## Deterministic checks
+
+Run from `vr-museum`:
 
 ```bash
 npm test
+npm run lint
+npx tsc --noEmit
+npm run build
 ```
 
-Vitest covers Zod request boundaries, commerce calculations, core Route
-Handlers, Meshy task creation/polling/download behavior, the persistent UI
-translation cache, and artifact/collection translation merging and fallbacks.
-Route and service tests mock authentication, provider, Blob, Gemini, and Prisma
-boundaries so they remain deterministic and do not mutate external systems.
+Current local result:
 
-Current checkpoint: 47 tests across 8 files. Credential-backed Meshy and
-translation durability checks remain explicit manual release checks; see
-`docs/FINAL_QA.md` for the latest results and environment prerequisites.
+- Vitest: 53 tests passed across 9 files
+- ESLint: passed
+- TypeScript: passed
+- Production build: not re-run during this documentation-only audit because page generation can require a reachable seeded database
 
-The existing authenticated end-to-end smoke flow can be run against an already
-running app:
+Vitest covers validators, role/OAuth policy, commerce calculations, Meshy service behavior, translation caching/content fallback, and selected route/service boundaries. External systems such as Prisma, Gemini, Meshy, Blob, and payment providers are mocked where deterministic isolation is required.
+
+## Seed audit
 
 ```bash
-SMOKE_BASE_URL=http://127.0.0.1:3000 node scripts/smoke-flow.mjs
+npm run seed:audit
 ```
 
-`scripts/regression-browser.mjs` crawls every catalog/detail page, verifies
-protected redirects and navbar search, and fails on any browser console warning,
-console error, page exception, failed request, or non-successful navigation.
+This checks the catalog source data used by the Prisma seed. It does not replace testing against a migrated database.
 
-## Batch 10 checkpoint
+## Browser scripts
 
-- Vitest: 26 tests passed across 5 files.
-- ESLint: passed with zero warnings.
-- TypeScript (`tsc --noEmit`): passed.
-- Next.js production build: passed with 58 pages/routes generated.
-- Navbar/footer audit: 8 responsive widths, the signed-in account menu, and all
-  11 footer links passed.
-- Role UI audit: all 5 roles passed.
-- Production browser crawl: 45 public/detail pages and 4 guest-gated/protected
-  flows passed with zero console warnings/errors or page exceptions.
-- Credentials edge flow: duplicate and incorrect credentials were rejected;
-  persistent and expired sessions, protected redirects, valid strict upload,
-  and owner-only mutation passed.
-- Image delivery: all content imagery uses `next/image`; AVIF and WebP are
-  enabled, the home LCP image is preloaded, and its responsive `sizes` value is
-  retained.
-- Animation/CWV pass: the primary heading reveal no longer starts transparent,
-  avoiding an animation-created LCP delay; reduced-motion behavior remains.
-- Fresh local production Lighthouse: 76 Performance and 94 Accessibility. The
-  Lighthouse report was produced successfully; its Windows temporary-profile
-  cleanup reported a non-product `EBUSY` after the JSON had been written.
+Start the application first, then run the relevant script:
 
-Google/Apple and Stripe/Razorpay end-to-end provider outcomes require
-project-specific sandbox credentials and dashboard callbacks. The local
-environment intentionally contains none, so this checkpoint does not claim
-provider-hosted sign-in, successful Card/UPI settlement, or a provider-declined
-card run. Deterministic tests cover provider configuration, payment validation,
-permissions, signature checks, and fulfillment behavior.
+```bash
+node scripts/smoke-flow.mjs
+node scripts/regression-browser.mjs
+node scripts/nav-footer-check.mjs
+node scripts/role-ui-check.mjs
+node scripts/auth-edge-flow.mjs
+node scripts/media-preview-check.mjs
+```
 
-The browser script defaults to installed Microsoft Edge. Override
-`AUDIT_BASE_URL` or `BROWSER_PATH` when needed.
+The scripts use environment variables documented in their source. Common overrides include `SMOKE_BASE_URL`, `AUDIT_BASE_URL`, and `BROWSER_PATH`. They require Microsoft Edge or another compatible Chromium executable and, for authenticated/data-backed scenarios, a reachable migrated and seeded database.
+
+## Credential-backed release checks
+
+Automated mocks do not prove provider dashboard configuration. Before release, verify:
+
+- Google and Apple callbacks, first-login profile completion, repeat login, and same-email linking
+- Stripe card success/decline and signed webhook fulfillment
+- Razorpay UPI success/failure and signed webhook fulfillment
+- Replayed provider webhooks do not fulfill twice
+- Direct Vercel Blob upload and durable media access
+- A real Meshy three-view task through downloadable GLB output and source-image cleanup
+- Gemini cache miss, cache hit, server restart durability, and English fallback
+- Arabic and Urdu layout direction on public and authenticated flows
+
+See [FINAL_QA.md](FINAL_QA.md) for the release checklist and [PAYMENTS.md](PAYMENTS.md) for provider-specific sandbox instructions.

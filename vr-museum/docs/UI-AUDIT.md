@@ -1,7 +1,10 @@
-# UI audit — Batch 9
+# UI audit — implementation record
 
 Date: 2026-07-25  
 Reference: `ui.png` (Figma-derived composite)
+
+Status reviewed on 2026-08-09. This is a dated design audit, not a claim that a
+new pixel-diff or browser capture was performed during the documentation audit.
 
 ## Method and scope
 

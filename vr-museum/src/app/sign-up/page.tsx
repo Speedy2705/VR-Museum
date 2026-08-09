@@ -88,7 +88,7 @@ export default function SignUpPage() {
               href="/"
               className="text-[11px] tracking-label uppercase text-stone hover:text-ink"
             >
-              ← Name
+              ← ViswaRoop
             </Link>
 
             <p className="mt-10 text-[10px] tracking-label uppercase text-stone">

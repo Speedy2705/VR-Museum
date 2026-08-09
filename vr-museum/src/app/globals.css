@@ -30,6 +30,34 @@ body {
   font-family: var(--font-inter), Arial, Helvetica, sans-serif;
 }
 
+/* Site-wide interaction fallback. Component hover utilities remain
+   authoritative because these selectors intentionally have zero specificity. */
+:where(a[href], button:not(:disabled), [role="button"]:not([aria-disabled="true"])) {
+  cursor: pointer;
+  transition-property: background-color, border-color, color, opacity, filter, text-decoration-color;
+  transition-duration: 200ms;
+  transition-timing-function: ease;
+}
+
+:where(button:disabled, [role="button"][aria-disabled="true"], a[aria-disabled="true"]) {
+  cursor: not-allowed !important;
+  filter: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  :where(a[href]:not([aria-disabled="true"]), button:not(:disabled), [role="button"]:not([aria-disabled="true"])):hover {
+    filter: brightness(1.08);
+  }
+
+  /* Button-like anchors retain their control treatment. Text links receive a
+     visible underline in addition to their existing colour response. */
+  :where(a[href]:not([aria-disabled="true"]):not([class*="bg-"]):not([class*="border"])):hover {
+    text-decoration-line: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.22em;
+  }
+}
+
 :where(a, button, input, select, textarea):focus-visible {
   outline: 2px solid #b88932;
   outline-offset: 3px;

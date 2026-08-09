@@ -4,6 +4,8 @@ import { ServiceError } from "@/lib/service-error";
 import { localizeRecord } from "@/lib/localized-content";
 import { getRequestLocale } from "@/lib/request-locale";
 import type { Locale } from "@/lib/i18n";
+import { getLocalizedArtifact, getLocalizedCollection } from "@/server/services/content-translation.service";
+import { mapWithConcurrency } from "@/server/concurrency";
 
 export async function listArtifacts(filters: {
   collection?: string;
@@ -31,9 +33,17 @@ export async function listArtifacts(filters: {
     include: { collection: true },
   });
   const locale = localeOverride ?? await getRequestLocale();
-  return rows.map((row) => ({
+  if (locale === "en") return rows.map((row) => ({
     ...localizeRecord(row, locale, ["title", "subtitle", "description"]),
     collection: localizeRecord(row.collection, locale, ["title", "subtitle", "description", "category"]),
+  }));
+  const collections = new Map<string, typeof rows[number]["collection"]>();
+  rows.forEach((row) => collections.set(row.collection.id, row.collection));
+  const localizedCollections = await mapWithConcurrency([...collections.values()], 6, (collection) => getLocalizedCollection(collection, locale));
+  const collectionsById = new Map(localizedCollections.map((collection) => [collection.id, collection]));
+  return mapWithConcurrency(rows, 8, async (row) => ({
+    ...await getLocalizedArtifact(row, locale),
+    collection: collectionsById.get(row.collection.id) ?? row.collection,
   }));
 }
 
@@ -52,6 +62,13 @@ export async function getArtifact(slug: string, localeOverride?: Locale) {
     throw new ServiceError("Artifact not found", "NOT_FOUND", 404);
   }
   const locale = localeOverride ?? await getRequestLocale();
+  if (locale !== "en") {
+    const [localizedArtifact, localizedCollection] = await Promise.all([
+      getLocalizedArtifact(artifact, locale),
+      getLocalizedCollection(artifact.collection, locale),
+    ]);
+    return { ...localizedArtifact, collection: localizedCollection };
+  }
   return {
     ...localizeRecord(artifact, locale, ["title", "subtitle", "description"]),
     collection: localizeRecord(artifact.collection, locale, ["title", "subtitle", "description", "category"]),

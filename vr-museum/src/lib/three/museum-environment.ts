@@ -8,6 +8,13 @@ function receiveShadows(mesh: THREE.Mesh) {
 export type MuseumPanelDetails = { uploadType: string; title: string; uploader: string; description: string; material: string; origin: string; license: string; price: string };
 type MuseumEnvironmentOptions = { exhibitOffsetX?: number; plaqueTitle?: string; plaqueOrigin?: string; showInfoDisplay?: boolean; panelDetails?: MuseumPanelDetails };
 
+export const MUSEUM_EXHIBIT_FIT = {
+  pedestalTopY: -0.275,
+  targetHeight: 2.475,
+  maxWidth: 1.96,
+  maxDepth: 1.96,
+} as const;
+
 function createPlaqueTexture(title: string, origin: string) {
   const canvas = document.createElement("canvas");
   canvas.width = 1024; canvas.height = 420;
@@ -24,21 +31,7 @@ function createPlaqueTexture(title: string, origin: string) {
 }
 
 function createBrandTexture() {
-  const canvas = document.createElement("canvas");
-  canvas.width = 1600; canvas.height = 420;
-  const context = canvas.getContext("2d");
-  if (!context) return null;
-
-  context.clearRect(0, 0, canvas.width, canvas.height);
-  context.textAlign = "center"; context.textBaseline = "middle";
-  context.shadowColor = "rgba(0,0,0,.72)"; context.shadowBlur = 18; context.shadowOffsetY = 9;
-  context.fillStyle = "#d2ae69"; context.font = "600 188px Georgia, serif";
-  context.fillText("ViswaRoop", 800, 157, 1480);
-  context.shadowColor = "rgba(0,0,0,.45)"; context.shadowBlur = 8; context.shadowOffsetY = 4;
-  context.fillStyle = "#e8dcc4"; context.font = "500 46px Arial, sans-serif";
-  context.fillText("EXPLORE.  EXPERIENCE.  OWN HISTORY.", 800, 326, 1420);
-
-  const texture = new THREE.CanvasTexture(canvas);
+  const texture = new THREE.TextureLoader().load("/brand/viswaroop-logo-light.svg");
   texture.colorSpace = THREE.SRGBColorSpace;
   texture.anisotropy = 8;
   return texture;
@@ -150,8 +143,8 @@ export function createMuseumEnvironment(options: MuseumEnvironmentOptions = {}):
   );
   signBacking.name = "brand-sign-backing";
   const signFace = new THREE.Mesh(
-    new THREE.PlaneGeometry(options.showInfoDisplay ? 5.55 : 4.65, 1.22),
-    new THREE.MeshBasicMaterial({ map: brandTexture ?? undefined, transparent: true, toneMapped: false }),
+    new THREE.PlaneGeometry(options.showInfoDisplay ? 3.15 : 2.85, options.showInfoDisplay ? 1.4 : 1.27),
+    new THREE.MeshBasicMaterial({ map: brandTexture, transparent: true, toneMapped: false }),
   );
   signFace.name = "brand-sign-lettering";
   signFace.position.z = 0.012;

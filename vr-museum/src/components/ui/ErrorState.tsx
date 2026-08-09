@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { logger } from "@/lib/logger";
+import BrandLogo from "@/components/ui/BrandLogo";
 
 export default function ErrorState({
   error,
@@ -24,6 +25,7 @@ export default function ErrorState({
   return (
     <main className="flex min-h-[65vh] items-center justify-center bg-cream px-6 py-20 text-center">
       <div className="max-w-lg">
+        <BrandLogo markOnly className="mx-auto mb-6 h-auto w-24 opacity-70" />
         <p className="text-[10px] tracking-label text-stone uppercase">
           A quiet room
         </p>

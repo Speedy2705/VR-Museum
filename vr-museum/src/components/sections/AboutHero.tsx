@@ -26,7 +26,7 @@ export default function AboutHero() {
         </Link>
 
         <p className="mt-8 text-[11px] tracking-[0.3em] text-white/45 uppercase">
-          About Name
+          About ViswaRoop
         </p>
 
         <h1 className="font-display mt-5 max-w-2xl text-5xl leading-[1.15] text-white italic md:text-[56px]">

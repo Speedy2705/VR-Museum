@@ -5,6 +5,7 @@ const mocks = vi.hoisted(() => ({
   translatePhrases: vi.fn(),
   artifactUpdate: vi.fn(),
   collectionUpdate: vi.fn(),
+  uploadedAssetUpdate: vi.fn(),
 }));
 
 vi.mock("@/server/gemini-translation", () => ({
@@ -15,10 +16,12 @@ vi.mock("@/lib/prisma", () => ({
   prisma: {
     artifact: { update: mocks.artifactUpdate },
     collection: { update: mocks.collectionUpdate },
+    uploadedAsset: { update: mocks.uploadedAssetUpdate },
   },
 }));
 
 import { getLocalizedArtifact, getLocalizedCollection } from "./content-translation.service";
+import { hashTranslationSource } from "@/lib/translation-hash";
 
 const artifact = {
   id: "artifact-1",
@@ -33,6 +36,7 @@ const collection = {
   title: "Ancient India",
   subtitle: "A long history",
   description: "Objects from across India",
+  category: "History",
   translations: {},
 } as unknown as Collection;
 
@@ -64,17 +68,48 @@ describe("content translation service", () => {
     expect(result).toMatchObject({ title: "सूर्य मंदिर", subtitle: "पत्थर और प्रकाश", description: "13वीं शताब्दी में निर्मित" });
   });
 
-  it("returns an existing complete collection locale without Gemini or a write", async () => {
+  it("preserves a legacy complete translation and stamps source hashes without Gemini", async () => {
     const translated = {
       ...collection,
-      translations: { es: { title: "India antigua", subtitle: "Una larga historia", description: "Objetos de toda la India" } },
+      translations: { es: { title: "India antigua", subtitle: "Una larga historia", description: "Objetos de toda la India", category: "Historia" } },
     } as Collection;
+    mocks.collectionUpdate.mockImplementation(async ({ data }: { data: { translations: unknown } }) => ({ translations: data.translations }));
 
     const result = await getLocalizedCollection(translated, "es");
 
     expect(result).toMatchObject({ title: "India antigua", subtitle: "Una larga historia", description: "Objetos de toda la India" });
     expect(mocks.translatePhrases).not.toHaveBeenCalled();
-    expect(mocks.collectionUpdate).not.toHaveBeenCalled();
+    expect(mocks.collectionUpdate).toHaveBeenCalledOnce();
+  });
+
+  it("regenerates only a changed field and preserves unchanged translated fields", async () => {
+    const changed = {
+      ...artifact,
+      description: "Revised description",
+      translations: {
+        fr: {
+          title: "Temple du Soleil",
+          subtitle: "Pierre et lumière",
+          description: "Ancienne description",
+          _sourceHashes: {
+            title: hashTranslationSource(artifact.title),
+            subtitle: hashTranslationSource(artifact.subtitle),
+            description: hashTranslationSource(artifact.description),
+          },
+        },
+      },
+    } as unknown as Artifact;
+    mocks.translatePhrases.mockResolvedValue(["Description révisée"]);
+    mocks.artifactUpdate.mockImplementation(async ({ data }: { data: { translations: unknown } }) => ({ translations: data.translations }));
+
+    const result = await getLocalizedArtifact(changed, "fr");
+
+    expect(mocks.translatePhrases).toHaveBeenCalledWith("fr", ["Revised description"]);
+    expect(result).toMatchObject({
+      title: "Temple du Soleil",
+      subtitle: "Pierre et lumière",
+      description: "Description révisée",
+    });
   });
 
   it("falls back to English without caching or clobbering existing locales when Gemini fails", async () => {

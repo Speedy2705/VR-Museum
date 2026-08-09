@@ -1,5 +1,7 @@
 # Authentication setup
 
+Last verified against `src/lib/auth.ts`, `src/proxy.ts`, and `.env.example` on 2026-08-09.
+
 ViswaRoop supports credentials, Google, and Apple sign-in through Auth.js and the
 Prisma adapter. The canonical profile roles are Artist, Curator,
 Archaeologist, Researcher, and Visitor.
@@ -68,9 +70,9 @@ uses JWT sessions, so Auth.js does not normally create `Session` rows.
 
 ## OAuth errors
 
-Consent denial and provider/callback failures return to `/sign-in?error=…`.
-The sign-in UI currently displays a generic retry-or-password message; detailed
-theming is intentionally deferred.
+Consent denial and provider/callback failures return to the localized sign-in
+route with an `error` query parameter. The UI intentionally shows a safe,
+general retry-or-password message rather than leaking provider internals.
 
 ## Live checkpoint
 

@@ -1,6 +1,9 @@
 # Multilingual coverage audit
 
-PR description checklist for `fix/multilingual-coverage-audit`.
+Implementation checklist originally completed during the multilingual coverage
+work and reviewed for documentation accuracy on 2026-08-09. Environment-blocked
+items below describe the original QA environment; current releases should use
+the live checklist in [FINAL_QA.md](FINAL_QA.md).
 
 ## Broken and fixed
 

@@ -6,5 +6,11 @@ export function normalizeTranslationSource(sourceText: string) {
 
 export function hashTranslationSource(sourceText: string) {
   const normalized = normalizeTranslationSource(sourceText);
+  return createHash("sha256").update(normalized).digest("hex");
+}
+
+/** Previous cache key format retained only for lossless cache migration. */
+export function legacyTranslationSourceHash(sourceText: string) {
+  const normalized = normalizeTranslationSource(sourceText);
   return createHash("sha256").update(normalized.toLowerCase()).digest("hex");
 }

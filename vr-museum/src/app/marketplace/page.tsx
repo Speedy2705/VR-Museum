@@ -10,7 +10,7 @@ import { Suspense } from "react";
 import { GridSectionSkeleton } from "@/components/ui/PageSkeleton";
 import type { Metadata } from "next";
 import { getRequestLocale } from "@/lib/request-locale";
-import { getLocalizedArtifact } from "@/server/services/content-translation.service";
+import { getLocalizedArtifact, getLocalizedUpload } from "@/server/services/content-translation.service";
 import { localizedMetadata } from "@/lib/localized-metadata";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -22,7 +22,7 @@ async function MarketplaceResults({ page }: { page: number }) {
   const locale = await getRequestLocale();
   const localizedItems = await Promise.all(result.items.map(async (entry) => entry.source === "museum"
     ? { ...entry, item: { ...entry.item, artifact: await getLocalizedArtifact(entry.item.artifact, locale) } }
-    : entry));
+    : { ...entry, item: await getLocalizedUpload(entry.item, locale) }));
   const marketplaceProducts = localizedItems.map((entry) =>
     entry.source === "museum"
       ? toMarketplaceView(entry.item, locale)

@@ -3,6 +3,8 @@ import { ServiceError } from "@/lib/service-error";
 import { localizeRecord } from "@/lib/localized-content";
 import { getRequestLocale } from "@/lib/request-locale";
 import type { Locale } from "@/lib/i18n";
+import { getLocalizedArtifact, getLocalizedCollection } from "@/server/services/content-translation.service";
+import { mapWithConcurrency } from "@/server/concurrency";
 
 export async function listCollections(localeOverride?: Locale) {
   const rows = await prisma.collection.findMany({
@@ -22,7 +24,8 @@ export async function listCollections(localeOverride?: Locale) {
     },
   });
   const locale = localeOverride ?? await getRequestLocale();
-  return rows.map((row) => localizeRecord(row, locale, ["title", "subtitle", "description", "category"]));
+  if (locale === "en") return rows.map((row) => localizeRecord(row, locale, ["title", "subtitle", "description", "category"]));
+  return mapWithConcurrency(rows, 8, (row) => getLocalizedCollection(row, locale));
 }
 
 export async function listPublicCollections(localeOverride?: Locale) {
@@ -134,6 +137,13 @@ export async function getCollection(slug: string, localeOverride?: Locale) {
     throw new ServiceError("Collection not found", "NOT_FOUND", 404);
   }
   const locale = localeOverride ?? await getRequestLocale();
+  if (locale !== "en") {
+    const [localizedCollection, artifacts] = await Promise.all([
+      getLocalizedCollection(collection, locale),
+      mapWithConcurrency(collection.artifacts, 8, (artifact) => getLocalizedArtifact(artifact, locale)),
+    ]);
+    return { ...localizedCollection, artifacts };
+  }
   return {
     ...localizeRecord(collection, locale, ["title", "subtitle", "description", "category"]),
     artifacts: collection.artifacts.map((artifact) => localizeRecord(artifact, locale, ["title", "subtitle", "description"])),

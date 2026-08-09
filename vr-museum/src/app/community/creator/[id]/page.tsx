@@ -5,6 +5,8 @@ import ProductCard from "@/components/marketplace/ProductCard";
 import { prisma } from "@/lib/prisma";
 import { publicUploadToMarketplaceView } from "@/server/view-models";
 import { getRequestLocale } from "@/lib/request-locale";
+import { getLocalizedUpload } from "@/server/services/content-translation.service";
+import { mapWithConcurrency } from "@/server/concurrency";
 
 export default async function CommunityCreatorPage({ params }: {
   params: Promise<{ id: string }>;
@@ -23,6 +25,7 @@ export default async function CommunityCreatorPage({ params }: {
     },
   });
   if (!creator) notFound();
+  const localizedUploads = await mapWithConcurrency(creator.uploadedAssets, 8, (upload) => getLocalizedUpload(upload, locale));
   return (
     <>
       <Navbar hasHeroBackground={false} />
@@ -31,7 +34,7 @@ export default async function CommunityCreatorPage({ params }: {
           <p className="text-[10px] tracking-label text-stone uppercase">Community creator</p>
           <h1 className="font-display mt-3 text-4xl italic">{creator.name ?? "Museum community member"}</h1>
           <div className="mt-10 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
-            {creator.uploadedAssets.map((upload) => (
+            {localizedUploads.map((upload) => (
               <ProductCard key={upload.id} product={publicUploadToMarketplaceView(upload, locale)} imageSizes="(min-width: 1024px) 25vw, 50vw" />
             ))}
           </div>

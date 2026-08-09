@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import BrandLogo from "@/components/ui/BrandLogo";
 
 export default function NotFound() {
   return (
@@ -8,6 +9,7 @@ export default function NotFound() {
       <Navbar hasHeroBackground={false} />
       <main className="flex min-h-[65vh] items-center justify-center bg-cream px-6 text-center">
         <div>
+          <BrandLogo markOnly className="mx-auto mb-6 h-auto w-24 opacity-70" />
           <p className="font-display text-7xl text-stone-light italic">404</p>
           <p className="mt-5 text-[10px] tracking-label text-stone uppercase">
             Object not on display

@@ -1,58 +1,76 @@
-# Backend Architecture
+# Backend architecture
 
-The backend lives inside the Next.js application and uses App Router Route
-Handlers as its HTTP API. There is no separate API server.
+Last verified against the source on 2026-08-09.
+
+The backend is part of the Next.js application. App Router Route Handlers provide the HTTP API; there is no separate API server.
 
 ## Request flow
 
 ```text
 src/app/api/**/route.ts
         ↓
+Zod request validation
+        ↓
 src/server/services/*.service.ts
         ↓
 src/lib/prisma.ts
         ↓
-Prisma Client → database
+Prisma Client → PostgreSQL
 ```
 
-- **Routes** translate HTTP input and output. Keep them thin: parse the request,
-  validate input with Zod, call one service, and return a standardized response.
-- **Services** contain business rules and coordinate database operations. They
-  must not depend on UI components or route-specific response objects.
-- **Prisma** is exposed through the singleton in `src/lib/prisma.ts`. Do not
-  create additional `PrismaClient` instances.
-- **Validators** live in `src/lib/validators/` and are shared by routes and
-  services where boundary validation is required.
-- **Responses** use `apiSuccess` and `apiError` from
-  `src/lib/api-response.ts`.
-- **Logging** uses the server-only utility in `src/lib/logger.ts`.
+- Routes authenticate, validate input, call services, and map failures to the standard API envelope.
+- Services own catalog, cart, checkout, payment, upload, moderation, translation, support, and user rules.
+- `src/lib/prisma.ts` exposes the shared Prisma client. Do not create route-local clients.
+- `src/lib/validators` contains reusable Zod contracts.
+- `src/lib/api-response.ts`, `route-error.ts`, and `service-error.ts` standardize responses and errors.
+- `src/lib/logger.ts` provides server-side structured logging.
 
-## Database environments
+## Persistence
 
-All environments use PostgreSQL through Prisma's `@prisma/adapter-pg` adapter.
-Production should use a pooled serverless connection string in `DATABASE_URL`.
-The active PostgreSQL migration history is in `prisma/migrations`; the retired
-local SQLite history is retained in `prisma/migrations-sqlite-archive` only for
-reference and must not be deployed.
+All environments use PostgreSQL through Prisma's `@prisma/adapter-pg` adapter. The active schema and migrations are under `prisma/`. Runtime data includes users and Auth.js accounts, collections, artifacts, listings, carts, orders, payment events, uploaded assets, reports, support requests, translation cache rows, and Meshy source-upload cleanup records.
 
-Uploads use local disk when `BLOB_READ_WRITE_TOKEN` is absent. Vercel
-deployments set that token through a connected Blob store and enable direct
-browser uploads with `NEXT_PUBLIC_BLOB_UPLOADS=true`, avoiding the Vercel
-Function request-body limit for large model and video files.
+Use a pooled, TLS-enabled production connection string in `DATABASE_URL`. Apply checked-in migrations with:
 
-Meshy three-view generation is the exception to the local-disk fallback:
-Meshy's Multi-Image API requires public JPG/PNG URLs, so
-`MESHY_API_KEY` and `BLOB_READ_WRITE_TOKEN` must both be configured. The service
-records source Blob URLs by Meshy task ID and removes them after a terminal
-task status.
+```bash
+npx prisma migrate deploy
+```
 
-## Authentication
+Catalog seeding is a separate, explicit operation:
 
-`src/lib/auth.ts` is reserved for the future Auth.js configuration and
-server-side session helpers. `NEXTAUTH_SECRET` is documented now, but
-authentication is not enabled in this batch.
-# Upload and moderation flow
+```bash
+npm run prisma:seed
+```
 
-Uploads have two media branches. Video scans accept MP4, MOV, or WebM and proceed from domain selection directly to artifact details. 3D uploads accept GLB, glTF, OBJ, or STL and open in an interactive lighting studio. Colour temperature and light direction are stored independently: Warm White (3000 K), Cool White (4000 K), or Artificial Daylight (5000 K) can be combined with Spotlight, Top Light, Front-Facing Light, Raking Light, or Backlight. Each domain suggests its requested temperature while contributors retain control. Curators can preview every temperature-and-direction combination before deciding.
+## Authentication and authorization
 
-Moderation has two negative outcomes. `CHANGES_REQUESTED` is actionable: the curator comment is shown to the artist, who may edit metadata, replace the media or display photo, change 3D lighting, and resubmit; saving returns the upload to `PENDING`. `REJECTED` is terminal: its curator comment remains visible, but editing is hidden in the UI and rejected updates are rejected by the service/API. Approval publishes the upload into its selected domain and the Community Uploads discovery feed; selecting Community Uploads places it only in that community destination.
+Auth.js is configured in `src/lib/auth.ts` with credentials, Google, and Apple providers and JWT sessions. `requireUserId`, `getCurrentUser`, and `requirePermission` are the server authorization helpers. In development only, selected API flows accept `x-user-id` for scripted testing; production requires a real Auth.js session.
+
+Application permissions are centralized in `src/lib/role-policy.ts`. UI visibility is only presentation—the service/API boundary remains authoritative. See [ROLES.md](ROLES.md).
+
+## Storage and uploads
+
+`src/server/storage` selects Vercel Blob when `BLOB_READ_WRITE_TOKEN` is configured and otherwise uses local disk under `public/uploads`. With `NEXT_PUBLIC_BLOB_UPLOADS=true`, the browser uses a signed direct-upload flow so large media does not pass through the application server request body.
+
+Uploads support:
+
+- Models: GLB, glTF, OBJ, or STL, up to 150 MB
+- Videos: MP4, MOV, or WebM, up to 200 MB
+- A required display image for uploaded media
+
+File extensions, MIME types, sizes, and supported signatures are checked before persistence. Contributor updates are owner-scoped. Curators can approve, reject, or request changes; approved uploads become public community content.
+
+Meshy generation requires exactly three JPG/PNG source views, `MESHY_API_KEY`, and public Vercel Blob URLs. Source Blob URLs are recorded by task ID and removed on terminal task states on a best-effort basis.
+
+## Checkout and payment lifecycle
+
+Checkout creates a pending order from server-loaded cart prices. Stripe and Razorpay integrations create provider payment objects, but only signed, amount-checked webhooks mark an order paid and clear its cart. Provider event IDs and conditional updates make repeated/concurrent webhook delivery idempotent.
+
+## Translation architecture
+
+Localized URLs and cookies are handled by `src/proxy.ts` and `src/lib/i18n.ts`. UI phrases are translated server-side through Gemini and cached in PostgreSQL `TranslationCache` rows. Artifact, collection, and upload translations live in their records' `translations` JSON. Provider or cache failure falls back to English rather than failing a page.
+
+## Operational limitations
+
+- Rate limiting in `src/lib/rate-limit.ts` is process-local and unsuitable for multi-instance enforcement.
+- Local-disk uploads are a development fallback, not durable serverless storage.
+- Payment, OAuth, translation, Blob, and Meshy end-to-end checks require project-specific credentials.

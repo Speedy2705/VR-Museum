@@ -13,6 +13,7 @@ import { useRole } from "@/hooks/useRole";
 import BackButton from "@/components/layout/BackButton";
 import { LanguageSelector, useI18n } from "@/context/I18nContext";
 import { localizePath } from "@/lib/i18n";
+import BrandLogo from "@/components/ui/BrandLogo";
 
 /*
  * Visual regression checklist
@@ -179,9 +180,10 @@ export default function Navbar({ hasHeroBackground = false }: NavbarProps) {
 
         <Link
           href={href("/")}
-          className="font-display flex-1 text-center text-lg tracking-[0.25em] text-current xl:flex-none xl:text-xl xl:tracking-[0.3em]"
+          aria-label="ViswaRoop home"
+          className="flex flex-1 justify-center xl:flex-none"
         >
-          ViswaRoop
+          <BrandLogo variant="light" className="h-14 w-auto max-w-[8.5rem] object-contain sm:max-w-[10rem]" priority />
         </Link>
 
         <div className="flex shrink-0 items-center justify-end gap-3 sm:gap-5 xl:flex-1 xl:gap-7">

@@ -65,11 +65,11 @@ export default function SignInPage() {
               href="/"
               className="text-[11px] tracking-label uppercase text-stone hover:text-ink"
             >
-              ← Name
+              ← ViswaRoop
             </Link>
 
             <p className="mt-10 text-[10px] tracking-label uppercase text-stone">
-              Welcome Back Aryan
+              Welcome Back
             </p>
             <h1 className="font-display mt-3 text-4xl italic">Sign in</h1>
 

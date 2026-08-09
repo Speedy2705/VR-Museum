@@ -26,7 +26,7 @@ vi.mock("@/server/gemini-translation", () => {
 });
 
 import { resetRateLimits } from "@/lib/rate-limit";
-import { hashTranslationSource, normalizeTranslationSource } from "@/lib/translation-hash";
+import { hashTranslationSource, legacyTranslationSourceHash, normalizeTranslationSource } from "@/lib/translation-hash";
 import { GeminiTranslationError } from "@/server/gemini-translation";
 import { POST } from "./route";
 
@@ -103,6 +103,43 @@ describe("POST /api/translations", () => {
       data: [expect.objectContaining({ sourceHash: hashTranslationSource(missing), translatedText: "Marché" })],
     }));
     expect(body.data.translations).toEqual({ Collections: "Collections", Marketplace: "Marché" });
+  });
+
+  it("reuses and migrates an exact legacy cache row without calling Gemini", async () => {
+    const phrase = "About ViswaRoop";
+    mocks.findMany.mockResolvedValue([{
+      sourceHash: legacyTranslationSourceHash(phrase),
+      sourceText: phrase,
+      translatedText: "À propos de ViswaRoop",
+    }]);
+
+    const response = await POST(request([phrase]));
+
+    expect(response.status).toBe(200);
+    expect(mocks.translatePhrases).not.toHaveBeenCalled();
+    expect(mocks.createMany).toHaveBeenCalledWith({
+      data: [{
+        locale: "fr",
+        sourceHash: hashTranslationSource(phrase),
+        sourceText: phrase,
+        translatedText: "À propos de ViswaRoop",
+      }],
+      skipDuplicates: true,
+    });
+  });
+
+  it("does not reuse a legacy row when only the source casing matches", async () => {
+    const phrase = "ABOUT";
+    mocks.findMany.mockResolvedValue([{
+      sourceHash: legacyTranslationSourceHash(phrase),
+      sourceText: "About",
+      translatedText: "À propos",
+    }]);
+    mocks.translatePhrases.mockResolvedValue(["À PROPOS"]);
+
+    await POST(request([phrase]));
+
+    expect(mocks.translatePhrases).toHaveBeenCalledWith("fr", [phrase]);
   });
 
   it("returns a clean error for malformed Gemini output without writing partial cache rows", async () => {

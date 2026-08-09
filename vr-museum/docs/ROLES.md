@@ -1,5 +1,7 @@
 # Role permissions
 
+Last verified against `src/lib/role-policy.ts` on 2026-08-09.
+
 Roles are enforced in UI controls, server-rendered pages, middleware, and API
 Route Handlers. Hiding a control is never the authorization boundary.
 

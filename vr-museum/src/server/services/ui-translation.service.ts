@@ -1,7 +1,7 @@
 import "server-only";
 
 import type { Locale } from "@/lib/i18n";
-import { hashTranslationSource, normalizeTranslationSource } from "@/lib/translation-hash";
+import { hashTranslationSource, legacyTranslationSourceHash, normalizeTranslationSource } from "@/lib/translation-hash";
 import { prisma } from "@/lib/prisma";
 import { translatePhrases } from "@/server/gemini-translation";
 
@@ -12,13 +12,25 @@ export async function getLocalizedUiPhrases(locale: Locale, phrases: string[]) {
     const requested = phrases.map((phrase) => ({
       phrase,
       sourceHash: hashTranslationSource(phrase),
+      legacyHash: legacyTranslationSourceHash(phrase),
       sourceText: normalizeTranslationSource(phrase),
     }));
     const cachedRows = await prisma.translationCache.findMany({
-      where: { locale, sourceHash: { in: [...new Set(requested.map(({ sourceHash }) => sourceHash))] } },
-      select: { sourceHash: true, translatedText: true },
+      where: { locale, sourceHash: { in: [...new Set(requested.flatMap(({ sourceHash, legacyHash }) => [sourceHash, legacyHash]))] } },
+      select: { sourceHash: true, sourceText: true, translatedText: true },
     });
-    const translatedByHash = new Map(cachedRows.map((row) => [row.sourceHash, row.translatedText]));
+    const cachedByHash = new Map(cachedRows.map((row) => [row.sourceHash, row]));
+    const translatedByHash = new Map<string, string>();
+    const migrationRows: { locale: typeof locale; sourceHash: string; sourceText: string; translatedText: string }[] = [];
+    requested.forEach(({ sourceHash, legacyHash, sourceText }) => {
+      const canonical = cachedByHash.get(sourceHash);
+      const legacy = cachedByHash.get(legacyHash);
+      const cached = canonical ?? (legacy && normalizeTranslationSource(legacy.sourceText ?? "") === sourceText ? legacy : undefined);
+      if (cached) {
+        translatedByHash.set(sourceHash, cached.translatedText);
+        if (!canonical) migrationRows.push({ locale, sourceHash, sourceText, translatedText: cached.translatedText });
+      }
+    });
     const missing = [...new Map(
       requested
         .filter(({ sourceHash }) => !translatedByHash.has(sourceHash))
@@ -33,8 +45,10 @@ export async function getLocalizedUiPhrases(locale: Locale, phrases: string[]) {
         sourceText: entry.sourceText,
         translatedText: generated[index],
       }));
-      await prisma.translationCache.createMany({ data: rows, skipDuplicates: true });
+      await prisma.translationCache.createMany({ data: [...migrationRows, ...rows], skipDuplicates: true });
       rows.forEach((row) => translatedByHash.set(row.sourceHash, row.translatedText));
+    } else if (migrationRows.length) {
+      await prisma.translationCache.createMany({ data: migrationRows, skipDuplicates: true });
     }
 
     return requested.map(({ phrase, sourceHash }) => translatedByHash.get(sourceHash) ?? phrase);

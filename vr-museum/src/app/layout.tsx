@@ -31,6 +31,11 @@ export async function generateMetadata(): Promise<Metadata> {
     metadataBase: new URL(process.env.AUTH_URL ?? "http://localhost:3000"),
     title: { default: title, template: "%s | ViswaRoop" },
     description,
+    icons: {
+      icon: "/brand/viswaroop-mark.svg",
+      shortcut: "/brand/viswaroop-mark.svg",
+      apple: "/brand/viswaroop-mark.svg",
+    },
     openGraph: {
       type: "website",
       siteName: "ViswaRoop",

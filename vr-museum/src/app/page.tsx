@@ -14,8 +14,8 @@ import { mapWithConcurrency } from "@/server/concurrency";
 
 export default async function Home() {
   const [collectionRows, artifactRows, locale] = await Promise.all([
-    listCollections(),
-    listArtifacts({}),
+    listCollections("en"),
+    listArtifacts({}, "en"),
     getRequestLocale(),
   ]);
   const [localizedCollections, artifacts] = await Promise.all([

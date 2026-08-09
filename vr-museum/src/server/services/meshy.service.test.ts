@@ -36,7 +36,7 @@ function images(type = "image/jpeg") {
 describe("Meshy multi-image service", () => {
   beforeEach(() => {
     process.env.MESHY_API_KEY = "test-meshy-key";
-    process.env.BLOB_READ_WRITE_TOKEN = "test-blob-token";
+    process.env.BLOB_READ_WRITE_TOKEN_STORE_ID = "test-store-id";
     save.mockReset();
     remove.mockReset();
     createCleanup.mockReset();
@@ -60,6 +60,7 @@ describe("Meshy multi-image service", () => {
     vi.unstubAllGlobals();
     delete process.env.MESHY_API_KEY;
     delete process.env.BLOB_READ_WRITE_TOKEN;
+    delete process.env.BLOB_READ_WRITE_TOKEN_STORE_ID;
   });
 
   it("uploads normalized public images and creates a GLB task", async () => {
@@ -112,6 +113,26 @@ describe("Meshy multi-image service", () => {
 
     await expect(createMultiImageTask(images())).rejects.toMatchObject({
       code: "MESHY_NOT_CONFIGURED",
+      status: 503,
+    });
+    expect(save).not.toHaveBeenCalled();
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it("accepts a legacy Blob read-write token when OIDC is unavailable", async () => {
+    delete process.env.BLOB_READ_WRITE_TOKEN_STORE_ID;
+    process.env.BLOB_READ_WRITE_TOKEN = "test-blob-token";
+    vi.mocked(fetch).mockResolvedValue(new Response(JSON.stringify({ result: "task-legacy" }), { status: 200 }));
+
+    await expect(createMultiImageTask(images())).resolves.toEqual({ taskId: "task-legacy" });
+  });
+
+  it("requires either a Blob OIDC store ID or a legacy read-write token", async () => {
+    delete process.env.BLOB_READ_WRITE_TOKEN_STORE_ID;
+    delete process.env.BLOB_READ_WRITE_TOKEN;
+
+    await expect(createMultiImageTask(images())).rejects.toMatchObject({
+      code: "BLOB_NOT_CONFIGURED",
       status: 503,
     });
     expect(save).not.toHaveBeenCalled();

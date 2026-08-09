@@ -130,7 +130,7 @@ async function cleanupSourceImages(taskId: string) {
 export async function createMultiImageTask(images: File[]) {
   if (images.length !== 3) throw new ServiceError("Exactly three views are required", "INVALID_IMAGE_COUNT", 400);
   apiKey();
-  if (!process.env.BLOB_READ_WRITE_TOKEN) {
+  if (!process.env.BLOB_READ_WRITE_TOKEN && !process.env.BLOB_READ_WRITE_TOKEN_STORE_ID) {
     throw new ServiceError("Blob storage is not configured for Meshy source images", "BLOB_NOT_CONFIGURED", 503);
   }
   const normalizedImages = images.map(normalizedImage);

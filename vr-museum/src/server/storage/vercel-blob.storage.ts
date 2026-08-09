@@ -17,6 +17,9 @@ export class BlobStorage implements FileStorage {
       access: "public",
       addRandomSuffix: false,
       contentType: file.type || "application/octet-stream",
+      ...(process.env.BLOB_READ_WRITE_TOKEN_STORE_ID
+        ? { storeId: process.env.BLOB_READ_WRITE_TOKEN_STORE_ID }
+        : {}),
     });
 
     return {
@@ -29,6 +32,10 @@ export class BlobStorage implements FileStorage {
   }
 
   async delete(urls: string | string[]) {
-    await del(urls);
+    await del(urls, {
+      ...(process.env.BLOB_READ_WRITE_TOKEN_STORE_ID
+        ? { storeId: process.env.BLOB_READ_WRITE_TOKEN_STORE_ID }
+        : {}),
+    });
   }
 }

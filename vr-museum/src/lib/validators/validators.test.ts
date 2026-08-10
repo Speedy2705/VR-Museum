@@ -18,14 +18,14 @@ import { marketplaceQuerySchema, marketplaceUpdateSchema } from "./marketplace";
 import { artifactListQuerySchema, artifactSchema } from "./artifact";
 import { collectionSchema } from "./collection";
 import { moderationSchema, uploadSchema, uploadUpdateSchema } from "./upload";
-import { locales } from "@/lib/i18n";
-
-const translations = Object.fromEntries(locales.map((locale) => [locale, {
-  title: `Artifact ${locale}`,
-  description: `A complete localized artifact description for curator review in the ${locale} language.`,
-  origin: `Origin ${locale}`,
-  material: `Material ${locale}`,
-}]));
+const translations = {
+  en: {
+    title: "Artifact",
+    description: "A complete English artifact description for curator review.",
+    origin: "India",
+    material: "Stone",
+  },
+};
 
 describe("user validators", () => {
   it("requires complete, valid checkout profile details", () => {
@@ -151,6 +151,8 @@ describe("catalog and upload validators", () => {
       translations,
     });
     expect(upload.metadata).toMatchObject({ description: expect.any(String) });
+    expect(upload.translations).toEqual(translations);
+    expect(uploadSchema.safeParse({ ...upload, translations: {} }).success).toBe(false);
     expect(uploadUpdateSchema.safeParse({}).success).toBe(false);
     expect(
       moderationSchema.safeParse({ status: "CHANGES_REQUESTED" }).success,

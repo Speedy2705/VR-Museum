@@ -32,12 +32,10 @@ import {
   validateUploadFile,
 } from "@/lib/upload-file-policy";
 import { uploadMediaDirect } from "@/lib/blob-upload.client";
-import { languageNames, locales, type Locale } from "@/lib/i18n";
 
 type ArtifactType = "3d-model" | "video-scan" | "image-to-3d";
 type SourceView = "front" | "side" | "back";
 type PriceMode = "free" | "paid";
-type UploadTranslation = { title: string; description: string; origin: string; material: string };
 
 const categoryDescriptions: Record<CollectionSlug, string> = {
   "veins-of-marble": "Carved marble sculptures and timeless decorative works",
@@ -149,9 +147,6 @@ export default function UploadWizard() {
   const [license, setLicense] = useState(licenseOptions[0].key);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
-  const [translations, setTranslations] = useState<Record<string, UploadTranslation>>(() =>
-    Object.fromEntries(locales.filter((locale) => locale !== "en").map((locale) => [locale, { title: "", description: "", origin: "", material: "" }])),
-  );
 
   const selectedLicense = licenseOptions.find((l) => l.key === license);
   const selectedType = typeOptions.find((option) => option.key === type);
@@ -177,11 +172,7 @@ export default function UploadWizard() {
   const maxFileSizeLabel =
     type === "video-scan" ? MAX_VIDEO_FILE_SIZE_LABEL : MAX_MODEL_FILE_SIZE_LABEL;
 
-  const allTranslationsComplete = locales.filter((locale) => locale !== "en").every((locale) => {
-    const value = translations[locale];
-    return value?.title.trim() && value.description.trim().length >= 40 && value.origin.trim() && value.material.trim();
-  });
-  const canReview = name.trim().length > 0 && material.trim().length > 0 && origin.trim().length > 0 && description.trim().length >= 40 && allTranslationsComplete && file !== null && photo !== null && category !== null && (!isModelType || (lightTemperature !== null && lightDirection !== null));
+  const canReview = name.trim().length > 0 && material.trim().length > 0 && origin.trim().length > 0 && description.trim().length >= 40 && file !== null && photo !== null && category !== null && (!isModelType || (lightTemperature !== null && lightDirection !== null));
   const canContinueFromStudio = file !== null && (!isModelType || (modelFormat !== null && lightTemperature !== null && lightDirection !== null));
 
   async function generateModel() {
@@ -245,7 +236,7 @@ export default function UploadWizard() {
     if (isModelType && lightTemperature && lightDirection) { form.set("lightTemperature", lightTemperature); form.set("lightDirection", lightDirection); }
     form.set("price", priceMode === "paid" ? price : "");
     form.set("license", license);
-    const localizedContent = { en: { title: name, description, origin, material }, ...translations };
+    const localizedContent = { en: { title: name, description, origin, material } };
     form.set("translations", JSON.stringify(localizedContent));
 
     try {
@@ -668,25 +659,8 @@ export default function UploadWizard() {
             </div>
 
             <div className="mt-8 border-t border-line pt-7">
-              <p className="text-[10px] tracking-label uppercase text-stone">Required translations</p>
-              <p className="mt-2 text-xs leading-relaxed text-stone">Provide the public title, description, origin, and material in every supported language. Each description requires at least 40 characters.</p>
-              <div className="mt-5 space-y-4">
-                {locales.filter((locale) => locale !== "en").map((locale) => {
-                  const value = translations[locale];
-                  const update = (field: keyof UploadTranslation, next: string) => setTranslations((current) => ({ ...current, [locale]: { ...current[locale], [field]: next } }));
-                  return <details key={locale} className="border border-line p-4" open={!value?.title}>
-                    <summary className="cursor-pointer text-sm font-medium">{languageNames[locale as Locale]}</summary>
-                    <div className="mt-4 grid gap-4">
-                      <input aria-label={`${languageNames[locale as Locale]} title`} value={value?.title ?? ""} onChange={(event) => update("title", event.target.value)} placeholder="Translated artifact name" className="border-b border-line bg-transparent pb-2 text-sm outline-none focus:border-ink" />
-                      <textarea aria-label={`${languageNames[locale as Locale]} description`} value={value?.description ?? ""} onChange={(event) => update("description", event.target.value)} minLength={40} maxLength={2000} placeholder="Translated public description (minimum 40 characters)" className="min-h-24 border border-line bg-transparent p-3 text-sm outline-none focus:border-ink" />
-                      <div className="grid gap-4 sm:grid-cols-2">
-                        <input aria-label={`${languageNames[locale as Locale]} origin`} value={value?.origin ?? ""} onChange={(event) => update("origin", event.target.value)} placeholder="Translated origin" className="border-b border-line bg-transparent pb-2 text-sm outline-none focus:border-ink" />
-                        <input aria-label={`${languageNames[locale as Locale]} material`} value={value?.material ?? ""} onChange={(event) => update("material", event.target.value)} placeholder="Translated material" className="border-b border-line bg-transparent pb-2 text-sm outline-none focus:border-ink" />
-                      </div>
-                    </div>
-                  </details>;
-                })}
-              </div>
+              <p className="text-[10px] tracking-label uppercase text-stone">Language</p>
+              <p className="mt-2 text-xs leading-relaxed text-stone">Enter the artifact details in English. When a visitor views this artifact in another language, Gemini translates it on demand and the translation is saved for future visits.</p>
             </div>
 
             {type === "video-scan" && (

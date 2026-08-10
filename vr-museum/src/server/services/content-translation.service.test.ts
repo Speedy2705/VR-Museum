@@ -1,4 +1,4 @@
-import type { Artifact, Collection } from "@/generated/prisma/client";
+import type { Artifact, Collection, UploadedAsset } from "@/generated/prisma/client";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
@@ -20,7 +20,7 @@ vi.mock("@/lib/prisma", () => ({
   },
 }));
 
-import { getLocalizedArtifact, getLocalizedCollection } from "./content-translation.service";
+import { getLocalizedArtifact, getLocalizedCollection, getLocalizedUpload } from "./content-translation.service";
 import { hashTranslationSource } from "@/lib/translation-hash";
 
 const artifact = {
@@ -39,6 +39,25 @@ const collection = {
   category: "History",
   translations: {},
 } as unknown as Collection;
+
+const upload = {
+  id: "upload-1",
+  title: "Dancing Shiva",
+  category: "forged-in-time",
+  metadata: {
+    description: "A detailed bronze sculpture contributed by a museum community member.",
+    origin: "Tamil Nadu, India",
+    material: "Bronze",
+  },
+  translations: {
+    en: {
+      title: "Dancing Shiva",
+      description: "A detailed bronze sculpture contributed by a museum community member.",
+      origin: "Tamil Nadu, India",
+      material: "Bronze",
+    },
+  },
+} as unknown as UploadedAsset;
 
 beforeEach(() => {
   vi.resetAllMocks();
@@ -130,5 +149,46 @@ describe("content translation service", () => {
     expect(result).toMatchObject({ title: artifact.title, subtitle: artifact.subtitle, description: artifact.description });
     expect(mocks.translatePhrases).not.toHaveBeenCalled();
     expect(mocks.artifactUpdate).not.toHaveBeenCalled();
+  });
+
+  it("translates an upload only when it is viewed in a non-English locale and caches it", async () => {
+    mocks.translatePhrases.mockResolvedValue(["Shiva dansant", "Bronze", "Tamil Nadu, Inde", "Une sculpture en bronze détaillée offerte par un membre de la communauté du musée."]);
+    mocks.uploadedAssetUpdate.mockImplementation(async ({ data }: { data: { translations: unknown } }) => ({
+      translations: data.translations,
+    }));
+
+    const result = await getLocalizedUpload(upload, "fr");
+
+    expect(mocks.translatePhrases).toHaveBeenCalledWith("fr", [
+      "Dancing Shiva",
+      "Bronze",
+      "Tamil Nadu, India",
+      "A detailed bronze sculpture contributed by a museum community member.",
+    ]);
+    expect(mocks.uploadedAssetUpdate).toHaveBeenCalledOnce();
+    expect(result.translations).toMatchObject({
+      en: {
+        title: "Dancing Shiva",
+        description: "A detailed bronze sculpture contributed by a museum community member.",
+        origin: "Tamil Nadu, India",
+        material: "Bronze",
+      },
+      fr: {
+        title: "Shiva dansant",
+        material: "Bronze",
+        origin: "Tamil Nadu, Inde",
+        description: "Une sculpture en bronze détaillée offerte par un membre de la communauté du musée.",
+      },
+    });
+  });
+
+  it("falls back to the upload's English content when on-demand translation fails", async () => {
+    mocks.translatePhrases.mockRejectedValue(new Error("Gemini unavailable"));
+
+    const result = await getLocalizedUpload(upload, "de");
+
+    expect(result.title).toBe(upload.title);
+    expect(result.translations).toEqual(upload.translations);
+    expect(mocks.uploadedAssetUpdate).not.toHaveBeenCalled();
   });
 });

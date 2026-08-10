@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { locales } from "@/lib/i18n";
 import { ARTIFACT_CATEGORIES } from "@/lib/artifact-categories";
 import {
   artifactMediaTypeSchema,
@@ -22,9 +21,9 @@ const localizedUploadSchema = z.object({
   origin: z.string().trim().min(1).max(200),
   material: z.string().trim().min(1).max(120),
 });
-const translationsSchema = z.object(Object.fromEntries(
-  locales.map((locale) => [locale, localizedUploadSchema]),
-) as Record<(typeof locales)[number], typeof localizedUploadSchema>);
+const translationsSchema = z.object({
+  en: localizedUploadSchema,
+});
 
 const uploadBaseSchema = z.object({
   title: z.string().trim().min(1).max(200),

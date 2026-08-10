@@ -1,6 +1,6 @@
 import type { Artifact, Collection, Prisma, UploadedAsset } from "@/generated/prisma/client";
 import type { Locale } from "@/lib/i18n";
-import { localizeRecord, translationFor } from "@/lib/localized-content";
+import { localizeRecord } from "@/lib/localized-content";
 import { hashTranslationSource, normalizeTranslationSource } from "@/lib/translation-hash";
 import { prisma } from "@/lib/prisma";
 import { translatePhrases } from "@/server/gemini-translation";
@@ -12,6 +12,14 @@ const SOURCE_HASHES_KEY = "_sourceHashes";
 function translationRoot(value: unknown) {
   return value && typeof value === "object" && !Array.isArray(value)
     ? value as Record<string, unknown>
+    : {};
+}
+
+function storedTranslationFor(value: unknown, locale: Locale): TranslationObject {
+  const root = translationRoot(value);
+  const localized = root[locale];
+  return localized && typeof localized === "object" && !Array.isArray(localized)
+    ? localized as TranslationObject
     : {};
 }
 
@@ -30,7 +38,7 @@ async function translateRecord<T extends TranslatableRecord>(
 ): Promise<T> {
   if (locale === "en") return localizeRecord(record, locale, fields);
 
-  const existingTranslation = translationFor(record.translations, locale);
+  const existingTranslation = storedTranslationFor(record.translations, locale);
   const existingHashes = storedSourceHashes(existingTranslation);
   const currentHashes = Object.fromEntries(fields.map((field) => [field, hashTranslationSource(String(record[field]))]));
   const hasHashMetadata = Object.keys(existingHashes).length > 0;
@@ -99,7 +107,7 @@ export async function getLocalizedUpload<T extends UploadedAsset>(upload: T, loc
   if (locale === "en") return upload;
   const english = uploadEnglishFields(upload);
   const fields = Object.keys(english) as (keyof typeof english)[];
-  const existing = translationFor(upload.translations, locale);
+  const existing = storedTranslationFor(upload.translations, locale);
   const existingHashes = storedSourceHashes(existing);
   const currentHashes = Object.fromEntries(fields.map((field) => [field, hashTranslationSource(english[field])]));
   const hasHashMetadata = Object.keys(existingHashes).length > 0;

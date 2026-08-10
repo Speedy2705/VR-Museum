@@ -7,6 +7,7 @@ export type ExhibitFit = {
   targetHeight: number;
   maxWidth: number;
   maxDepth: number;
+  platformRotationY?: number;
 };
 
 const MIN_DIMENSION = 1e-6;
@@ -17,6 +18,7 @@ const MIN_DIMENSION = 1e-6;
  * rotation and relative transforms.
  */
 export function fitModelToExhibit(object: THREE.Object3D, fit: ExhibitFit) {
+  if (fit.platformRotationY) object.rotation.y += fit.platformRotationY;
   object.updateWorldMatrix(true, true);
   const initialBounds = new THREE.Box3().setFromObject(object, true);
   if (initialBounds.isEmpty()) throw new Error("The model has no visible geometry to fit.");

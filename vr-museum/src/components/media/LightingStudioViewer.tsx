@@ -199,6 +199,7 @@ export default function LightingStudioViewer({ src, format, presetKey = "raking-
         ...MUSEUM_EXHIBIT_FIT,
         centerX: exhibitCenterX,
         centerZ: 0,
+        platformRotationY: environmentRef.current?.getObjectByName("artifact-exhibit")?.rotation.y ?? 0,
       });
       modelRef.current = object; scene.add(object); frameObject(object, camera, controls, showMuseumEnvironment ? environmentRef.current : null, museumLayout === "details");
       originalViewRef.current = { position: camera.position.clone(), target: controls.target.clone(), minDistance: controls.minDistance, maxDistance: controls.maxDistance };

@@ -28,16 +28,20 @@ export default function PlaceholderImage({
   sizes = "(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw",
   priority = false,
 }: PlaceholderImageProps) {
-  const [loaded, setLoaded] = useState(false);
+  const [loadedSrc, setLoadedSrc] = useState<string | null>(null);
+  const [failedSrc, setFailedSrc] = useState<string | null>(null);
   const reduceMotion = useReducedMotion();
+  const loaded = Boolean(src && loadedSrc === src);
+  const failed = Boolean(src && failedSrc === src);
 
-  if (src) {
+  if (src && !failed) {
     return (
       <Image
         src={src}
         alt={alt}
         fill
-        onLoad={() => setLoaded(true)}
+        onLoad={() => setLoadedSrc(src)}
+        onError={() => setFailedSrc(src)}
         className={`object-cover ${
           reduceMotion || loaded ? "opacity-100 blur-0" : "scale-[1.01] opacity-0 blur-sm"
         } transition-[opacity,filter,transform] duration-500 motion-reduce:transition-none ${className}`}

@@ -54,4 +54,17 @@ describe("fitModelToExhibit", () => {
     expect(object.rotation.y).toBeCloseTo(rotation.y);
     expect(object.rotation.z).toBeCloseTo(rotation.z);
   });
+
+  it("aligns the model yaw with a rotated exhibit platform before fitting", () => {
+    const object = model(1, 2, 1);
+    object.rotation.y = -0.2;
+
+    const result = fitModelToExhibit(object, { ...fit, platformRotationY: 0.35 });
+    const center = result.bounds.getCenter(new THREE.Vector3());
+
+    expect(object.rotation.y).toBeCloseTo(0.15);
+    expect(result.bounds.min.y).toBeCloseTo(fit.pedestalTopY);
+    expect(center.x).toBeCloseTo(fit.centerX);
+    expect(center.z).toBeCloseTo(fit.centerZ);
+  });
 });

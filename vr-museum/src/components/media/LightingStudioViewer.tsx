@@ -43,14 +43,13 @@ function frameObject(object: THREE.Object3D, camera: THREE.PerspectiveCamera, co
   }
   const size = box.getSize(new THREE.Vector3());
   const center = box.getCenter(new THREE.Vector3());
-  if (detailsComposition) center.x += 2.5;
-  else if (museumComposition) center.x += 1.1;
   const verticalFov = THREE.MathUtils.degToRad(camera.fov);
   const horizontalFov = 2 * Math.atan(Math.tan(verticalFov / 2) * camera.aspect);
   const fittedDistance = museumComposition
     ? Math.max(size.y / (2 * Math.tan(verticalFov / 2)), size.x / (2 * Math.tan(horizontalFov / 2))) * 1.18
     : Math.max(size.x, size.y, size.z, 1) / (2 * Math.tan(verticalFov / 2)) * 1.45;
-  const distance = museumComposition ? Math.max(fittedDistance, 7.5) * 1.18 : fittedDistance;
+  const compositionPadding = detailsComposition ? 1.28 : 1.18;
+  const distance = museumComposition ? Math.max(fittedDistance, 7.5) * compositionPadding : fittedDistance;
   camera.position.set(center.x + (museumComposition ? 0 : distance * 0.55), center.y + distance * (museumComposition ? 0.04 : 0.3), center.z + distance);
   camera.near = Math.max(distance / 100, 0.01);
   camera.far = Math.max(distance * 100, 100);
@@ -70,6 +69,7 @@ export default function LightingStudioViewer({ src, format, presetKey = "raking-
   const environmentRef = useRef<THREE.Group>(null);
   const originalViewRef = useRef<{ position: THREE.Vector3; target: THREE.Vector3; minDistance: number; maxDistance: number }>(null);
   const cameraMoveRef = useRef<{ startedAt: number; fromPosition: THREE.Vector3; toPosition: THREE.Vector3; fromTarget: THREE.Vector3; toTarget: THREE.Vector3 }>(null);
+  const focusedRef = useRef<"both" | "artifact" | "details">("both");
   const rotatingRef = useRef(false);
   const presetRef = useRef(presetKey);
   const callbacksRef = useRef({ onReady, onError });
@@ -81,6 +81,7 @@ export default function LightingStudioViewer({ src, format, presetKey = "raking-
   const [focused, setFocused] = useState<"both" | "artifact" | "details">("both");
 
   useEffect(() => { rotatingRef.current = rotating; }, [rotating]);
+  useEffect(() => { focusedRef.current = focused; }, [focused]);
   useEffect(() => { callbacksRef.current = { onReady, onError }; }, [onReady, onError]);
   useEffect(() => { exhibitDetailsRef.current = { title, plaqueOrigin, panelDetails }; }, [title, plaqueOrigin, panelDetails]);
   useEffect(() => { presetRef.current = presetKey; }, [presetKey]);
@@ -153,7 +154,17 @@ export default function LightingStudioViewer({ src, format, presetKey = "raking-
     scene.add(environmentFill);
     environmentRef.current = environment;
     sceneRef.current = scene; cameraRef.current = camera; controlsRef.current = controls;
-    const observer = new ResizeObserver(([entry]) => { const { width, height } = entry.contentRect; if (!width || !height) return; renderer.setSize(width, height, false); camera.aspect = width / height; camera.updateProjectionMatrix(); });
+    const observer = new ResizeObserver(([entry]) => {
+      const { width, height } = entry.contentRect;
+      if (!width || !height) return;
+      renderer.setSize(width, height, false);
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+      const model = modelRef.current;
+      if (!model || focusedRef.current !== "both" || cameraMoveRef.current) return;
+      frameObject(model, camera, controls, showMuseumEnvironment ? environmentRef.current : null, museumLayout === "details");
+      originalViewRef.current = { position: camera.position.clone(), target: controls.target.clone(), minDistance: controls.minDistance, maxDistance: controls.maxDistance };
+    });
     observer.observe(host);
     let frame = 0;
     const animate = (now: number) => {

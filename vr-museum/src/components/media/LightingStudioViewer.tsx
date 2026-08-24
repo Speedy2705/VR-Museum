@@ -18,6 +18,7 @@ import { loadModel, type ModelFormat, type ModelLoadError } from "@/lib/three/lo
 
 export type LightingStudioViewerProps = { src: string; format: ModelFormat; presetKey?: LightingPresetKey; lightTemperature?: LightTemperatureKey; lightDirection?: LightDirectionKey; title: string; poster?: string; onReady?: () => void; onError?: (message: string) => void; showMuseumEnvironment?: boolean; className?: string; museumLayout?: "centered" | "details"; focusArtifactWithExhibit?: boolean; plaqueOrigin?: string; panelDetails?: MuseumPanelDetails };
 type CameraView = { position: THREE.Vector3; target: THREE.Vector3; minDistance: number; maxDistance: number };
+type FocusMode = "both" | "artifact" | "details" | "custom";
 
 function disposeMaterial(material: THREE.Material) {
   for (const value of Object.values(material)) if (value instanceof THREE.Texture) value.dispose();
@@ -77,7 +78,8 @@ export default function LightingStudioViewer({ src, format, presetKey = "raking-
   const cameraMoveRef = useRef<{ startedAt: number; fromPosition: THREE.Vector3; toPosition: THREE.Vector3; fromTarget: THREE.Vector3; toTarget: THREE.Vector3 }>(null);
   const reframeRef = useRef<(() => CameraView | null) | null>(null);
   const viewerReadyRef = useRef(false);
-  const focusedRef = useRef<"both" | "artifact" | "details">("both");
+  const userInteractedRef = useRef(false);
+  const focusedRef = useRef<FocusMode>("both");
   const rotatingRef = useRef(false);
   const presetRef = useRef(presetKey);
   const callbacksRef = useRef({ onReady, onError });
@@ -86,7 +88,7 @@ export default function LightingStudioViewer({ src, format, presetKey = "raking-
   const [failed, setFailed] = useState(false);
   const [progress, setProgress] = useState(0);
   const [rotating, setRotating] = useState(false);
-  const [focused, setFocused] = useState<"both" | "artifact" | "details">("both");
+  const [focused, setFocused] = useState<FocusMode>("both");
 
   useEffect(() => { rotatingRef.current = rotating; }, [rotating]);
   useEffect(() => { focusedRef.current = focused; }, [focused]);
@@ -116,8 +118,28 @@ export default function LightingStudioViewer({ src, format, presetKey = "raking-
     setFocused(kind);
   }, [moveCamera]);
 
+  const moveExhibit = useCallback((horizontal: number, vertical: number) => {
+    const camera = cameraRef.current;
+    const controls = controlsRef.current;
+    if (!camera || !controls || cameraMoveRef.current) return;
+    const distance = camera.position.distanceTo(controls.target);
+    const visibleHeight = 2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * distance;
+    const step = visibleHeight * 0.055;
+    const cameraRight = new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld, 0).normalize();
+    const cameraUp = new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld, 1).normalize();
+    const cameraOffset = cameraRight.multiplyScalar(-horizontal * step).add(cameraUp.multiplyScalar(-vertical * step));
+    camera.position.add(cameraOffset);
+    controls.target.add(cameraOffset);
+    controls.update();
+    userInteractedRef.current = true;
+    focusedRef.current = "custom";
+    setFocused("custom");
+  }, []);
+
   const resetView = useCallback(() => {
-    const view = originalViewRef.current;
+    focusedRef.current = "both";
+    userInteractedRef.current = false;
+    const view = reframeRef.current?.() ?? originalViewRef.current;
     if (!view) return;
     if (controlsRef.current) {
       controlsRef.current.minDistance = view.minDistance;
@@ -144,8 +166,11 @@ export default function LightingStudioViewer({ src, format, presetKey = "raking-
     host.appendChild(renderer.domElement);
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enabled = false;
+    controls.enablePan = false;
     controls.enableDamping = true;
     controls.dampingFactor = 0.06;
+    const noteInteraction = () => { if (viewerReadyRef.current) userInteractedRef.current = true; };
+    controls.addEventListener("start", noteInteraction);
     const exhibitOffsetX = museumLayout === "details" ? -2.35 : 0;
     const exhibitDetails = exhibitDetailsRef.current;
     const environment = showMuseumEnvironment ? createMuseumEnvironment({ exhibitOffsetX, plaqueTitle: exhibitDetails.title, plaqueOrigin: exhibitDetails.plaqueOrigin, showInfoDisplay: museumLayout === "details", panelDetails: exhibitDetails.panelDetails }) : null;
@@ -176,6 +201,11 @@ export default function LightingStudioViewer({ src, format, presetKey = "raking-
       return view;
     };
     reframeRef.current = applyFullFrame;
+    const restoreCenteredView = () => {
+      if (!modelRef.current || focusedRef.current !== "both" || userInteractedRef.current || cameraMoveRef.current) return;
+      cancelAnimationFrame(resizeFrame);
+      resizeFrame = requestAnimationFrame(() => { applyFullFrame(); });
+    };
     const observer = new ResizeObserver(([entry]) => {
       const { width, height } = entry.contentRect;
       if (!width || !height) return;
@@ -187,6 +217,9 @@ export default function LightingStudioViewer({ src, format, presetKey = "raking-
       resizeFrame = requestAnimationFrame(() => { applyFullFrame(); });
     });
     observer.observe(host);
+    window.addEventListener("pageshow", restoreCenteredView);
+    window.addEventListener("load", restoreCenteredView);
+    window.visualViewport?.addEventListener("resize", restoreCenteredView);
     let frame = 0;
     const animate = (now: number) => {
       const move = cameraMoveRef.current;
@@ -200,7 +233,7 @@ export default function LightingStudioViewer({ src, format, presetKey = "raking-
       controls.autoRotate = rotatingRef.current && !move; controls.autoRotateSpeed = 1.6; controls.update(); renderer.render(scene, camera); frame = requestAnimationFrame(animate);
     };
     frame = requestAnimationFrame(animate);
-    return () => { cancelAnimationFrame(frame); cancelAnimationFrame(resizeFrame); observer.disconnect(); controls.dispose(); if (modelRef.current) disposeObject(modelRef.current); if (environment) disposeObject(environment); renderer.dispose(); renderer.domElement.remove(); sceneRef.current = null; cameraRef.current = null; controlsRef.current = null; modelRef.current = null; environmentRef.current = null; cameraMoveRef.current = null; reframeRef.current = null; viewerReadyRef.current = false; };
+    return () => { cancelAnimationFrame(frame); cancelAnimationFrame(resizeFrame); observer.disconnect(); window.removeEventListener("pageshow", restoreCenteredView); window.removeEventListener("load", restoreCenteredView); window.visualViewport?.removeEventListener("resize", restoreCenteredView); controls.removeEventListener("start", noteInteraction); controls.dispose(); if (modelRef.current) disposeObject(modelRef.current); if (environment) disposeObject(environment); renderer.dispose(); renderer.domElement.remove(); sceneRef.current = null; cameraRef.current = null; controlsRef.current = null; modelRef.current = null; environmentRef.current = null; cameraMoveRef.current = null; reframeRef.current = null; viewerReadyRef.current = false; userInteractedRef.current = false; };
   }, [showMuseumEnvironment, museumLayout, focusObject]);
 
   useEffect(() => {
@@ -220,7 +253,9 @@ export default function LightingStudioViewer({ src, format, presetKey = "raking-
     const scene = sceneRef.current; const camera = cameraRef.current; const controls = controlsRef.current;
     if (!scene || !camera || !controls) return;
     let active = true;
+    const settleTimers: number[] = [];
     viewerReadyRef.current = false;
+    userInteractedRef.current = false;
     originalViewRef.current = null;
     controls.enabled = false;
     setLoaded(false); setFailed(false); setProgress(8);
@@ -243,12 +278,17 @@ export default function LightingStudioViewer({ src, format, presetKey = "raking-
         requestAnimationFrame(() => {
           if (!active || modelRef.current !== object) return;
           reframeRef.current?.();
+          for (const delay of [150, 500, 1200]) {
+            settleTimers.push(window.setTimeout(() => {
+              if (active && focusedRef.current === "both" && !userInteractedRef.current && !cameraMoveRef.current) reframeRef.current?.();
+            }, delay));
+          }
         });
       });
     }).catch((error: ModelLoadError) => { if (!active) return; const message = error.message || "The model file may be missing or no longer available."; setFailed(true); callbacksRef.current.onError?.(message); }).finally(() => window.clearInterval(timer));
-    return () => { active = false; window.clearInterval(timer); if (modelRef.current) { scene.remove(modelRef.current); disposeObject(modelRef.current); modelRef.current = null; } };
+    return () => { active = false; window.clearInterval(timer); settleTimers.forEach(window.clearTimeout); if (modelRef.current) { scene.remove(modelRef.current); disposeObject(modelRef.current); modelRef.current = null; } };
   }, [src, format, showMuseumEnvironment, museumLayout]);
 
   if (failed) return <div role="alert" className={`relative flex h-full items-center justify-center overflow-hidden bg-cream-dark p-8 text-center ${className}`}>{poster && <div className="absolute inset-0 opacity-35"><PlaceholderImage src={poster} alt={title} label={title} sizes="(min-width: 768px) 50vw, 100vw" /></div>}<div className="relative"><p className="font-display text-2xl italic">The model is unavailable</p><p className="mt-3 text-sm text-stone">We couldn’t prepare this 3D view. Try the artifact photo instead.</p></div></div>;
-  return <div className={`relative h-full min-h-64 w-full overflow-hidden bg-cream-dark ${className}`}><div ref={hostRef} className="absolute inset-0" aria-label={`Interactive 3D model of ${title}`} />{!loaded && <div className="pointer-events-none absolute inset-x-5 bottom-5" role="status" aria-label={`Loading 3D model: ${progress}%`}><div className="h-px bg-cream/30"><span className="block h-full bg-cream transition-[width]" style={{ width: `${progress}%` }} /></div><p className="mt-2 text-[9px] tracking-label text-cream/75 uppercase">Preparing 3D view · {progress}%</p></div>}{loaded && <div className="absolute bottom-3 left-3 flex flex-wrap gap-2"><button type="button" aria-pressed={rotating} onClick={() => setRotating((value) => !value)} className="bg-cream/95 px-3 py-2 text-[9px] tracking-label uppercase shadow">{rotating ? "Stop rotation" : "Auto rotate"}</button>{museumLayout === "details" ? <><button type="button" aria-pressed={focused === "artifact"} onClick={() => { const exhibit = environmentRef.current?.getObjectByName("artifact-exhibit"); const target = focusArtifactWithExhibit ? exhibit ?? modelRef.current : modelRef.current; if (target) focusObject(target, "artifact"); }} className="bg-cream/95 px-3 py-2 text-[9px] tracking-label uppercase shadow">Focus artifact</button><button type="button" aria-pressed={focused === "details"} onClick={() => { const display = environmentRef.current?.getObjectByName("museum-info-display"); if (display) focusObject(display, "details"); }} className="bg-cream/95 px-3 py-2 text-[9px] tracking-label uppercase shadow">View details</button><button type="button" aria-pressed={focused === "both"} onClick={resetView} className="bg-cream/95 px-3 py-2 text-[9px] tracking-label uppercase shadow">View all</button></> : <button type="button" aria-pressed={focused === "both"} onClick={resetView} className="bg-cream/95 px-3 py-2 text-[9px] tracking-label uppercase shadow">Focus artifact</button>}</div>}</div>;
+  return <div className={`relative h-full min-h-64 w-full overflow-hidden bg-cream-dark ${className}`}><div ref={hostRef} className="absolute inset-0" aria-label={`Interactive 3D model of ${title}`} />{!loaded && <div className="pointer-events-none absolute inset-x-5 bottom-5" role="status" aria-label={`Loading 3D model: ${progress}%`}><div className="h-px bg-cream/30"><span className="block h-full bg-cream transition-[width]" style={{ width: `${progress}%` }} /></div><p className="mt-2 text-[9px] tracking-label text-cream/75 uppercase">Preparing 3D view · {progress}%</p></div>}{loaded && <div className="absolute bottom-3 left-3 flex max-w-[calc(100%-1.5rem)] flex-wrap items-end gap-3"><div className="flex flex-wrap gap-2"><button type="button" aria-pressed={rotating} onClick={() => setRotating((value) => !value)} className="bg-cream/95 px-3 py-2 text-[9px] tracking-label uppercase shadow">{rotating ? "Stop rotation" : "Auto rotate"}</button>{museumLayout === "details" ? <><button type="button" aria-pressed={focused === "artifact"} onClick={() => { const exhibit = environmentRef.current?.getObjectByName("artifact-exhibit"); const target = focusArtifactWithExhibit ? exhibit ?? modelRef.current : modelRef.current; if (target) focusObject(target, "artifact"); }} className="bg-cream/95 px-3 py-2 text-[9px] tracking-label uppercase shadow">Focus artifact</button><button type="button" aria-pressed={focused === "details"} onClick={() => { const display = environmentRef.current?.getObjectByName("museum-info-display"); if (display) focusObject(display, "details"); }} className="bg-cream/95 px-3 py-2 text-[9px] tracking-label uppercase shadow">View details</button><button type="button" aria-pressed={focused === "both"} onClick={resetView} className="bg-cream/95 px-3 py-2 text-[9px] tracking-label uppercase shadow">View all</button></> : <button type="button" aria-pressed={focused === "both"} onClick={resetView} className="bg-cream/95 px-3 py-2 text-[9px] tracking-label uppercase shadow">Focus artifact</button>}</div><div role="group" aria-label="Move 3D exhibit" className="grid grid-cols-3 gap-1"><span aria-hidden="true" /><button type="button" aria-label="Move exhibit up" title="Move up" onClick={() => moveExhibit(0, 1)} className="flex size-9 items-center justify-center bg-cream/95 text-base text-ink shadow transition hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cream">↑</button><span aria-hidden="true" /><button type="button" aria-label="Move exhibit left" title="Move left" onClick={() => moveExhibit(-1, 0)} className="flex size-9 items-center justify-center bg-cream/95 text-base text-ink shadow transition hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cream">←</button><button type="button" aria-label="Center exhibit" title="Center view" onClick={resetView} className="flex size-9 items-center justify-center bg-cream/95 text-sm text-ink shadow transition hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cream">●</button><button type="button" aria-label="Move exhibit right" title="Move right" onClick={() => moveExhibit(1, 0)} className="flex size-9 items-center justify-center bg-cream/95 text-base text-ink shadow transition hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cream">→</button><span aria-hidden="true" /><button type="button" aria-label="Move exhibit down" title="Move down" onClick={() => moveExhibit(0, -1)} className="flex size-9 items-center justify-center bg-cream/95 text-base text-ink shadow transition hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cream">↓</button><span aria-hidden="true" /></div></div>}</div>;
 }

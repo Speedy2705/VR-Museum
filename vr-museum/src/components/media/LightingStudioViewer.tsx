@@ -17,6 +17,7 @@ import { createMuseumEnvironment, MUSEUM_EXHIBIT_FIT, type MuseumPanelDetails } 
 import { loadModel, type ModelFormat, type ModelLoadError } from "@/lib/three/loaders";
 
 export type LightingStudioViewerProps = { src: string; format: ModelFormat; presetKey?: LightingPresetKey; lightTemperature?: LightTemperatureKey; lightDirection?: LightDirectionKey; title: string; poster?: string; onReady?: () => void; onError?: (message: string) => void; showMuseumEnvironment?: boolean; className?: string; museumLayout?: "centered" | "details"; focusArtifactWithExhibit?: boolean; plaqueOrigin?: string; panelDetails?: MuseumPanelDetails };
+type CameraView = { position: THREE.Vector3; target: THREE.Vector3; minDistance: number; maxDistance: number };
 
 function disposeMaterial(material: THREE.Material) {
   for (const value of Object.values(material)) if (value instanceof THREE.Texture) value.dispose();
@@ -32,32 +33,37 @@ function disposeObject(object: THREE.Object3D) {
   });
 }
 
-function frameObject(object: THREE.Object3D, camera: THREE.PerspectiveCamera, controls: OrbitControls, museumEnvironment: THREE.Group | null = null, detailsComposition = false) {
-  const box = new THREE.Box3().setFromObject(object);
+function fittedDistance(box: THREE.Box3, camera: THREE.PerspectiveCamera, padding: number, minimum: number) {
+  const size = box.getSize(new THREE.Vector3());
+  const verticalFov = THREE.MathUtils.degToRad(camera.fov);
+  const horizontalFov = 2 * Math.atan(Math.tan(verticalFov / 2) * camera.aspect);
+  const verticalDistance = size.y / (2 * Math.tan(verticalFov / 2));
+  const horizontalDistance = size.x / (2 * Math.tan(horizontalFov / 2));
+  return Math.max(Math.max(verticalDistance, horizontalDistance) * padding + size.z / 2, minimum);
+}
+
+function frameObject(object: THREE.Object3D, camera: THREE.PerspectiveCamera, controls: OrbitControls, museumEnvironment: THREE.Group | null = null, detailsComposition = false): CameraView {
+  object.updateWorldMatrix(true, true);
+  museumEnvironment?.updateWorldMatrix(true, true);
+  const box = new THREE.Box3().setFromObject(object, true);
   const museumComposition = Boolean(museumEnvironment);
   if (museumEnvironment) {
     ["platform", "pedestal", "glass-case", "museum-info-display"].forEach((name) => {
       const part = museumEnvironment.getObjectByName(name);
-      if (part) box.expandByObject(part);
+      if (part) box.expandByObject(part, true);
     });
   }
-  const size = box.getSize(new THREE.Vector3());
   const center = box.getCenter(new THREE.Vector3());
-  const verticalFov = THREE.MathUtils.degToRad(camera.fov);
-  const horizontalFov = 2 * Math.atan(Math.tan(verticalFov / 2) * camera.aspect);
-  const fittedDistance = museumComposition
-    ? Math.max(size.y / (2 * Math.tan(verticalFov / 2)), size.x / (2 * Math.tan(horizontalFov / 2))) * 1.18
-    : Math.max(size.x, size.y, size.z, 1) / (2 * Math.tan(verticalFov / 2)) * 1.45;
-  const compositionPadding = detailsComposition ? 1.28 : 1.18;
-  const distance = museumComposition ? Math.max(fittedDistance, 7.5) * compositionPadding : fittedDistance;
+  const distance = fittedDistance(box, camera, detailsComposition ? 1.35 : museumComposition ? 1.28 : 1.4, museumComposition ? 7.5 : 2.4);
   camera.position.set(center.x + (museumComposition ? 0 : distance * 0.55), center.y + distance * (museumComposition ? 0.04 : 0.3), center.z + distance);
   camera.near = Math.max(distance / 100, 0.01);
   camera.far = Math.max(distance * 100, 100);
   camera.updateProjectionMatrix();
   controls.target.copy(center);
   controls.minDistance = distance * 0.35;
-  controls.maxDistance = museumComposition ? distance * 1.02 : distance * 4;
+  controls.maxDistance = distance * 4;
   controls.update();
+  return { position: camera.position.clone(), target: controls.target.clone(), minDistance: controls.minDistance, maxDistance: controls.maxDistance };
 }
 
 export default function LightingStudioViewer({ src, format, presetKey = "raking-light", lightTemperature, lightDirection, title, poster, onReady, onError, showMuseumEnvironment = true, className = "", museumLayout = "centered", focusArtifactWithExhibit = false, plaqueOrigin, panelDetails }: LightingStudioViewerProps) {
@@ -67,8 +73,10 @@ export default function LightingStudioViewer({ src, format, presetKey = "raking-
   const controlsRef = useRef<OrbitControls>(null);
   const modelRef = useRef<THREE.Object3D>(null);
   const environmentRef = useRef<THREE.Group>(null);
-  const originalViewRef = useRef<{ position: THREE.Vector3; target: THREE.Vector3; minDistance: number; maxDistance: number }>(null);
+  const originalViewRef = useRef<CameraView>(null);
   const cameraMoveRef = useRef<{ startedAt: number; fromPosition: THREE.Vector3; toPosition: THREE.Vector3; fromTarget: THREE.Vector3; toTarget: THREE.Vector3 }>(null);
+  const reframeRef = useRef<(() => CameraView | null) | null>(null);
+  const viewerReadyRef = useRef(false);
   const focusedRef = useRef<"both" | "artifact" | "details">("both");
   const rotatingRef = useRef(false);
   const presetRef = useRef(presetKey);
@@ -98,22 +106,15 @@ export default function LightingStudioViewer({ src, format, presetKey = "raking-
     const camera = cameraRef.current; const controls = controlsRef.current;
     if (!camera || !controls) return;
     const box = new THREE.Box3().setFromObject(object);
-    const size = box.getSize(new THREE.Vector3()); const center = box.getCenter(new THREE.Vector3());
-    const longest = Math.max(size.x, size.y, size.z) || 1;
-    const padding = kind === "artifact" ? 1.38 : 1.35;
-    const distance = Math.max(longest / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2))) * padding, kind === "details" ? 3.8 : 2.4);
-    const viewCenter = center.clone();
-    if (kind === "artifact" && museumLayout === "details") {
-      viewCenter.x += 1;
-      viewCenter.y -= 0.22;
-    }
+    const viewCenter = box.getCenter(new THREE.Vector3());
+    const distance = fittedDistance(box, camera, kind === "artifact" ? 1.35 : 1.28, kind === "details" ? 3.8 : 2.4);
     const frontPosition = new THREE.Vector3(viewCenter.x, viewCenter.y + distance * 0.05, viewCenter.z + distance);
     controls.minDistance = distance * 0.4;
     controls.maxDistance = originalViewRef.current?.maxDistance ?? distance * 3;
     moveCamera(frontPosition, viewCenter);
     setRotating(false);
     setFocused(kind);
-  }, [moveCamera, museumLayout]);
+  }, [moveCamera]);
 
   const resetView = useCallback(() => {
     const view = originalViewRef.current;
@@ -142,6 +143,7 @@ export default function LightingStudioViewer({ src, format, presetKey = "raking-
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     host.appendChild(renderer.domElement);
     const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enabled = false;
     controls.enableDamping = true;
     controls.dampingFactor = 0.06;
     const exhibitOffsetX = museumLayout === "details" ? -2.35 : 0;
@@ -154,16 +156,35 @@ export default function LightingStudioViewer({ src, format, presetKey = "raking-
     scene.add(environmentFill);
     environmentRef.current = environment;
     sceneRef.current = scene; cameraRef.current = camera; controlsRef.current = controls;
+    let resizeFrame = 0;
+    const applyFullFrame = () => {
+      const model = modelRef.current;
+      const { width, height } = host.getBoundingClientRect();
+      if (!model || !width || !height) return null;
+      renderer.setSize(width, height, false);
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+      const view = frameObject(model, camera, controls, showMuseumEnvironment ? environmentRef.current : null, museumLayout === "details");
+      originalViewRef.current = view;
+      if (!viewerReadyRef.current) {
+        viewerReadyRef.current = true;
+        controls.enabled = true;
+        setProgress(100);
+        setLoaded(true);
+        callbacksRef.current.onReady?.();
+      }
+      return view;
+    };
+    reframeRef.current = applyFullFrame;
     const observer = new ResizeObserver(([entry]) => {
       const { width, height } = entry.contentRect;
       if (!width || !height) return;
       renderer.setSize(width, height, false);
       camera.aspect = width / height;
       camera.updateProjectionMatrix();
-      const model = modelRef.current;
-      if (!model || focusedRef.current !== "both" || cameraMoveRef.current) return;
-      frameObject(model, camera, controls, showMuseumEnvironment ? environmentRef.current : null, museumLayout === "details");
-      originalViewRef.current = { position: camera.position.clone(), target: controls.target.clone(), minDistance: controls.minDistance, maxDistance: controls.maxDistance };
+      if (!modelRef.current || focusedRef.current !== "both" || cameraMoveRef.current) return;
+      cancelAnimationFrame(resizeFrame);
+      resizeFrame = requestAnimationFrame(() => { applyFullFrame(); });
     });
     observer.observe(host);
     let frame = 0;
@@ -179,7 +200,7 @@ export default function LightingStudioViewer({ src, format, presetKey = "raking-
       controls.autoRotate = rotatingRef.current && !move; controls.autoRotateSpeed = 1.6; controls.update(); renderer.render(scene, camera); frame = requestAnimationFrame(animate);
     };
     frame = requestAnimationFrame(animate);
-    return () => { cancelAnimationFrame(frame); observer.disconnect(); controls.dispose(); if (modelRef.current) disposeObject(modelRef.current); if (environment) disposeObject(environment); renderer.dispose(); renderer.domElement.remove(); sceneRef.current = null; cameraRef.current = null; controlsRef.current = null; modelRef.current = null; environmentRef.current = null; cameraMoveRef.current = null; };
+    return () => { cancelAnimationFrame(frame); cancelAnimationFrame(resizeFrame); observer.disconnect(); controls.dispose(); if (modelRef.current) disposeObject(modelRef.current); if (environment) disposeObject(environment); renderer.dispose(); renderer.domElement.remove(); sceneRef.current = null; cameraRef.current = null; controlsRef.current = null; modelRef.current = null; environmentRef.current = null; cameraMoveRef.current = null; reframeRef.current = null; viewerReadyRef.current = false; };
   }, [showMuseumEnvironment, museumLayout, focusObject]);
 
   useEffect(() => {
@@ -199,6 +220,9 @@ export default function LightingStudioViewer({ src, format, presetKey = "raking-
     const scene = sceneRef.current; const camera = cameraRef.current; const controls = controlsRef.current;
     if (!scene || !camera || !controls) return;
     let active = true;
+    viewerReadyRef.current = false;
+    originalViewRef.current = null;
+    controls.enabled = false;
     setLoaded(false); setFailed(false); setProgress(8);
     const timer = window.setInterval(() => setProgress((value) => Math.min(value + Math.max(1, Math.round((90 - value) / 8)), 90)), 180);
     loadModel(src, format, presetRef.current).then((object) => {
@@ -212,9 +236,15 @@ export default function LightingStudioViewer({ src, format, presetKey = "raking-
         centerZ: 0,
         platformRotationY: environmentRef.current?.getObjectByName("artifact-exhibit")?.rotation.y ?? 0,
       });
-      modelRef.current = object; scene.add(object); frameObject(object, camera, controls, showMuseumEnvironment ? environmentRef.current : null, museumLayout === "details");
-      originalViewRef.current = { position: camera.position.clone(), target: controls.target.clone(), minDistance: controls.minDistance, maxDistance: controls.maxDistance };
-      setProgress(100); setLoaded(true); callbacksRef.current.onReady?.();
+      modelRef.current = object;
+      scene.add(object);
+      controls.enabled = false;
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          if (!active || modelRef.current !== object) return;
+          reframeRef.current?.();
+        });
+      });
     }).catch((error: ModelLoadError) => { if (!active) return; const message = error.message || "The model file may be missing or no longer available."; setFailed(true); callbacksRef.current.onError?.(message); }).finally(() => window.clearInterval(timer));
     return () => { active = false; window.clearInterval(timer); if (modelRef.current) { scene.remove(modelRef.current); disposeObject(modelRef.current); modelRef.current = null; } };
   }, [src, format, showMuseumEnvironment, museumLayout]);

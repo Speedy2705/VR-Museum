@@ -1,8 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const { save, remove, createCleanup, findCleanup, updateCleanup } = vi.hoisted(() => ({
+const { save, remove, b2Save, b2Remove, createB2DownloadUrl, createCleanup, findCleanup, updateCleanup } = vi.hoisted(() => ({
   save: vi.fn(),
   remove: vi.fn(),
+  b2Save: vi.fn(),
+  b2Remove: vi.fn(),
+  createB2DownloadUrl: vi.fn(),
   createCleanup: vi.fn(),
   findCleanup: vi.fn(),
   updateCleanup: vi.fn(),
@@ -13,6 +16,15 @@ vi.mock("@/server/storage/vercel-blob.storage", () => ({
     save = save;
     delete = remove;
   },
+}));
+
+vi.mock("@/server/storage/b2", () => ({
+  B2Storage: class {
+    save = b2Save;
+    delete = b2Remove;
+  },
+  b2KeyFromUrl: (url: string) => url.startsWith("/api/media/") ? url.slice("/api/media/".length) : null,
+  createB2DownloadUrl,
 }));
 
 vi.mock("@/lib/prisma", () => ({
@@ -39,6 +51,9 @@ describe("Meshy multi-image service", () => {
     process.env.BLOB_READ_WRITE_TOKEN_STORE_ID = "test-store-id";
     save.mockReset();
     remove.mockReset();
+    b2Save.mockReset();
+    b2Remove.mockReset();
+    createB2DownloadUrl.mockReset();
     createCleanup.mockReset();
     findCleanup.mockReset();
     updateCleanup.mockReset();
@@ -46,6 +61,8 @@ describe("Meshy multi-image service", () => {
     findCleanup.mockResolvedValue(null);
     updateCleanup.mockResolvedValue({ count: 1 });
     remove.mockResolvedValue(undefined);
+    b2Remove.mockResolvedValue(undefined);
+    createB2DownloadUrl.mockImplementation(async (key: string) => `https://signed-b2.example/${key}`);
     save.mockImplementation(async (file: File) => ({
       url: `https://blob.example/${file.name}`,
       filename: file.name,
@@ -61,6 +78,7 @@ describe("Meshy multi-image service", () => {
     delete process.env.MESHY_API_KEY;
     delete process.env.BLOB_READ_WRITE_TOKEN;
     delete process.env.BLOB_READ_WRITE_TOKEN_STORE_ID;
+    delete process.env.STORAGE_PROVIDER;
   });
 
   it("uploads normalized public images and creates a GLB task", async () => {
@@ -128,6 +146,36 @@ describe("Meshy multi-image service", () => {
     vi.mocked(fetch).mockResolvedValue(new Response(JSON.stringify({ result: "task-legacy" }), { status: 200 }));
 
     await expect(createMultiImageTask(images())).resolves.toEqual({ taskId: "task-legacy" });
+  });
+
+  it("uploads private B2 source images and sends signed download URLs to Meshy", async () => {
+    process.env.STORAGE_PROVIDER = "backblaze-b2";
+    delete process.env.BLOB_READ_WRITE_TOKEN_STORE_ID;
+    b2Save.mockImplementation(async (file: File) => ({
+      url: `/api/media/uploads/${file.name}`,
+      filename: file.name,
+      extension: ".jpg",
+      contentType: file.type,
+      size: file.size,
+    }));
+    vi.mocked(fetch).mockResolvedValue(new Response(JSON.stringify({ result: "task-b2" }), { status: 200 }));
+
+    await expect(createMultiImageTask(images())).resolves.toEqual({ taskId: "task-b2" });
+    expect(b2Save).toHaveBeenCalledTimes(3);
+    expect(createB2DownloadUrl).toHaveBeenCalledTimes(3);
+    expect(fetch).toHaveBeenCalledWith("https://api.meshy.ai/openapi/v1/multi-image-to-3d", expect.objectContaining({
+      body: expect.stringContaining("https://signed-b2.example/uploads/meshy-source-1.jpg"),
+    }));
+    expect(createCleanup).toHaveBeenCalledWith({
+      data: {
+        taskId: "task-b2",
+        blobUrls: [
+          "/api/media/uploads/meshy-source-1.jpg",
+          "/api/media/uploads/meshy-source-2.jpg",
+          "/api/media/uploads/meshy-source-3.jpg",
+        ],
+      },
+    });
   });
 
   it("requires either a Blob OIDC store ID or a legacy read-write token", async () => {

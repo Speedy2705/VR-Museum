@@ -1,12 +1,19 @@
 import { ServiceError } from "@/lib/service-error";
 import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
+import { B2Storage, b2KeyFromUrl, createB2DownloadUrl } from "@/server/storage/b2";
+import type { FileStorage } from "@/server/storage/storage";
 import { BlobStorage } from "@/server/storage/vercel-blob.storage";
 
 const MESHY_ENDPOINT = "https://api.meshy.ai/openapi/v1";
 const ALLOWED_IMAGE_TYPES = new Set(["image/jpeg", "image/png"]);
 const MAX_IMAGE_SIZE = 10 * 1024 * 1024;
-const blobStorage = new BlobStorage();
+
+function sourceStorage(): FileStorage {
+  return process.env.STORAGE_PROVIDER === "backblaze-b2"
+    ? new B2Storage()
+    : new BlobStorage();
+}
 
 export type MeshyTaskStatus = "PENDING" | "IN_PROGRESS" | "SUCCEEDED" | "FAILED" | "CANCELED";
 
@@ -64,13 +71,19 @@ function normalizedImage(image: File, index: number) {
 
 async function uploadImage(image: File) {
   try {
-    const stored = await blobStorage.save(image);
+    const stored = await sourceStorage().save(image);
+    if (process.env.STORAGE_PROVIDER === "backblaze-b2") {
+      const key = b2KeyFromUrl(stored.url);
+      if (!key) throw new Error("B2 source image key is invalid");
+      return { storageUrl: stored.url, meshyUrl: await createB2DownloadUrl(key) };
+    }
     const url = new URL(stored.url);
-    if (url.protocol !== "https:") throw new Error("Blob URL is not HTTPS");
-    return url.toString();
+    if (url.protocol !== "https:") throw new Error("Source image URL is not HTTPS");
+    return { storageUrl: stored.url, meshyUrl: url.toString() };
   } catch (error) {
     if (error instanceof ServiceError) throw error;
-    throw new ServiceError("A source image could not be uploaded to Blob storage", "MESHY_SOURCE_UPLOAD_FAILED", 502);
+    logger.error("Meshy source-image upload failed", { error });
+    throw new ServiceError("A source image could not be uploaded to media storage", "MESHY_SOURCE_UPLOAD_FAILED", 502);
   }
 }
 
@@ -117,7 +130,7 @@ async function cleanupSourceImages(taskId: string) {
   try {
     const upload = await prisma.meshySourceUpload.findUnique({ where: { taskId } });
     if (!upload || upload.cleanedAt) return;
-    await blobStorage.delete(upload.blobUrls);
+    await sourceStorage().delete(upload.blobUrls);
     await prisma.meshySourceUpload.updateMany({
       where: { taskId, cleanedAt: null },
       data: { cleanedAt: new Date() },
@@ -138,11 +151,11 @@ export async function createMultiImageTask(images: File[]) {
     throw new ServiceError("Blob storage is not configured for Meshy source images", "BLOB_NOT_CONFIGURED", 503);
   }
   const normalizedImages = images.map(normalizedImage);
-  const imageUrls = await Promise.all(normalizedImages.map(uploadImage));
+  const uploadedImages = await Promise.all(normalizedImages.map(uploadImage));
   const result = await meshyRequest("/multi-image-to-3d", {
     method: "POST",
     body: JSON.stringify({
-      image_urls: imageUrls,
+      image_urls: uploadedImages.map(({ meshyUrl }) => meshyUrl),
       should_texture: true,
       // Web delivery favors one 2K base-color texture and Meshy's lowest
       // adaptive polygon tier. PBR map generation can multiply GLB size.
@@ -156,7 +169,7 @@ export async function createMultiImageTask(images: File[]) {
   if (typeof result.result !== "string" || !result.result) {
     throw new ServiceError("Meshy did not return a task ID", "MESHY_INVALID_RESPONSE", 502);
   }
-  await rememberSourceImages(result.result, imageUrls);
+  await rememberSourceImages(result.result, uploadedImages.map(({ storageUrl }) => storageUrl));
   return { taskId: result.result };
 }
 

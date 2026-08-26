@@ -191,7 +191,9 @@ export default function LightingStudioViewer({ src, format, presetKey = "raking-
       const model = modelRef.current;
       const { width, height } = host.getBoundingClientRect();
       if (!model || !width || !height) return null;
-      renderer.setSize(width, height, false);
+      // Keep the CSS canvas size matched to its host. The renderer separately
+      // scales its drawing buffer for devicePixelRatio.
+      renderer.setSize(width, height);
       camera.aspect = width / height;
       camera.updateProjectionMatrix();
       const view = frameObject(model, camera, controls, showMuseumEnvironment ? environmentRef.current : null);
@@ -214,7 +216,7 @@ export default function LightingStudioViewer({ src, format, presetKey = "raking-
     const observer = new ResizeObserver(([entry]) => {
       const { width, height } = entry.contentRect;
       if (!width || !height) return;
-      renderer.setSize(width, height, false);
+      renderer.setSize(width, height);
       camera.aspect = width / height;
       camera.updateProjectionMatrix();
       if (!modelRef.current || focusedRef.current !== "both" || userInteractedRef.current || cameraMoveRef.current) return;

@@ -285,6 +285,53 @@ describe("key API routes", () => {
     );
   });
 
+  it("accepts stable private B2 media URLs", async () => {
+    process.env.STORAGE_PROVIDER = "backblaze-b2";
+    mocks.createUpload.mockResolvedValue({ id: "upload-b2", status: "PENDING" });
+    try {
+      const response = await upload(
+        jsonRequest(
+          "/api/upload",
+          {
+            title: "Private B2 model",
+            category: "forged-in-time",
+            fileUrl: "/api/media/uploads/model.glb",
+            thumbnailUrl: "/api/media/uploads/model.jpg",
+            mediaType: "MODEL_3D",
+            modelFormat: "glb",
+            lightingPreset: "directional-spot",
+            lightTemperature: "cool-white",
+            lightDirection: "spotlight",
+            metadata: {
+              type: "3d-model",
+              description: "A documented artifact model submitted through private B2 storage.",
+            },
+            translations: {
+              en: {
+                title: "Private B2 model",
+                description: "A documented artifact model submitted through private B2 storage.",
+                origin: "Historical collection",
+                material: "Bronze",
+              },
+            },
+          },
+          "10.0.0.10",
+        ),
+      );
+
+      expect(response.status).toBe(201);
+      expect(mocks.createUpload).toHaveBeenCalledWith(
+        "user-1",
+        expect.objectContaining({
+          fileUrl: "/api/media/uploads/model.glb",
+          thumbnailUrl: "/api/media/uploads/model.jpg",
+        }),
+      );
+    } finally {
+      delete process.env.STORAGE_PROVIDER;
+    }
+  });
+
   it("rejects an invalid upload before storage or database creation", async () => {
     const form = new FormData();
     form.set("title", "Executable");

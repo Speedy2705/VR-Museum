@@ -13,9 +13,14 @@ function assertProductionStorageUrl(value: unknown) {
   if (typeof value !== "string") {
     throw new ServiceError("A stored media URL is required", "INVALID_BLOB_URL", 400);
   }
-  const url = new URL(value);
-  const isVercelBlob = url.protocol === "https:" && url.hostname.endsWith(".public.blob.vercel-storage.com");
   const isB2 = process.env.STORAGE_PROVIDER === "backblaze-b2" && value.startsWith("/api/media/uploads/");
+  let isVercelBlob = false;
+  try {
+    const url = new URL(value);
+    isVercelBlob = url.protocol === "https:" && url.hostname.endsWith(".public.blob.vercel-storage.com");
+  } catch {
+    // Private B2 objects deliberately use stable, same-origin relative URLs.
+  }
   if (!isVercelBlob && !isB2) {
     throw new ServiceError("Media must come from the configured upload store", "INVALID_BLOB_URL", 400);
   }

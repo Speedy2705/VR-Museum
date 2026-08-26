@@ -34,15 +34,6 @@ function disposeObject(object: THREE.Object3D) {
   });
 }
 
-function fittedDistance(box: THREE.Box3, camera: THREE.PerspectiveCamera, padding: number, minimum: number) {
-  const size = box.getSize(new THREE.Vector3());
-  const verticalFov = THREE.MathUtils.degToRad(camera.fov);
-  const horizontalFov = 2 * Math.atan(Math.tan(verticalFov / 2) * camera.aspect);
-  const verticalDistance = size.y / (2 * Math.tan(verticalFov / 2));
-  const horizontalDistance = size.x / (2 * Math.tan(horizontalFov / 2));
-  return Math.max(Math.max(verticalDistance, horizontalDistance) * padding + size.z / 2, minimum);
-}
-
 function frameObject(object: THREE.Object3D, camera: THREE.PerspectiveCamera, controls: OrbitControls, museumEnvironment: THREE.Group | null = null, detailsComposition = false): CameraView {
   object.updateWorldMatrix(true, true);
   museumEnvironment?.updateWorldMatrix(true, true);
@@ -54,15 +45,26 @@ function frameObject(object: THREE.Object3D, camera: THREE.PerspectiveCamera, co
       if (part) box.expandByObject(part, true);
     });
   }
+  const size = box.getSize(new THREE.Vector3());
   const center = box.getCenter(new THREE.Vector3());
-  const distance = fittedDistance(box, camera, detailsComposition ? 1.35 : museumComposition ? 1.28 : 1.4, museumComposition ? 7.5 : 2.4);
+  // These are composition targets, not the artifact's orbit pivot. The details
+  // layout deliberately looks farther right so the left-hand exhibit and the
+  // information display remain visible together.
+  if (detailsComposition) center.x += 2.5;
+  else if (museumComposition) center.x += 1.1;
+  const verticalFov = THREE.MathUtils.degToRad(camera.fov);
+  const horizontalFov = 2 * Math.atan(Math.tan(verticalFov / 2) * camera.aspect);
+  const fittedCompositionDistance = museumComposition
+    ? Math.max(size.y / (2 * Math.tan(verticalFov / 2)), size.x / (2 * Math.tan(horizontalFov / 2))) * 1.18
+    : Math.max(size.x, size.y, size.z, 1) / (2 * Math.tan(verticalFov / 2)) * 1.45;
+  const distance = museumComposition ? Math.max(fittedCompositionDistance, 7.5) * 1.18 : fittedCompositionDistance;
   camera.position.set(center.x + (museumComposition ? 0 : distance * 0.55), center.y + distance * (museumComposition ? 0.04 : 0.3), center.z + distance);
   camera.near = Math.max(distance / 100, 0.01);
   camera.far = Math.max(distance * 100, 100);
   camera.updateProjectionMatrix();
   controls.target.copy(center);
   controls.minDistance = distance * 0.35;
-  controls.maxDistance = distance * 4;
+  controls.maxDistance = museumComposition ? distance * 1.02 : distance * 4;
   controls.update();
   return { position: camera.position.clone(), target: controls.target.clone(), minDistance: controls.minDistance, maxDistance: controls.maxDistance };
 }
@@ -107,16 +109,24 @@ export default function LightingStudioViewer({ src, format, presetKey = "raking-
   const focusObject = useCallback((object: THREE.Object3D, kind: "artifact" | "details") => {
     const camera = cameraRef.current; const controls = controlsRef.current;
     if (!camera || !controls) return;
-    const box = new THREE.Box3().setFromObject(object);
+    object.updateWorldMatrix(true, true);
+    const box = new THREE.Box3().setFromObject(object, true);
+    const size = box.getSize(new THREE.Vector3());
     const viewCenter = box.getCenter(new THREE.Vector3());
-    const distance = fittedDistance(box, camera, kind === "artifact" ? 1.35 : 1.28, kind === "details" ? 3.8 : 2.4);
+    const longest = Math.max(size.x, size.y, size.z) || 1;
+    const padding = kind === "artifact" ? 1.38 : 1.35;
+    const distance = Math.max(longest / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2))) * padding, kind === "details" ? 3.8 : 2.4);
+    if (kind === "artifact" && museumLayout === "details") {
+      viewCenter.x += 1;
+      viewCenter.y -= 0.22;
+    }
     const frontPosition = new THREE.Vector3(viewCenter.x, viewCenter.y + distance * 0.05, viewCenter.z + distance);
     controls.minDistance = distance * 0.4;
     controls.maxDistance = originalViewRef.current?.maxDistance ?? distance * 3;
     moveCamera(frontPosition, viewCenter);
     setRotating(false);
     setFocused(kind);
-  }, [moveCamera]);
+  }, [moveCamera, museumLayout]);
 
   const moveExhibit = useCallback((horizontal: number, vertical: number) => {
     const camera = cameraRef.current;
@@ -166,7 +176,7 @@ export default function LightingStudioViewer({ src, format, presetKey = "raking-
     host.appendChild(renderer.domElement);
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enabled = false;
-    controls.enablePan = false;
+    controls.enablePan = true;
     controls.enableDamping = true;
     controls.dampingFactor = 0.06;
     const noteInteraction = () => { if (viewerReadyRef.current) userInteractedRef.current = true; };
@@ -212,7 +222,7 @@ export default function LightingStudioViewer({ src, format, presetKey = "raking-
       renderer.setSize(width, height, false);
       camera.aspect = width / height;
       camera.updateProjectionMatrix();
-      if (!modelRef.current || focusedRef.current !== "both" || cameraMoveRef.current) return;
+      if (!modelRef.current || focusedRef.current !== "both" || userInteractedRef.current || cameraMoveRef.current) return;
       cancelAnimationFrame(resizeFrame);
       resizeFrame = requestAnimationFrame(() => { applyFullFrame(); });
     });

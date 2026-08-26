@@ -3,11 +3,27 @@ import type { UploadInput, UploadUpdateInput } from "@/lib/validators/upload";
 import { prisma } from "@/lib/prisma";
 import { ServiceError } from "@/lib/service-error";
 import { getCategoryByKey, type CollectionSlug } from "@/lib/artifact-categories";
+import { fileStorage } from "@/server/storage";
 
 const COMMUNITY_COLLECTION_ID = "community-uploads";
 export const communityArtifactId = (id: string) => `community-artifact-${id}`;
 export const communityListingId = (id: string) => `community-listing-${id}`;
 export const communityArtifactSlug = (id: string) => `community-upload-${id}`;
+
+export function storedMediaUrls(upload: { fileUrl: string; thumbnailUrl: string | null }) {
+  return [upload.fileUrl, upload.thumbnailUrl].filter((url): url is string => Boolean(url));
+}
+
+export async function deleteStoredMedia(urls: string[]) {
+  if (!urls.length) return;
+  try {
+    await fileStorage.delete(urls);
+  } catch (error) {
+    // The database remains authoritative. The scheduled orphan sweep retries
+    // files that could not be removed during the request lifecycle.
+    console.error("Unable to delete stored upload media", { urls, error });
+  }
+}
 
 type UploadForListing = {
   id: string;
@@ -247,7 +263,7 @@ export async function updateUpload(
     ? { ...existingMetadata, ...input.metadata }
     : existingMetadata;
 
-  return prisma.$transaction(async (transaction) => {
+  const updated = await prisma.$transaction(async (transaction) => {
     const updated = await transaction.uploadedAsset.update({
       where: { id },
       data: {
@@ -264,10 +280,17 @@ export async function updateUpload(
     }
     return updated;
   });
+  const replacedUrls = [
+    input.fileUrl && input.fileUrl !== existing.fileUrl ? existing.fileUrl : null,
+    input.thumbnailUrl && input.thumbnailUrl !== existing.thumbnailUrl ? existing.thumbnailUrl : null,
+  ].filter((url): url is string => Boolean(url));
+  await deleteStoredMedia(replacedUrls);
+  return updated;
 }
 
 export async function deleteUpload(userId: string, id: string) {
-  await getUpload(userId, id);
+  const upload = await getUpload(userId, id);
   await prisma.uploadedAsset.delete({ where: { id } });
+  await deleteStoredMedia(storedMediaUrls(upload));
   return { id };
 }

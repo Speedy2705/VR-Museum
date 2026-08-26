@@ -4,9 +4,9 @@ export const MAX_MODEL_FILE_SIZE = 150 * 1024 * 1024;
 export const MAX_MODEL_FILE_SIZE_LABEL = "150 MB";
 export const ALLOWED_VIDEO_EXTENSIONS = [".mp4", ".mov", ".webm"] as const;
 export const VIDEO_FILE_ACCEPT = ALLOWED_VIDEO_EXTENSIONS.join(",");
-export const MAX_VIDEO_FILE_SIZE = 200 * 1024 * 1024;
-export const MAX_VIDEO_FILE_SIZE_LABEL = "200 MB";
-export const MAX_UPLOAD_FILE_SIZE = MAX_VIDEO_FILE_SIZE;
+export const MAX_VIDEO_FILE_SIZE = 150 * 1024 * 1024;
+export const MAX_VIDEO_FILE_SIZE_LABEL = "150 MB";
+export const MAX_UPLOAD_FILE_SIZE = MAX_MODEL_FILE_SIZE;
 
 export type UploadMediaType = "3d-model" | "video-scan";
 

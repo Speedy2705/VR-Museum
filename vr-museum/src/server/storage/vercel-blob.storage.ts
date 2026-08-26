@@ -8,7 +8,7 @@ import type { FileStorage } from "@/server/storage/storage";
 export class BlobStorage implements FileStorage {
   async save(file: File) {
     if (!file.size || file.size > MAX_UPLOAD_FILE_SIZE) {
-      throw new Error("File must be between 1 byte and 200 MB");
+      throw new Error("File must be between 1 byte and 150 MB");
     }
 
     const extension = path.extname(file.name).replace(/[^.\w-]/g, "");

@@ -51,15 +51,36 @@ Application permissions are centralized in `src/lib/role-policy.ts`. UI visibili
 
 `src/server/storage` selects Vercel Blob when `BLOB_READ_WRITE_TOKEN` is configured and otherwise uses local disk under `public/uploads`. With `NEXT_PUBLIC_BLOB_UPLOADS=true`, the browser uses a signed direct-upload flow so large media does not pass through the application server request body.
 
+Set `STORAGE_PROVIDER=backblaze-b2` and
+`NEXT_PUBLIC_STORAGE_PROVIDER=backblaze-b2` with the five `B2_*` variables to
+use a private Backblaze B2 bucket. Browser uploads use short-lived
+presigned PUT URLs; configure bucket CORS to allow `PUT` from the production and
+preview origins with the `Content-Type` header. Stable `/api/media/*` URLs issue
+short-lived signed download redirects, so the bucket does not need public access.
+Existing Vercel Blob URLs remain
+readable during migration. `npm run storage:migrate-b2` previews referenced
+objects and `npm run storage:migrate-b2 -- --apply` copies each object, updates
+database references transactionally, and deletes its old Blob only afterward.
+
 Uploads support:
 
 - Models: GLB, glTF, OBJ, or STL, up to 150 MB
-- Videos: MP4, MOV, or WebM, up to 200 MB
+- Videos: MP4, MOV, or WebM, up to 150 MB
 - A required display image for uploaded media
 
 File extensions, MIME types, sizes, and supported signatures are checked before persistence. Contributor updates are owner-scoped. Curators can approve, reject, or request changes; approved uploads become public community content.
 
-Meshy generation requires exactly three JPG/PNG source views, `MESHY_API_KEY`, and public Vercel Blob URLs. Source Blob URLs are recorded by task ID and removed on terminal task states on a best-effort basis.
+Meshy generation requires exactly three JPG/PNG source views, `MESHY_API_KEY`, and publicly readable object-storage URLs. Source image URLs are recorded by task ID and removed on terminal task states on a best-effort basis.
+New Meshy jobs request only GLB output, a 2K base-color texture without extra
+PBR maps, and Meshy's low adaptive remesh tier to keep web-delivery models
+materially smaller than the original generation defaults.
+
+Owner deletion, curator removal, and media replacement remove superseded Blob
+objects after the database mutation succeeds. A daily authenticated cron sweep
+deletes direct-upload objects that remain unreferenced for 24 hours and rejected
+uploads after 30 days. Operators can preview the identical sweep locally with
+`npm run uploads:cleanup`; it never deletes unless re-run as
+`npm run uploads:cleanup -- --apply`.
 
 ## Checkout and payment lifecycle
 

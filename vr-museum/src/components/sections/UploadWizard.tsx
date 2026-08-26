@@ -240,7 +240,7 @@ export default function UploadWizard() {
     form.set("translations", JSON.stringify(localizedContent));
 
     try {
-      if (process.env.NEXT_PUBLIC_BLOB_UPLOADS === "true") {
+      if (process.env.NEXT_PUBLIC_BLOB_UPLOADS === "true" || process.env.NEXT_PUBLIC_STORAGE_PROVIDER === "backblaze-b2") {
         const [stored, storedPhoto] = await Promise.all([
           uploadMediaDirect(file),
           uploadMediaDirect(photo),

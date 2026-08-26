@@ -8,13 +8,15 @@ import { storeDisplayPhoto, storeUploadFile } from "@/server/upload-media";
 
 export const dynamic = "force-dynamic";
 
-function assertProductionBlobUrl(value: unknown) {
-  if (process.env.NEXT_PUBLIC_BLOB_UPLOADS !== "true") return;
+function assertProductionStorageUrl(value: unknown) {
+  if (process.env.NEXT_PUBLIC_BLOB_UPLOADS !== "true" && process.env.STORAGE_PROVIDER !== "backblaze-b2") return;
   if (typeof value !== "string") {
     throw new ServiceError("A stored media URL is required", "INVALID_BLOB_URL", 400);
   }
   const url = new URL(value);
-  if (url.protocol !== "https:" || !url.hostname.endsWith(".public.blob.vercel-storage.com")) {
+  const isVercelBlob = url.protocol === "https:" && url.hostname.endsWith(".public.blob.vercel-storage.com");
+  const isB2 = process.env.STORAGE_PROVIDER === "backblaze-b2" && value.startsWith("/api/media/uploads/");
+  if (!isVercelBlob && !isB2) {
     throw new ServiceError("Media must come from the configured upload store", "INVALID_BLOB_URL", 400);
   }
 }
@@ -81,13 +83,13 @@ export async function POST(request: Request) {
         translations: JSON.parse(String(form.get("translations") ?? "{}")),
       };
     } else if (
-      process.env.NEXT_PUBLIC_BLOB_UPLOADS === "true" &&
+      (process.env.NEXT_PUBLIC_BLOB_UPLOADS === "true" || process.env.STORAGE_PROVIDER === "backblaze-b2") &&
       request.headers.get("content-type")?.includes("application/json")
     ) {
       rawInput = await request.json();
       const input = rawInput as Record<string, unknown>;
-      assertProductionBlobUrl(input.fileUrl);
-      assertProductionBlobUrl(input.thumbnailUrl);
+      assertProductionStorageUrl(input.fileUrl);
+      assertProductionStorageUrl(input.thumbnailUrl);
     } else {
       throw new ServiceError("Uploads must use the configured media transport", "UNSUPPORTED_MEDIA_TYPE", 415);
     }

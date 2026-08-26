@@ -89,7 +89,7 @@ Upload routes require the `upload` permission (Artist, Archaeologist, or Curator
 | `PATCH` | `/api/upload/:id` | Update/resubmit an eligible owned upload; multipart supported |
 | `DELETE` | `/api/upload/:id` | Delete an owned upload |
 
-Models accept GLB, glTF, OBJ, or STL up to 150 MB. Videos accept MP4, MOV, or WebM up to 200 MB. A display image is required. Rejected uploads are terminal; `CHANGES_REQUESTED` uploads may be edited and resubmitted.
+Models accept GLB, glTF, OBJ, or STL up to 150 MB. Videos accept MP4, MOV, or WebM up to 150 MB. A display image is required. Rejected uploads are terminal; `CHANGES_REQUESTED` uploads may be edited and resubmitted.
 
 ## Meshy generation
 

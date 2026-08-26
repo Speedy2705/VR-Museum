@@ -8,4 +8,5 @@ export type StoredFile = {
 
 export interface FileStorage {
   save(file: File): Promise<StoredFile>;
+  delete(urls: string | string[]): Promise<void>;
 }

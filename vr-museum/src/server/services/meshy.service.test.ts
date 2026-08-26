@@ -93,7 +93,10 @@ describe("Meshy multi-image service", () => {
           "https://blob.example/meshy-source-3.jpg",
         ],
         should_texture: true,
-        enable_pbr: true,
+        texture_resolution: "2k",
+        enable_pbr: false,
+        should_remesh: true,
+        decimation_mode: 4,
         target_formats: ["glb"],
       }),
     }));

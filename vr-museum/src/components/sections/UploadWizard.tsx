@@ -14,6 +14,7 @@ import {
   getDefaultLightingForCategory,
   getDefaultTemperatureForCategory,
   getDefaultDirectionForCategory,
+  getExhibitDisplayStyle,
   type CollectionSlug,
   type LightTemperatureKey,
   type LightDirectionKey,
@@ -565,7 +566,7 @@ export default function UploadWizard() {
                 <ArtifactStageFullscreen
                   studioSplit
                   overlayLabel="Upload lighting controls"
-                  viewer={<LightingStudioViewer src={fileUrl} format={modelFormat} lightTemperature={lightTemperature} lightDirection={lightDirection} title={name || fileName || "Uploaded artifact"} />}
+                  viewer={<LightingStudioViewer src={fileUrl} format={modelFormat} lightTemperature={lightTemperature} lightDirection={lightDirection} title={name || fileName || "Uploaded artifact"} displayStyle={getExhibitDisplayStyle(category, material)} />}
                   overlay={<div><p className="text-[9px] tracking-label text-stone uppercase">Step 3 of 5 · Lighting Studio</p><h2 className="font-display mt-3 text-3xl italic">Shape the viewing light</h2><p className="mt-2 text-xs leading-relaxed text-stone">Changes appear immediately in the 3D exhibit on the left.</p><div className="mt-6"><LightingPresetPicker stepped temperature={lightTemperature} direction={lightDirection} onTemperatureChange={setLightTemperature} onDirectionChange={setLightDirection} suggestedTemperature={category ? getDefaultTemperatureForCategory(category) : undefined} /></div></div>}
                 />
               </div>
@@ -788,7 +789,7 @@ export default function UploadWizard() {
 
             {fileUrl && isModelType && modelFormat && lightTemperature && lightDirection && (
               <div className="mt-6 -mx-6 md:-mx-10">
-                <ArtifactStageFullscreen immersiveDetails hideOverlayActions viewer={<LightingStudioViewer src={fileUrl} format={modelFormat} lightTemperature={lightTemperature} lightDirection={lightDirection} title={name || fileName || "Uploaded artifact"} museumLayout="details" focusArtifactWithExhibit plaqueOrigin={origin || "Origin pending"} panelDetails={{ uploadType: "Upload Review · Draft", title: name || fileName || "Uploaded artifact", uploader: "Museum Contributor", description, material: material || selectedCategory?.name || "Artifact", origin: origin || "Not specified", license: selectedLicense?.name ?? "Creator-specified", price: priceMode === "free" ? "Free" : `$${price}` }} />} overlay={<div><p className="text-[9px] tracking-label text-stone uppercase">Step 5 of 5 · Review</p><h2 className="font-display mt-3 text-2xl italic">{name}</h2><p className="mt-2 text-xs text-stone">{selectedCategory?.name} · {getLightTemperature(lightTemperature).name} · {getLightDirection(lightDirection).name}</p><p className="mt-4 text-sm leading-relaxed text-charcoal/80">{description}</p></div>} />
+                <ArtifactStageFullscreen immersiveDetails hideOverlayActions viewer={<LightingStudioViewer src={fileUrl} format={modelFormat} lightTemperature={lightTemperature} lightDirection={lightDirection} title={name || fileName || "Uploaded artifact"} museumLayout="details" focusArtifactWithExhibit plaqueOrigin={origin || "Origin pending"} displayStyle={getExhibitDisplayStyle(category, material)} panelDetails={{ uploadType: "Upload Review · Draft", title: name || fileName || "Uploaded artifact", uploader: "Museum Contributor", description, material: material || selectedCategory?.name || "Artifact", origin: origin || "Not specified", license: selectedLicense?.name ?? "Creator-specified", price: priceMode === "free" ? "Free" : `$${price}` }} />} overlay={<div><p className="text-[9px] tracking-label text-stone uppercase">Step 5 of 5 · Review</p><h2 className="font-display mt-3 text-2xl italic">{name}</h2><p className="mt-2 text-xs text-stone">{selectedCategory?.name} · {getLightTemperature(lightTemperature).name} · {getLightDirection(lightDirection).name}</p><p className="mt-4 text-sm leading-relaxed text-charcoal/80">{description}</p></div>} />
               </div>
             )}
             {fileUrl && type === "video-scan" && (

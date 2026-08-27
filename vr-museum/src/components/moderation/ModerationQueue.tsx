@@ -5,7 +5,7 @@ import LightingPresetPicker from "@/components/media/LightingPresetPicker";
 import LightingStudioViewer from "@/components/media/LightingStudioViewer";
 import ArtifactStageFullscreen from "@/components/media/ArtifactStageFullscreen";
 import ModerationCommentDialog, { type CommentDecision } from "@/components/moderation/ModerationCommentDialog";
-import { getCategoryByKey, type CollectionSlug, type LightDirectionKey, type LightTemperatureKey } from "@/lib/artifact-categories";
+import { getCategoryByKey, getExhibitDisplayStyle, type CollectionSlug, type LightDirectionKey, type LightTemperatureKey } from "@/lib/artifact-categories";
 import { notifyError } from "@/lib/client-error";
 import { getLightDirection, getLightTemperature } from "@/lib/lighting-presets";
 import { museumToast } from "@/lib/museum-toast";
@@ -107,7 +107,7 @@ export default function ModerationQueue({ initialItems }: { initialItems: Modera
                   studioSplit
                   overlayLabel={`Moderation controls for ${item.title}`}
                   viewer={item.mediaType === "MODEL_3D" && previewTemperature && previewDirection && item.modelFormat
-                    ? <LightingStudioViewer src={item.fileUrl} format={item.modelFormat} lightTemperature={previewTemperature} lightDirection={previewDirection} title={item.title} poster={item.thumbnailUrl ?? undefined} />
+                    ? <LightingStudioViewer src={item.fileUrl} format={item.modelFormat} lightTemperature={previewTemperature} lightDirection={previewDirection} title={item.title} poster={item.thumbnailUrl ?? undefined} displayStyle={getExhibitDisplayStyle(item.category, item.material)} />
                     : <video className="h-full w-full bg-black object-contain" controls poster={item.thumbnailUrl ?? undefined} src={item.fileUrl}>Your browser does not support video playback.</video>}
                   overlay={<div>
                     <div className="flex items-start justify-between gap-4">

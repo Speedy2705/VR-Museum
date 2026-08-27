@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import * as THREE from "three";
-import { fitModelToExhibit } from "./fit-model-to-exhibit";
+import { fitModelToExhibit, mountModelInFrontOfWall, orientFlatModelForWall, straightenFlatModelOnWall } from "./fit-model-to-exhibit";
 
 const fit = {
   centerX: -2.35,
@@ -66,5 +66,56 @@ describe("fitModelToExhibit", () => {
     expect(result.bounds.min.y).toBeCloseTo(fit.pedestalTopY);
     expect(center.x).toBeCloseTo(fit.centerX);
     expect(center.z).toBeCloseTo(fit.centerZ);
+  });
+});
+
+describe("orientFlatModelForWall", () => {
+  it("stands up artwork authored flat on the X-Z plane", () => {
+    const object = model(6, 0.1, 4);
+    expect(orientFlatModelForWall(object)).toBe("y-to-z");
+    const size = new THREE.Box3().setFromObject(object, true).getSize(new THREE.Vector3());
+    expect(size.x).toBeCloseTo(6);
+    expect(size.y).toBeCloseTo(4);
+    expect(size.z).toBeCloseTo(0.1);
+  });
+
+  it("turns artwork authored flat on the Y-Z plane toward the camera", () => {
+    const object = model(0.1, 4, 6);
+    expect(orientFlatModelForWall(object)).toBe("x-to-z");
+    const size = new THREE.Box3().setFromObject(object, true).getSize(new THREE.Vector3());
+    expect(size.x).toBeCloseTo(6);
+    expect(size.y).toBeCloseTo(4);
+    expect(size.z).toBeCloseTo(0.1);
+  });
+
+  it("preserves artwork already authored on the X-Y wall plane", () => {
+    const object = model(6, 4, 0.1);
+    expect(orientFlatModelForWall(object)).toBe("unchanged");
+  });
+});
+
+describe("straightenFlatModelOnWall", () => {
+  it("removes an authored in-plane tilt while preserving geometry depth", () => {
+    const object = model(3, 5, 0.2);
+    object.rotation.z = THREE.MathUtils.degToRad(12);
+
+    const correction = straightenFlatModelOnWall(object);
+    const size = new THREE.Box3().setFromObject(object, true).getSize(new THREE.Vector3());
+
+    expect(THREE.MathUtils.radToDeg(correction)).toBeCloseTo(-12, 0);
+    expect(size.x).toBeCloseTo(3, 1);
+    expect(size.y).toBeCloseTo(5, 1);
+    expect(size.z).toBeCloseTo(0.2);
+  });
+});
+
+describe("mountModelInFrontOfWall", () => {
+  it("places the deepest fold just in front of the wall without flattening it", () => {
+    const object = model(3, 4, 1.25);
+    const originalDepth = new THREE.Box3().setFromObject(object, true).getSize(new THREE.Vector3()).z;
+    const bounds = mountModelInFrontOfWall(object, -0.32);
+
+    expect(bounds.min.z).toBeCloseTo(-0.32);
+    expect(bounds.getSize(new THREE.Vector3()).z).toBeCloseTo(originalDepth);
   });
 });

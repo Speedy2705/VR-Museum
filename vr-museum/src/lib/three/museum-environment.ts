@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import type { ExhibitDisplayStyle } from "@/lib/artifact-categories";
 
 function receiveShadows(mesh: THREE.Mesh) {
   mesh.receiveShadow = true;
@@ -6,7 +7,7 @@ function receiveShadows(mesh: THREE.Mesh) {
 }
 
 export type MuseumPanelDetails = { uploadType: string; title: string; uploader: string; description: string; material: string; origin: string; license: string; price: string };
-type MuseumEnvironmentOptions = { exhibitOffsetX?: number; plaqueTitle?: string; plaqueOrigin?: string; showInfoDisplay?: boolean; panelDetails?: MuseumPanelDetails };
+type MuseumEnvironmentOptions = { exhibitOffsetX?: number; plaqueTitle?: string; plaqueOrigin?: string; showInfoDisplay?: boolean; panelDetails?: MuseumPanelDetails; displayStyle?: ExhibitDisplayStyle };
 
 export const MUSEUM_EXHIBIT_FIT = {
   pedestalTopY: -0.275,
@@ -14,6 +15,20 @@ export const MUSEUM_EXHIBIT_FIT = {
   maxWidth: 1.96,
   maxDepth: 1.96,
 } as const;
+
+export const MUSEUM_WALL_ART_FIT = {
+  pedestalTopY: -1.05,
+  targetHeight: 3.1,
+  maxWidth: 3.45,
+  // Wall art is sized by its visible face. Natural folds may project forward
+  // without making the entire artwork shrink inside the fixed frame.
+  maxDepth: Number.POSITIVE_INFINITY,
+} as const;
+
+export const MUSEUM_DETAILS_EXHIBIT_X = -3.1;
+export const MUSEUM_DETAILS_DISPLAY_X = 3.1;
+export const MUSEUM_DETAILS_EXHIBIT_ROTATION_Y = 0.28;
+export const MUSEUM_WALL_ART_ROTATION_Y = 0.12;
 
 function createPlaqueTexture(title: string, origin: string) {
   const canvas = document.createElement("canvas");
@@ -31,7 +46,7 @@ function createPlaqueTexture(title: string, origin: string) {
 }
 
 function createBrandTexture() {
-  const texture = new THREE.TextureLoader().load("/brand/viswaroop-logo-light.svg");
+  const texture = new THREE.TextureLoader().load("/brand/viswaroop-mark-light.svg");
   texture.colorSpace = THREE.SRGBColorSpace;
   texture.anisotropy = 8;
   return texture;
@@ -89,11 +104,14 @@ export function createMuseumEnvironment(options: MuseumEnvironmentOptions = {}):
   const group = new THREE.Group();
   group.name = "museum-environment";
   const exhibitOffsetX = options.exhibitOffsetX ?? 0;
-  const infoDisplayX = 2.05;
+  const framedArt = options.displayStyle === "framed-art";
+  const infoDisplayX = MUSEUM_DETAILS_DISPLAY_X;
   const exhibit = new THREE.Group();
   exhibit.name = "artifact-exhibit";
   exhibit.position.x = exhibitOffsetX;
-  exhibit.rotation.y = options.showInfoDisplay ? 0.35 : 0;
+  exhibit.rotation.y = options.showInfoDisplay
+    ? framedArt ? MUSEUM_WALL_ART_ROTATION_Y : MUSEUM_DETAILS_EXHIBIT_ROTATION_Y
+    : 0;
 
   const stone = new THREE.MeshStandardMaterial({ color: 0xd8d1c3, roughness: 0.88 });
   const darkStone = new THREE.MeshStandardMaterial({ color: 0x756d62, roughness: 0.78 });
@@ -123,32 +141,45 @@ export function createMuseumEnvironment(options: MuseumEnvironmentOptions = {}):
   plaque.position.set(0, -0.78, 0.758);
   plaque.name = "plaque";
 
+  if (framedArt) {
+    const frameMaterial = new THREE.MeshStandardMaterial({ color: 0x6d4a2e, roughness: 0.68, metalness: 0.04 });
+    const matMaterial = new THREE.MeshStandardMaterial({ color: 0xe7dfd0, roughness: 0.94 });
+    const backing = receiveShadows(new THREE.Mesh(new THREE.BoxGeometry(3.8, 3.5, 0.12), matMaterial));
+    backing.name = "artwork-mat";
+    backing.position.set(0, 0.5, -0.45);
+    exhibit.add(backing);
+    const addFrameEdge = (name: string, size: [number, number, number], position: [number, number, number]) => {
+      const edge = new THREE.Mesh(new THREE.BoxGeometry(...size), frameMaterial);
+      edge.name = name;
+      edge.position.set(...position);
+      edge.castShadow = true;
+      exhibit.add(edge);
+    };
+    addFrameEdge("art-frame-top", [4.05, 0.18, 0.2], [0, 2.34, -0.4]);
+    addFrameEdge("art-frame-bottom", [4.05, 0.18, 0.2], [0, -1.34, -0.4]);
+    addFrameEdge("art-frame-left", [0.18, 3.5, 0.2], [-1.94, 0.5, -0.4]);
+    addFrameEdge("art-frame-right", [0.18, 3.5, 0.2], [1.94, 0.5, -0.4]);
+  }
+
   const glowMaterial = new THREE.MeshBasicMaterial({ color: 0xd9c8a8, transparent: true, opacity: 0.12, side: THREE.DoubleSide, depthWrite: false });
   const wallGlow = new THREE.Mesh(new THREE.PlaneGeometry(options.showInfoDisplay ? 12.5 : 7, options.showInfoDisplay ? 6.5 : 5), glowMaterial);
   // Keep the rear display plane centred on the exhibit. The information panel
   // is a separate object and must not pull the artifact backdrop sideways.
-  const backdropX = options.showInfoDisplay ? (exhibitOffsetX + infoDisplayX) / 2 - 0.6 : exhibitOffsetX;
+  const backdropX = options.showInfoDisplay ? 0 : exhibitOffsetX;
   wallGlow.position.set(backdropX, options.showInfoDisplay ? 0.05 : 0.65, -3.6);
   wallGlow.name = "wall-glow";
 
-  // A dimensional gallery signature: warm brass lettering mounted on the rear
-  // wall, positioned as part of the exhibit instead of as a UI overlay.
+  // Display only the logo mark on the rear wall, without a wordmark or banner.
   const brandTexture = createBrandTexture();
   const brandSign = new THREE.Group();
   brandSign.name = "viswaroop-gallery-sign";
   brandSign.position.set(backdropX, options.showInfoDisplay ? 2.32 : 2.45, -3.52);
-  const signBacking = new THREE.Mesh(
-    new THREE.PlaneGeometry(options.showInfoDisplay ? 5.7 : 4.8, 1.3),
-    new THREE.MeshStandardMaterial({ color: 0x211f1c, roughness: 0.72, metalness: 0.08 }),
-  );
-  signBacking.name = "brand-sign-backing";
   const signFace = new THREE.Mesh(
-    new THREE.PlaneGeometry(options.showInfoDisplay ? 3.15 : 2.85, options.showInfoDisplay ? 1.4 : 1.27),
+    new THREE.PlaneGeometry(options.showInfoDisplay ? 2.4 : 2.1, options.showInfoDisplay ? 0.85 : 0.75),
     new THREE.MeshBasicMaterial({ map: brandTexture, transparent: true, toneMapped: false }),
   );
-  signFace.name = "brand-sign-lettering";
-  signFace.position.z = 0.012;
-  brandSign.add(signBacking, signFace);
+  signFace.name = "brand-logo-mark";
+  brandSign.add(signFace);
 
   if (options.showInfoDisplay) {
     const display = new THREE.Group();
@@ -202,11 +233,11 @@ export function createMuseumEnvironment(options: MuseumEnvironmentOptions = {}):
     addBeam("frame-bottom", [2.02, 0.12, 0.18], [0, -0.83, 0.02]);
     addBeam("frame-left", [0.12, 2.42, 0.18], [-0.95, 0.42, 0.02]);
     addBeam("frame-right", [0.12, 2.42, 0.18], [0.95, 0.42, 0.02]);
-    addBeam("left-leg", [0.13, 1.65, 0.16], [-0.66, -1.5, -0.12], -0.13);
-    addBeam("right-leg", [0.13, 1.65, 0.16], [0.66, -1.5, -0.12], 0.13);
-    addBeam("lower-brace", [1.55, 0.12, 0.15], [0, -1.46, -0.08]);
-    addBeam("left-foot", [0.9, 0.12, 0.35], [-0.56, -2.24, 0.05]);
-    addBeam("right-foot", [0.9, 0.12, 0.35], [0.56, -2.24, 0.05]);
+    // End the easel cleanly on the circular gallery base. The previous long
+    // legs and feet extended beneath it and looked like a separate lower tier.
+    addBeam("left-leg", [0.13, 0.78, 0.16], [-0.66, -1.08, -0.12], -0.13);
+    addBeam("right-leg", [0.13, 0.78, 0.16], [0.66, -1.08, -0.12], 0.13);
+    addBeam("lower-brace", [1.55, 0.12, 0.15], [0, -1.38, -0.08]);
     const shelf = receiveShadows(new THREE.Mesh(new THREE.BoxGeometry(2.1, 0.13, 0.38), darkWood));
     shelf.name = "display-shelf";
     shelf.position.set(0, -0.78, 0.13);
@@ -215,7 +246,10 @@ export function createMuseumEnvironment(options: MuseumEnvironmentOptions = {}):
     group.add(display);
   }
 
-  exhibit.add(platform, pedestal, caseMesh, plaque);
-  group.add(floor, exhibit, wallGlow, brandSign);
+  if (!framedArt) exhibit.add(platform, pedestal, caseMesh, plaque);
+  // The circular gallery base belongs to the complete exhibit composition,
+  // including wall-mounted artwork.
+  group.add(floor);
+  group.add(exhibit, wallGlow, brandSign);
   return group;
 }

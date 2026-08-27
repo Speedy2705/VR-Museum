@@ -58,7 +58,7 @@ export default async function CommunityArtifactPage({ params }: { params: Promis
       <Navbar hasHeroBackground={false} />
       <CommunityViewTracker uploadId={id} />
       <main className="bg-cream">
-        <ArtifactMediaStage title={localizedTitle} image={upload.thumbnailUrl ?? undefined} video={video} model={model} lighting={upload.lightingPreset} primaryMediaType={model ? "model" : video ? "video" : "image"} fullscreen overlay={details} overlayActions={actions} immersiveDetails={Boolean(model)} plaqueOrigin={origin} panelDetails={{ uploadType: "Community Upload · Curator Approved", title: localizedTitle, uploader: uploaderName, description, material, origin, license: String(metadata.license ?? "Creator-specified"), price: price ? `$${price}` : "Not for sale" }} />
+        <ArtifactMediaStage title={localizedTitle} image={upload.thumbnailUrl ?? undefined} video={video} model={model} lighting={upload.lightingPreset} primaryMediaType={model ? "model" : video ? "video" : "image"} fullscreen overlay={details} overlayActions={actions} immersiveDetails={Boolean(model)} plaqueOrigin={origin} exhibitCategory={upload.category} exhibitMaterial={material} panelDetails={{ uploadType: "Community Upload · Curator Approved", title: localizedTitle, uploader: uploaderName, description, material, origin, license: String(metadata.license ?? "Creator-specified"), price: price ? `$${price}` : "Not for sale" }} />
       </main>
       <Footer />
     </>

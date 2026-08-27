@@ -3,6 +3,7 @@ export type LightTemperatureKey = "warm-white" | "cool-white" | "artificial-dayl
 export type LightDirectionKey = "spotlight" | "top-light" | "front-facing" | "raking-light" | "backlight";
 /** @deprecated Compatibility for catalog records created before lighting was separated. */
 export type LightingPresetKey = "warm-diffuse" | "directional-spot" | "cool-ambient" | "backlit-halo" | "raking-light";
+export type ExhibitDisplayStyle = "sculpture" | "framed-art";
 
 export const ARTIFACT_CATEGORIES = [
   { key: "veins-of-marble", name: "Veins of Marble", description: "Carved marble sculptures and timeless decorative works", lightTemperature: "artificial-daylight" },
@@ -16,5 +17,11 @@ export const ARTIFACT_CATEGORIES = [
 export function getCategoryByKey(key: CollectionSlug) { return ARTIFACT_CATEGORIES.find((category) => category.key === key); }
 export function getDefaultTemperatureForCategory(key: CollectionSlug): LightTemperatureKey { return getCategoryByKey(key)!.lightTemperature; }
 export function getDefaultDirectionForCategory(key: CollectionSlug): LightDirectionKey { void key; return "front-facing"; }
+export function getExhibitDisplayStyle(category?: string | null, material?: string | null): ExhibitDisplayStyle {
+  const description = `${category ?? ""} ${material ?? ""}`.toLowerCase();
+  return /stories[-\s]in[-\s]colo(?:u)?r|painting|textile|fabric|batik|screen print|block print|canvas/.test(description)
+    ? "framed-art"
+    : "sculpture";
+}
 /** @deprecated Use independent temperature and direction defaults. */
 export function getDefaultLightingForCategory(key: CollectionSlug): LightingPresetKey { return getDefaultTemperatureForCategory(key) === "artificial-daylight" ? "cool-ambient" : "directional-spot"; }

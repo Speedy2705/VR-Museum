@@ -40,11 +40,12 @@ export default function ReportQueue({ initialReports }: { initialReports: Report
       });
       if (!response.ok) throw new Error();
       const target = reports.find((report) => report.id === id);
-      setReports((current) => action === "REMOVE"
-        ? current.filter((report) => report.uploadId !== target?.uploadId)
+      const orphaned = action === "REMOVE" && !target?.uploadId;
+      setReports((current) => action === "REMOVE" && target?.uploadId
+        ? current.filter((report) => report.uploadId !== target.uploadId)
         : current.filter((report) => report.id !== id));
       setRemoveId(null);
-      museumToast.success(action === "REMOVE" ? "Artifact removed" : "Report dismissed", action === "REMOVE" ? "The artifact is no longer public or purchasable, and it was removed from active carts." : "The report has been closed with no artifact changes.");
+      museumToast.success(orphaned ? "Report cleared" : action === "REMOVE" ? "Artifact removed" : "Report dismissed", orphaned ? "The upload had already been removed, so its remaining report was closed." : action === "REMOVE" ? "The artifact is no longer public or purchasable, and it was removed from active carts." : "The report has been closed with no artifact changes.");
     } catch {
       museumToast.error("Moderation action failed", "The report was not changed. Please try again.");
     } finally {
@@ -68,12 +69,12 @@ export default function ReportQueue({ initialReports }: { initialReports: Report
             </div>
             <div className="flex shrink-0 items-start gap-3">
               <button type="button" disabled={pendingId === report.id} onClick={() => void resolve(report.id, "DISMISS")} className="border border-line px-5 py-2.5 text-[10px] tracking-label uppercase disabled:opacity-50">Dismiss</button>
-              <button type="button" disabled={pendingId === report.id || !report.uploadId} onClick={() => setRemoveId(report.id)} className="bg-red-800 px-5 py-2.5 text-[10px] tracking-label text-white uppercase disabled:opacity-50">Remove Artifact</button>
+              <button type="button" disabled={pendingId === report.id} onClick={() => setRemoveId(report.id)} className="bg-red-800 px-5 py-2.5 text-[10px] tracking-label text-white uppercase disabled:opacity-50">{report.uploadId ? "Remove Artifact" : "Clear Report"}</button>
             </div>
           </div>
         </article>
       ))}
-      <ConfirmDialog open={removeId !== null} title="Remove this artifact everywhere?" description="This removes the upload from public pages, marketplace results, creator assets, and active carts. This action cannot be undone. Historical paid orders remain intact for buyer records." confirmLabel="Remove Artifact" pending={pendingId === removeId} onCancel={() => setRemoveId(null)} onConfirm={() => removeId ? resolve(removeId, "REMOVE") : undefined} />
+      <ConfirmDialog open={removeId !== null} title={reports.find((report) => report.id === removeId)?.uploadId ? "Remove this artifact everywhere?" : "Clear this orphaned report?"} description={reports.find((report) => report.id === removeId)?.uploadId ? "This removes the upload from public pages, marketplace results, creator assets, and active carts. This action cannot be undone. Historical paid orders remain intact for buyer records." : "The associated upload has already been removed. This closes its remaining moderation report."} confirmLabel={reports.find((report) => report.id === removeId)?.uploadId ? "Remove Artifact" : "Clear Report"} pending={pendingId === removeId} onCancel={() => setRemoveId(null)} onConfirm={() => removeId ? resolve(removeId, "REMOVE") : undefined} />
     </div>
   );
 }

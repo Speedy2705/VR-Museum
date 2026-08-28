@@ -64,6 +64,16 @@ export async function resolveArtifactReport(
       await transaction.uploadedAsset.delete({ where: { id: report.uploadId } });
       return { action, removed: true, mediaUrls: upload ? storedMediaUrls(upload) : [] };
     }
+    if (action === "REMOVE") {
+      // The upload may already have been deleted by its owner or another
+      // moderation action. Resolve the orphaned report instead of leaving it
+      // permanently open with a null uploadId.
+      await transaction.artifactReport.update({
+        where: { id: report.id },
+        data: { status: "REMOVED", resolvedAt: new Date(), resolvedById: curatorId },
+      });
+      return { action, removed: false, mediaUrls: [] as string[] };
+    }
     await transaction.artifactReport.update({
       where: { id: report.id },
       data: { status: "DISMISSED", resolvedAt: new Date(), resolvedById: curatorId },

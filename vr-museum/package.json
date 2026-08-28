@@ -17,7 +17,8 @@
     "seed:audit": "tsx scripts/audit-seed.mts",
     "uploads:cleanup": "tsx scripts/cleanup-uploads.mts",
     "storage:migrate-b2": "tsx scripts/migrate-blob-to-b2.mts",
-    "storage:test-b2": "tsx scripts/test-b2.mts"
+    "storage:test-b2": "tsx scripts/test-b2.mts",
+    "models:audit": "tsx scripts/audit-models.mts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.3",

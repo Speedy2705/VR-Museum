@@ -11,18 +11,12 @@ import { MAX_UPLOAD_FILE_SIZE } from "@/lib/upload-file-policy";
 export const dynamic = "force-dynamic";
 
 const allowedContentTypes = [
-  "application/gltf+json",
-  "application/json",
   "application/octet-stream",
-  "application/sla",
   "image/avif",
   "image/jpeg",
   "image/png",
   "image/webp",
   "model/gltf-binary",
-  "model/obj",
-  "model/stl",
-  "text/plain",
   "video/mp4",
   "video/quicktime",
   "video/webm",

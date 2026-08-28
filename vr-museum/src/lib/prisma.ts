@@ -6,7 +6,14 @@ if (!databaseUrl) {
   throw new Error("DATABASE_URL is required");
 }
 
-const adapter = new PrismaPg({ connectionString: databaseUrl });
+// pg currently treats these modes as verify-full but warns because their
+// meaning will change in its next major version. Make the intended strict
+// certificate verification explicit and keep development consoles clean.
+const verifiedDatabaseUrl = databaseUrl.replace(
+  /([?&])sslmode=(?:prefer|require|verify-ca)(?=&|$)/i,
+  "$1sslmode=verify-full",
+);
+const adapter = new PrismaPg({ connectionString: verifiedDatabaseUrl });
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;

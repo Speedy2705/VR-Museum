@@ -8,7 +8,7 @@ import { createB2ObjectKey, createB2UploadUrl, b2ObjectUrl } from "@/server/stor
 
 export const dynamic = "force-dynamic";
 
-const allowedExtensions = new Set([".glb", ".gltf", ".obj", ".stl", ".mp4", ".mov", ".webm", ".jpg", ".jpeg", ".png", ".webp", ".avif"]);
+const allowedExtensions = new Set([".glb", ".mp4", ".mov", ".webm", ".jpg", ".jpeg", ".png", ".webp", ".avif"]);
 
 export async function POST(request: Request) {
   try {

@@ -13,6 +13,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Vendored Three.js decoder runtime served directly to the browser.
+    "public/draco/**",
   ]),
 ]);
 

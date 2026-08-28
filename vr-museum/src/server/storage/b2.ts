@@ -58,6 +58,15 @@ export async function createB2DownloadUrl(key: string) {
   });
 }
 
+export async function getB2Object(key: string, range?: string | null) {
+  const { bucket, client } = b2Config();
+  return client.send(new GetObjectCommand({
+    Bucket: bucket,
+    Key: key,
+    ...(range ? { Range: range } : {}),
+  }));
+}
+
 export async function listB2UploadObjects() {
   const { bucket, client } = b2Config();
   const objects: Array<{ url: string; pathname: string; size: number; uploadedAt: Date }> = [];

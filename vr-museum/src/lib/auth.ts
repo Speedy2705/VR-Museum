@@ -13,6 +13,9 @@ import { hasPermission, type Permission } from "@/lib/role-policy";
 const isProduction = process.env.NODE_ENV === "production";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  secret: process.env.AUTH_SECRET
+    ?? process.env.NEXTAUTH_SECRET
+    ?? (isProduction ? undefined : "viswaroop-local-development-secret"),
   adapter: PrismaAdapter(prisma),
   session: { strategy: "jwt", maxAge: 30 * 24 * 60 * 60 },
   cookies: {

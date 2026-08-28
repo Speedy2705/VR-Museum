@@ -1,4 +1,6 @@
-export const ALLOWED_MODEL_EXTENSIONS = [".glb", ".gltf", ".obj", ".stl"] as const;
+// New uploads must be a single self-contained asset. Legacy catalog entries
+// may still be viewed through the loaders for GLTF, OBJ, and STL.
+export const ALLOWED_MODEL_EXTENSIONS = [".glb"] as const;
 export const MODEL_FILE_ACCEPT = ALLOWED_MODEL_EXTENSIONS.join(",");
 export const MAX_MODEL_FILE_SIZE = 150 * 1024 * 1024;
 export const MAX_MODEL_FILE_SIZE_LABEL = "150 MB";
@@ -12,9 +14,6 @@ export type UploadMediaType = "3d-model" | "video-scan";
 
 const MIME_TYPES: Record<(typeof ALLOWED_MODEL_EXTENSIONS)[number], readonly string[]> = {
   ".glb": ["model/gltf-binary", "application/octet-stream", ""],
-  ".gltf": ["model/gltf+json", "application/json", "text/plain", ""],
-  ".obj": ["text/plain", "model/obj", "application/octet-stream", ""],
-  ".stl": ["model/stl", "application/sla", "application/octet-stream", ""],
 };
 
 const VIDEO_MIME_TYPES: Record<(typeof ALLOWED_VIDEO_EXTENSIONS)[number], readonly string[]> = {
@@ -28,7 +27,7 @@ export function extensionOf(filename: string) {
   return dot < 0 ? "" : filename.slice(dot).toLowerCase();
 }
 
-export type ModelFormat = "glb" | "gltf" | "obj" | "stl";
+export type ModelFormat = "glb";
 
 export function modelFormatFromExtension(
   extension: string,
@@ -88,27 +87,6 @@ export async function validateModelFile(file: File): Promise<FileValidationResul
     ) {
       return { valid: false, reason: "The file does not contain a valid GLB signature." };
     }
-  } else if (typedExtension === ".gltf") {
-    const header = new TextDecoder().decode(bytes).replace(/^\uFEFF/, "").trimStart();
-    if (!header.startsWith("{") || !/"asset"\s*:/.test(header) || !/"version"\s*:/.test(header)) {
-      return { valid: false, reason: "The file does not contain valid glTF JSON metadata." };
-    }
-  } else if (typedExtension === ".obj") {
-    const text = new TextDecoder().decode(bytes).replace(/^\uFEFF/, "");
-    const hasObjToken = text.split(/\r?\n/).some((line) => {
-      const trimmed = line.trimStart();
-      return trimmed !== "" && !trimmed.startsWith("#") && /^(?:(?:v|vt|vn|f|o|g)\s|(?:mtllib|usemtl)\s)/.test(trimmed);
-    });
-    if (!hasObjToken) return { valid: false, reason: "The file does not contain a recognized OBJ declaration." };
-  } else {
-    const text = new TextDecoder().decode(bytes).replace(/^\uFEFF/, "").trimStart();
-    const isAscii = text.toLowerCase().startsWith("solid");
-    let isBinary = false;
-    if (bytes.length >= 84) {
-      const count = new DataView(bytes.buffer, bytes.byteOffset + 80, 4).getUint32(0, true);
-      isBinary = file.size === 84 + count * 50;
-    }
-    if (!isAscii && !isBinary) return { valid: false, reason: "The file does not contain a valid ASCII or binary STL signature." };
   }
 
   return { valid: true, extension: typedExtension };

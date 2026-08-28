@@ -83,6 +83,7 @@ export default function LightingStudioViewer({ src, format, presetKey = "raking-
   const exhibitDetailsRef = useRef({ title, plaqueOrigin, panelDetails });
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
+  const [failureMessage, setFailureMessage] = useState("The model file could not be prepared.");
   const [progress, setProgress] = useState(0);
   const [rotating, setRotating] = useState(false);
   const [focused, setFocused] = useState<FocusMode>("both");
@@ -239,7 +240,11 @@ export default function LightingStudioViewer({ src, format, presetKey = "raking-
       ? new THREE.Box3().setFromObject(modelRef.current).getCenter(new THREE.Vector3())
       : new THREE.Vector3();
     const activeLights = lightTemperature && lightDirection ? buildLighting(scene, lightTemperature, lightDirection, artifactCenter) : getLightingPreset(presetKey).build(scene, artifactCenter);
-    activeLights.forEach((light: THREE.Light) => { light.castShadow = true; });
+    activeLights.forEach((light: THREE.Light) => {
+      light.castShadow = light instanceof THREE.DirectionalLight
+        || light instanceof THREE.PointLight
+        || light instanceof THREE.SpotLight;
+    });
     const hint = getLightingPreset(presetKey).fallbackMaterial;
     modelRef.current?.traverse((child) => { if (child instanceof THREE.Mesh && child.userData.usesPresetFallbackMaterial) { const old = child.material as THREE.Material; child.material = new THREE.MeshStandardMaterial({ ...hint }); disposeMaterial(old); } });
   }, [presetKey, lightTemperature, lightDirection, loaded]);
@@ -253,7 +258,7 @@ export default function LightingStudioViewer({ src, format, presetKey = "raking-
     userInteractedRef.current = false;
     originalViewRef.current = null;
     controls.enabled = false;
-    setLoaded(false); setFailed(false); setProgress(8);
+    setLoaded(false); setFailed(false); setFailureMessage("The model file could not be prepared."); setProgress(8);
     const timer = window.setInterval(() => setProgress((value) => Math.min(value + Math.max(1, Math.round((90 - value) / 8)), 90)), 180);
     loadModel(src, format, presetRef.current).then((object) => {
       if (!active) { disposeObject(object); return; }
@@ -289,10 +294,10 @@ export default function LightingStudioViewer({ src, format, presetKey = "raking-
           }
         });
       });
-    }).catch((error: ModelLoadError) => { if (!active) return; const message = error.message || "The model file may be missing or no longer available."; setFailed(true); callbacksRef.current.onError?.(message); }).finally(() => window.clearInterval(timer));
+    }).catch((error: ModelLoadError) => { if (!active) return; const message = error.message || "The model file could not be prepared."; setFailureMessage(message); setFailed(true); callbacksRef.current.onError?.(message); }).finally(() => window.clearInterval(timer));
     return () => { active = false; window.clearInterval(timer); settleTimers.forEach(window.clearTimeout); if (modelRef.current) { modelRef.current.parent?.remove(modelRef.current); disposeObject(modelRef.current); modelRef.current = null; } };
   }, [src, format, showMuseumEnvironment, museumLayout, displayStyle]);
 
-  if (failed) return <div role="alert" className={`relative flex h-full items-center justify-center overflow-hidden bg-cream-dark p-8 text-center ${className}`}>{poster && <div className="absolute inset-0 opacity-35"><PlaceholderImage src={poster} alt={title} label={title} sizes="(min-width: 768px) 50vw, 100vw" /></div>}<div className="relative"><p className="font-display text-2xl italic">The model is unavailable</p><p className="mt-3 text-sm text-stone">We couldn’t prepare this 3D view. Try the artifact photo instead.</p></div></div>;
+  if (failed) return <div role="alert" className={`relative flex h-full items-center justify-center overflow-hidden bg-cream-dark p-8 text-center ${className}`}>{poster && <div className="absolute inset-0 opacity-35"><PlaceholderImage src={poster} alt={title} label={title} sizes="(min-width: 768px) 50vw, 100vw" /></div>}<div className="relative"><p className="font-display text-2xl italic">The model is unavailable</p><p className="mt-3 text-sm text-stone">{failureMessage} Try the artifact photo instead.</p></div></div>;
   return <div className={`relative h-full min-h-64 w-full overflow-hidden bg-cream-dark ${className}`}><div ref={hostRef} className="absolute inset-0" aria-label={`Interactive 3D model of ${title}`} />{!loaded && <div className="pointer-events-none absolute inset-x-5 bottom-5" role="status" aria-label={`Loading 3D model: ${progress}%`}><div className="h-px bg-cream/30"><span className="block h-full bg-cream transition-[width]" style={{ width: `${progress}%` }} /></div><p className="mt-2 text-[9px] tracking-label text-cream/75 uppercase">Preparing 3D view · {progress}%</p></div>}{loaded && <div className="absolute bottom-3 left-3 flex max-w-[calc(100%-1.5rem)] flex-wrap gap-2">{displayStyle === "sculpture" && <button type="button" aria-pressed={rotating} onClick={() => setRotating((value) => !value)} className="bg-cream/95 px-3 py-2 text-[9px] tracking-label uppercase shadow">{rotating ? "Stop rotation" : "Auto rotate"}</button>}{museumLayout === "details" ? <><button type="button" aria-pressed={focused === "artifact"} onClick={() => { const exhibit = environmentRef.current?.getObjectByName("artifact-exhibit"); const target = focusArtifactWithExhibit ? exhibit ?? modelRef.current : modelRef.current; if (target) focusObject(target, "artifact"); }} className="bg-cream/95 px-3 py-2 text-[9px] tracking-label uppercase shadow">{displayStyle === "framed-art" ? "Front view" : "Focus artifact"}</button><button type="button" aria-pressed={focused === "details"} onClick={() => { const display = environmentRef.current?.getObjectByName("museum-info-display"); if (display) focusObject(display, "details"); }} className="bg-cream/95 px-3 py-2 text-[9px] tracking-label uppercase shadow">View details</button><button type="button" aria-pressed={focused === "both"} onClick={resetView} className="bg-cream/95 px-3 py-2 text-[9px] tracking-label uppercase shadow">View all</button></> : <button type="button" aria-pressed={focused === "both"} onClick={resetView} className="bg-cream/95 px-3 py-2 text-[9px] tracking-label uppercase shadow">{displayStyle === "framed-art" ? "Front view" : "Focus artifact"}</button>}</div>}</div>;
 }

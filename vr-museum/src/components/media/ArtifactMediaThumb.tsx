@@ -20,6 +20,7 @@ type ArtifactMediaThumbProps = {
   sizes?: string;
   priority?: boolean;
   compact?: boolean;
+  notifyWhenUnavailable?: boolean;
 };
 
 const HOVER_DELAY_MS = 175;
@@ -42,6 +43,7 @@ export default function ArtifactMediaThumb({
   sizes,
   priority,
   compact = false,
+  notifyWhenUnavailable = true,
 }: ArtifactMediaThumbProps) {
   const reduceMotion = useReducedMotion();
   const rootRef = useRef<HTMLDivElement>(null);
@@ -118,7 +120,7 @@ export default function ArtifactMediaThumb({
     hoverTimer.current = window.setTimeout(() => {
       if (!hovered.current) return;
       if (!availableType) {
-        if (!unavailableNotified.current) {
+        if (notifyWhenUnavailable && !unavailableNotified.current) {
           unavailableNotified.current = true;
           museumToast.info(
             "Preview unavailable",

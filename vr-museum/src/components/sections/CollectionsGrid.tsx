@@ -61,6 +61,7 @@ export default function CollectionsGrid({ items }: CollectionsGridProps) {
                     primaryMediaType={collection.primaryMediaType}
                     alt={collection.title}
                     sizes="(min-width: 640px) 50vw, 100vw"
+                    notifyWhenUnavailable={false}
                   />
                 </div>
                 <h3 data-no-translate className="font-display mt-5 text-2xl italic group-hover:underline">

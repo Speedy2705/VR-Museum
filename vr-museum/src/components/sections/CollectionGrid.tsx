@@ -46,6 +46,7 @@ export default function CollectionGrid({
                   primaryMediaType={item.primaryMediaType}
                   alt={item.title}
                   sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
+                  notifyWhenUnavailable={false}
                 />
               </div>
               <h3 data-no-translate className="font-display mt-4 text-xl italic">

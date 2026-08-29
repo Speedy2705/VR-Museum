@@ -99,7 +99,7 @@ export default async function CollectionDetailPage({
       <>
         <Navbar hasHeroBackground={false} />
         <main>
-          <CollectionHero title={community.title} subtitle={`${community.subtitle} · ${community.pagination.total} Models`}
+          <CollectionHero title={community.title} subtitle={`${community.subtitle} · ${community.pagination.total} ${community.pagination.total === 1 ? "Model" : "Models"}`}
             image={{ src: community.heroImage, alt: community.title, label: community.title }} />
           <CollectionInfoBar description={community.description} />
           <ArtifactGrid items={items} collectionSlug={community.slug} count={community.pagination.total} />
@@ -147,7 +147,7 @@ export default async function CollectionDetailPage({
       <main>
         <CollectionHero
           title={collection.title}
-          subtitle={`${collection.subtitle} · ${collection.artifacts.length} Models`}
+          subtitle={`${collection.subtitle} · ${collection.artifacts.length} ${collection.artifacts.length === 1 ? "Model" : "Models"}`}
           image={{
             src: collection.heroImage,
             alt: collection.title,

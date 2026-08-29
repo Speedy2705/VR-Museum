@@ -13,6 +13,7 @@ type PlaceholderImageProps = {
   sizes?: string;
   priority?: boolean;
   fill?: boolean;
+  fit?: "cover" | "contain";
 };
 
 /**
@@ -27,6 +28,7 @@ export default function PlaceholderImage({
   dark = false,
   sizes = "(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw",
   priority = false,
+  fit = "cover",
 }: PlaceholderImageProps) {
   const [loadedSrc, setLoadedSrc] = useState<string | null>(null);
   const [failedSrc, setFailedSrc] = useState<string | null>(null);
@@ -42,7 +44,7 @@ export default function PlaceholderImage({
         fill
         onLoad={() => setLoadedSrc(src)}
         onError={() => setFailedSrc(src)}
-        className={`object-cover ${
+        className={`${fit === "contain" ? "object-contain" : "object-cover"} ${
           reduceMotion || loaded ? "opacity-100 blur-0" : "scale-[1.01] opacity-0 blur-sm"
         } transition-[opacity,filter,transform] duration-500 motion-reduce:transition-none ${className}`}
         sizes={sizes}

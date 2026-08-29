@@ -9,7 +9,8 @@ export default function CollectionGrid({
 }: {
   collections: CollectionView[];
 }) {
-  const totalArtifacts = collections.reduce((sum, c) => sum + c.count, 0);
+  const visibleCollections = collections.filter((collection) => collection.count > 0);
+  const totalArtifacts = visibleCollections.reduce((sum, c) => sum + c.count, 0);
   return (
     <section className="bg-cream px-10 py-24">
       <div className="mx-auto max-w-[1600px]">
@@ -36,7 +37,7 @@ export default function CollectionGrid({
         </div>
 
         <div className="mt-10 grid grid-cols-1 gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-4">
-          {collections.map((item) => (
+          {visibleCollections.map((item) => (
             <div key={item.slug}>
               <div className="relative aspect-[4/5] w-full overflow-hidden">
                 <ArtifactMediaThumb
@@ -53,7 +54,7 @@ export default function CollectionGrid({
                 {item.title}
               </h3>
               <p data-no-translate className="mt-1 text-xs text-stone">
-                {item.subtitle.split(" · ")[0]} · {item.count} models
+                {item.subtitle.split(" · ")[0]} · {item.count} {item.count === 1 ? "model" : "models"}
               </p>
               <Button
                 href={`/collections/${item.slug}`}

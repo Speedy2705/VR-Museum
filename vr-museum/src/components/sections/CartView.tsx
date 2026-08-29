@@ -71,14 +71,7 @@ export default function CartView() {
   return (
     <section className="bg-cream px-10 py-14 md:px-16">
       <div className="mx-auto max-w-[1400px]">
-        <Link
-          href="/marketplace"
-          className="text-[10px] tracking-label uppercase text-stone hover:text-ink"
-        >
-          ← Continue Shopping
-        </Link>
-
-        <div className="mt-4 flex items-baseline gap-2">
+        <div className="flex items-baseline gap-2">
           <h1 className="font-display text-3xl italic">Your Cart</h1>
           <span className="text-xs text-stone">
             {items.length} {items.length === 1 ? "item" : "items"}
@@ -103,6 +96,7 @@ export default function CartView() {
                     alt={item.title}
                     label={item.title}
                     sizes="6rem"
+                    fit="contain"
                   />
                 </div>
                 <div className="flex flex-1 flex-col justify-center">

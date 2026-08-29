@@ -26,7 +26,7 @@ export default function MainExperience() {
     <section className="grid grid-cols-1 md:grid-cols-2">
       <div className="relative h-[520px] md:h-auto">
         <PlaceholderImage
-          src={pageImages.vrPerson}
+          src={pageImages.vrPersonAlt}
           alt="Person wearing a VR headset and holding controllers"
           label="VR headset photo"
           sizes="(min-width: 768px) 50vw, 100vw"

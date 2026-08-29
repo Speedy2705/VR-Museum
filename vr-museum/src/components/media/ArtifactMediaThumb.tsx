@@ -165,6 +165,7 @@ export default function ArtifactMediaThumb({
           label={alt}
           sizes={sizes}
           priority={priority}
+          fit="contain"
           className="transition-transform duration-500 group-hover:scale-[1.035] motion-reduce:transform-none motion-reduce:transition-none"
         />
       </motion.div>

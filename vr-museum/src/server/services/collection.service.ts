@@ -15,6 +15,7 @@ export async function listCollections(localeOverride?: Locale) {
         orderBy: { title: "asc" },
         take: 1,
         select: {
+          image: true,
           videoUrl: true,
           modelUrl: true,
           modelFormat: true,
@@ -23,9 +24,13 @@ export async function listCollections(localeOverride?: Locale) {
       },
     },
   });
+  const collectionsWithCurrentCovers = rows.map((row) => ({
+    ...row,
+    heroImage: row.artifacts[0]?.image || row.heroImage || "/images/gallery-wall.png",
+  }));
   const locale = localeOverride ?? await getRequestLocale();
-  if (locale === "en") return rows.map((row) => localizeRecord(row, locale, ["title", "subtitle", "description", "category"]));
-  return mapWithConcurrency(rows, 8, (row) => getLocalizedCollection(row, locale));
+  if (locale === "en") return collectionsWithCurrentCovers.map((row) => localizeRecord(row, locale, ["title", "subtitle", "description", "category"]));
+  return mapWithConcurrency(collectionsWithCurrentCovers, 8, (row) => getLocalizedCollection(row, locale));
 }
 
 export async function listPublicCollections(localeOverride?: Locale) {
@@ -44,7 +49,7 @@ export async function listPublicCollections(localeOverride?: Locale) {
     }),
   ]);
   return [
-    ...collections.filter((collection) => collection.slug !== "community-uploads").map((collection) => ({
+    ...collections.filter((collection) => collection.slug !== "community-uploads" && collection._count.artifacts > 0).map((collection) => ({
       ...collection,
       source: "museum" as const,
       count: collection._count.artifacts,
@@ -136,16 +141,18 @@ export async function getCollection(slug: string, localeOverride?: Locale) {
   if (!collection) {
     throw new ServiceError("Collection not found", "NOT_FOUND", 404);
   }
+  const heroImage = collection.artifacts[0]?.image || "/images/gallery-wall.png";
   const locale = localeOverride ?? await getRequestLocale();
   if (locale !== "en") {
     const [localizedCollection, artifacts] = await Promise.all([
       getLocalizedCollection(collection, locale),
       mapWithConcurrency(collection.artifacts, 8, (artifact) => getLocalizedArtifact(artifact, locale)),
     ]);
-    return { ...localizedCollection, artifacts };
+    return { ...localizedCollection, heroImage, artifacts };
   }
   return {
     ...localizeRecord(collection, locale, ["title", "subtitle", "description", "category"]),
+    heroImage,
     artifacts: collection.artifacts.map((artifact) => localizeRecord(artifact, locale, ["title", "subtitle", "description"])),
   };
 }

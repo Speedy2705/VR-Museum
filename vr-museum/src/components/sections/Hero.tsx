@@ -9,7 +9,7 @@ export default function Hero() {
   return (
     <section className="relative flex h-[820px] w-full items-center justify-center overflow-hidden">
       <PlaceholderImage
-        src={pageImages.heroVrBanner}
+        src={pageImages.heroGallery}
         priority
         alt="Museum gallery interior with framed paintings"
         label="Hero — museum gallery photo"

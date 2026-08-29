@@ -18,7 +18,7 @@ export default function CollectionsGrid({ items }: CollectionsGridProps) {
   const [filter, setFilter] = useState<Filter>("All");
 
   const filtered = items.filter(
-    (c) => filter === "All" || c.category === filter
+    (c) => c.count > 0 && (filter === "All" || c.category === filter)
   );
 
   return (
@@ -69,7 +69,7 @@ export default function CollectionsGrid({ items }: CollectionsGridProps) {
                 </h3>
               </Link>
               <p data-no-translate className="mt-1.5 text-xs tracking-wide text-stone uppercase">
-                {collection.subtitle} · {collection.count} Models
+                {collection.subtitle} · {collection.count} {collection.count === 1 ? "Model" : "Models"}
               </p>
               <p data-no-translate className="mt-3 max-w-md text-sm leading-relaxed text-charcoal/75">
                 {collection.description}

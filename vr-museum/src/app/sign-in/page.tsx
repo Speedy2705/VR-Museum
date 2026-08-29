@@ -61,14 +61,7 @@ export default function SignInPage() {
       <main className="grid grid-cols-1 md:grid-cols-2">
         <div className="flex flex-col justify-center bg-cream px-10 py-16 md:px-16 lg:px-20">
           <div className="mx-auto w-full max-w-sm">
-            <Link
-              href="/"
-              className="text-[11px] tracking-label uppercase text-stone hover:text-ink"
-            >
-              ← ViswaRoop
-            </Link>
-
-            <p className="mt-10 text-[10px] tracking-label uppercase text-stone">
+            <p className="text-[10px] tracking-label uppercase text-stone">
               Welcome Back
             </p>
             <h1 className="font-display mt-3 text-4xl italic">Sign in</h1>

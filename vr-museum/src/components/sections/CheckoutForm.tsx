@@ -266,8 +266,7 @@ export default function CheckoutForm({ initialProfile }: { initialProfile: Billi
   return (
     <section className="bg-cream px-6 py-14 md:px-10">
       <div className="mx-auto max-w-5xl">
-        <Link href="/cart" className="text-[10px] tracking-label uppercase text-stone hover:text-ink">← Back to Cart</Link>
-        <h1 className="font-display mt-4 text-3xl italic">Secure Checkout</h1>
+        <h1 className="font-display text-3xl italic">Secure Checkout</h1>
         <p className="mt-2 text-sm text-stone">Required fields are marked with an asterisk.</p>
         <form onSubmit={submit} noValidate className="mt-10 grid grid-cols-1 gap-14 lg:grid-cols-[1fr_360px]">
           <div className="flex flex-col gap-9">
@@ -360,7 +359,7 @@ export default function CheckoutForm({ initialProfile }: { initialProfile: Billi
               {items.map((item) => (
                 <div key={item.slug} className="flex items-center gap-3 py-4">
                   <div className="relative h-11 w-11 flex-shrink-0 overflow-hidden">
-                    <PlaceholderImage src={item.image} alt={item.title} label={item.title} sizes="2.75rem" />
+                    <PlaceholderImage src={item.image} alt={item.title} label={item.title} sizes="2.75rem" fit="contain" />
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm text-ink">{item.title}</p>

@@ -18,7 +18,7 @@ export default function MarketplaceHero() {
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
 
       <div className="relative z-10 w-full px-10 pb-12 md:px-16">
-        <p className="text-[11px] tracking-label text-white/55 uppercase">
+        <p className="text-xs tracking-label text-white/55 uppercase">
           Digital Artifact Marketplace
         </p>
 

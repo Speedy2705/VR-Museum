@@ -52,7 +52,7 @@ export default function CTASection({
       <div className="absolute inset-0 bg-black/55" />
 
       <div className="relative z-10 mx-auto flex max-w-2xl flex-col items-center px-6 text-center">
-        <p className="text-[11px] tracking-[0.35em] text-white/45 uppercase">
+        <p className="text-xs tracking-[0.35em] text-white/45 uppercase">
           {eyebrow}
         </p>
 

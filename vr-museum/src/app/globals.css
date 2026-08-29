@@ -30,6 +30,23 @@ body {
   font-family: var(--font-inter), Arial, Helvetica, sans-serif;
 }
 
+.skip-link {
+  position: fixed;
+  top: 0.75rem;
+  left: 0.75rem;
+  z-index: 100;
+  transform: translateY(-200%);
+  background: var(--color-cream);
+  color: var(--color-ink);
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+}
+
 /* Site-wide interaction fallback. Component hover utilities remain
    authoritative because these selectors intentionally have zero specificity. */
 :where(a[href], button:not(:disabled), [role="button"]:not([aria-disabled="true"])) {

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import CartIcon from "@/components/ui/CartIcon";
 import VrEntryModal from "@/components/ui/VrEntryModal";
@@ -40,6 +41,7 @@ type NavbarProps = {
 };
 
 export default function Navbar({ hasHeroBackground = false }: NavbarProps) {
+  const pathname = usePathname();
   const { locale, messages: t } = useI18n();
   const href = (path: string) => localizePath(path, locale);
   const leftLinks = [
@@ -69,6 +71,10 @@ export default function Navbar({ hasHeroBackground = false }: NavbarProps) {
   const roleLabel = userRoles.find((role) => role.value === user?.role)?.label;
   const { canUpload, canModerateUploads } = useRole();
   const [signOutOpen, setSignOutOpen] = useState(false);
+  const isActive = (path: string) => {
+    const localizedPath = href(path);
+    return pathname === localizedPath || (path !== "/" && pathname.startsWith(`${localizedPath}/`));
+  };
 
   useEffect(() => {
     const update = () => {
@@ -155,7 +161,7 @@ export default function Navbar({ hasHeroBackground = false }: NavbarProps) {
         <BackButton />
         <button
           type="button"
-          className="flex shrink-0 text-current xl:hidden"
+          className="flex h-11 w-11 shrink-0 items-center justify-center text-current xl:hidden"
           aria-label={menuOpen ? t.closeMenu : t.openMenu}
           aria-expanded={menuOpen}
           onClick={() => {
@@ -170,7 +176,8 @@ export default function Navbar({ hasHeroBackground = false }: NavbarProps) {
             <li key={link.label}>
               <Link
                 href={href(link.href)}
-                className="text-[11px] tracking-label uppercase text-current opacity-75 transition-opacity hover:opacity-100"
+                aria-current={isActive(link.href) ? "page" : undefined}
+                className={`text-xs tracking-label uppercase text-current transition-opacity hover:opacity-100 ${isActive(link.href) ? "border-b border-current pb-1 opacity-100" : "opacity-75"}`}
               >
                 {link.label}
               </Link>
@@ -191,7 +198,7 @@ export default function Navbar({ hasHeroBackground = false }: NavbarProps) {
             <div ref={accountRef} className="relative order-last xl:order-none">
               <button
                 type="button"
-                className="flex items-center rounded-full text-xs text-current outline-none opacity-80 ring-cream/60 hover:opacity-100 focus-visible:ring-2"
+                className="flex h-11 w-11 items-center justify-center rounded-full text-xs text-current outline-none opacity-80 ring-cream/60 hover:opacity-100 focus-visible:ring-2"
                 aria-label={t.accountMenu}
                 aria-haspopup="menu"
                 aria-expanded={accountOpen}
@@ -208,7 +215,7 @@ export default function Navbar({ hasHeroBackground = false }: NavbarProps) {
                     className="h-7 w-7 rounded-full object-cover"
                   />
                 ) : (
-                  <span className="grid h-7 w-7 place-items-center rounded-full bg-cream text-[11px] font-semibold text-ink">
+                  <span className="grid h-7 w-7 place-items-center rounded-full bg-cream text-xs font-semibold text-ink">
                     {initial}
                   </span>
                 )}
@@ -228,7 +235,7 @@ export default function Navbar({ hasHeroBackground = false }: NavbarProps) {
                         {user.email ?? t.mobileAccount}
                       </p>
                       {roleLabel && (
-                        <p className="mt-2 text-[9px] tracking-label uppercase text-white/40">
+                        <p className="mt-2 text-xs tracking-label uppercase text-white/70">
                           {roleLabel}
                         </p>
                       )}
@@ -240,7 +247,7 @@ export default function Navbar({ hasHeroBackground = false }: NavbarProps) {
                           role="menuitem"
                           href={href(link.href)}
                           onClick={() => setAccountOpen(false)}
-                          className="block px-3 py-2.5 text-[11px] tracking-label uppercase text-white/70 transition-colors hover:bg-white/5 hover:text-white"
+                          className="block px-3 py-3 text-xs tracking-label uppercase text-white/80 transition-colors hover:bg-white/5 hover:text-white"
                         >
                           {link.label}
                         </Link>
@@ -250,7 +257,7 @@ export default function Navbar({ hasHeroBackground = false }: NavbarProps) {
                           role="menuitem"
                           href={href("/moderation")}
                           onClick={() => setAccountOpen(false)}
-                          className="block px-3 py-2.5 text-[11px] tracking-label uppercase text-white/70 transition-colors hover:bg-white/5 hover:text-white"
+                          className="block px-3 py-3 text-xs tracking-label uppercase text-white/80 transition-colors hover:bg-white/5 hover:text-white"
                         >
                           {t.moderate}
                         </Link>
@@ -264,7 +271,7 @@ export default function Navbar({ hasHeroBackground = false }: NavbarProps) {
                           setAccountOpen(false);
                           setSignOutOpen(true);
                         }}
-                        className="w-full px-3 py-2.5 text-start text-[11px] tracking-label uppercase text-white/70 transition-colors hover:bg-white/5 hover:text-white"
+                        className="w-full px-3 py-3 text-start text-xs tracking-label uppercase text-white/80 transition-colors hover:bg-white/5 hover:text-white"
                       >
                         {t.signOut}
                       </button>
@@ -276,7 +283,7 @@ export default function Navbar({ hasHeroBackground = false }: NavbarProps) {
           ) : status !== "loading" ? (
             <Link
               href={href("/sign-in")}
-              className="hidden text-[11px] tracking-label uppercase text-current opacity-75 transition-opacity hover:opacity-100 xl:block"
+              className="hidden text-xs tracking-label uppercase text-current opacity-75 transition-opacity hover:opacity-100 xl:block"
             >
               {t.signIn}
             </Link>
@@ -291,7 +298,7 @@ export default function Navbar({ hasHeroBackground = false }: NavbarProps) {
             }}
             aria-label={t.search}
             aria-expanded={searchOpen}
-            className="text-current opacity-80 hover:opacity-100"
+            className="grid h-11 w-11 place-items-center text-current opacity-80 hover:opacity-100"
           >
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
               <circle cx="11" cy="11" r="6.5" />
@@ -343,7 +350,7 @@ export default function Navbar({ hasHeroBackground = false }: NavbarProps) {
                         className="block border-b border-line px-5 py-4 last:border-0 hover:bg-cream-dark"
                       >
                         <span className="block text-sm">{result.title}</span>
-                        <span className="mt-1 block text-[10px] tracking-label text-stone uppercase">{result.collection.title}</span>
+                        <span className="mt-1 block text-xs tracking-label text-stone uppercase">{result.collection.title}</span>
                       </Link>
                     ))
                   ) : (
@@ -375,7 +382,8 @@ export default function Navbar({ hasHeroBackground = false }: NavbarProps) {
                   key={link.href}
                   href={href(link.href)}
                   onClick={() => setMenuOpen(false)}
-                  className="text-[11px] tracking-label uppercase text-white/80"
+                  aria-current={isActive(link.href) ? "page" : undefined}
+                  className={`flex min-h-11 items-center text-sm tracking-label uppercase ${isActive(link.href) ? "text-white underline underline-offset-8" : "text-white/80"}`}
                 >
                   {link.label}
                 </Link>

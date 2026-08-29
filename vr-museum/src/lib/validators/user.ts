@@ -27,11 +27,11 @@ export const credentialsSchema = z.object({
 });
 
 export const userRoles = [
-  { value: "ARTIST", label: "Artist" },
-  { value: "CURATOR", label: "Curator" },
-  { value: "ARCHAEOLOGIST", label: "Archaeologist" },
-  { value: "RESEARCHER", label: "Researcher" },
-  { value: "VISITOR", label: "Visitor" },
+  { value: "VISITOR", label: "Visitor", description: "Explore exhibitions and purchase licensed digital artifacts." },
+  { value: "ARTIST", label: "Artist", description: "Share, manage, and sell digital versions of your creative work." },
+  { value: "ARCHAEOLOGIST", label: "Archaeologist", description: "Contribute documented scans and research-based cultural artifacts." },
+  { value: "RESEARCHER", label: "Researcher", description: "Explore and purchase artifacts for study and educational work." },
+  { value: "CURATOR", label: "Curator", description: "Contribute artifacts and review community submissions for the museum." },
 ] as const;
 
 export const userRoleSchema = z.enum([
@@ -78,7 +78,6 @@ export const registerSchema = z.object({
   }
 });
 
-export type CredentialsInput = z.infer<typeof credentialsSchema>;
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type UserRole = z.infer<typeof userRoleSchema>;
 export type BillingProfileInput = z.infer<typeof billingProfileSchema>;

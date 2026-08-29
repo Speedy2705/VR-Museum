@@ -31,7 +31,7 @@ export default function CoreTeam() {
     <section id="core-team" aria-labelledby="core-team-title" className="scroll-mt-24 bg-cream-dark px-6 py-20 text-ink md:px-10 md:py-24">
       <div className="mx-auto max-w-6xl">
         <SlideUp>
-          <p className="text-[11px] tracking-[0.3em] text-stone uppercase">The People Behind ViswaRoop</p>
+          <p className="text-xs tracking-[0.3em] text-stone uppercase">The People Behind ViswaRoop</p>
           <div className="mt-5 grid gap-6 border-b border-line pb-10 md:grid-cols-[minmax(0,1fr)_minmax(18rem,0.7fr)] md:items-end">
             <h2 id="core-team-title" className="font-display text-4xl leading-tight italic md:text-5xl">Meet the Core Team</h2>
             <p className="max-w-xl text-sm leading-relaxed text-charcoal/75 md:justify-self-end">
@@ -44,12 +44,12 @@ export default function CoreTeam() {
           {teamGroups.map((group, groupIndex) => (
             <SlideUp key={group.title} delay={groupIndex * 0.06}>
               <div>
-                <h3 className="text-[10px] tracking-label text-stone uppercase">{group.title}</h3>
+                <h3 className="text-xs tracking-label text-stone uppercase">{group.title}</h3>
                 <ul className="mt-5 divide-y divide-line border-y border-line">
                   {group.members.map((member) => (
                     <li key={member.name} className="py-5">
                       <p data-no-translate className="font-display text-xl italic">{member.name}</p>
-                      <p className="mt-2 text-[10px] tracking-label text-stone uppercase">{member.role}</p>
+                      <p className="mt-2 text-xs tracking-label text-stone uppercase">{member.role}</p>
                     </li>
                   ))}
                 </ul>

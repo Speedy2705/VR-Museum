@@ -21,12 +21,6 @@ export type UploadedAsset = {
   uploadedDate: string;
 };
 
-export const assetsStats = {
-  totalEarnings: 1824,
-  itemsSold: 150,
-  activeListings: 2,
-};
-
 export const purchasedAssets: PurchasedAsset[] = [
   {
     slug: "roman-marble-portrait-bust",

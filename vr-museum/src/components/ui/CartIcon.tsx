@@ -12,7 +12,7 @@ export default function CartIcon() {
     <Link
       href="/cart"
       aria-label={isAuthenticated ? "Cart" : "Sign in to view your cart"}
-      className="relative text-current opacity-85 hover:opacity-100"
+      className="relative grid h-11 w-11 place-items-center text-current opacity-85 hover:opacity-100"
     >
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
         <path
@@ -33,7 +33,7 @@ export default function CartIcon() {
           animate={{ opacity: 1, scale: 1 }}
           exit={reduceMotion ? undefined : { opacity: 0, scale: 0.5 }}
           transition={{ type: "spring", stiffness: 500, damping: 24 }}
-          className="absolute -top-2 -right-2.5 flex h-4 w-4 items-center justify-center rounded-full bg-cream text-[9px] font-medium text-ink"
+          className="absolute top-0 right-0 flex h-5 min-w-5 items-center justify-center rounded-full bg-cream px-1 text-xs font-medium text-ink"
         >
           {count}
         </motion.span>

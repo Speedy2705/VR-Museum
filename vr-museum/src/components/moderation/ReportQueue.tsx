@@ -61,15 +61,15 @@ export default function ReportQueue({ initialReports }: { initialReports: Report
         <article key={report.id} className="border border-line p-6">
           <div className="flex flex-col justify-between gap-6 md:flex-row">
             <div className="max-w-2xl">
-              <p className="text-[9px] tracking-label uppercase text-stone">{reasonLabels[report.reason] ?? report.reason} · {report.createdAt}</p>
+              <p className="text-xs tracking-label uppercase text-stone">{reasonLabels[report.reason] ?? report.reason} · {report.createdAt}</p>
               <h2 className="font-display mt-2 text-xl">{report.title}</h2>
               <p className="mt-2 text-xs text-stone">Uploaded by {report.ownerName} · {report.ownerEmail}</p>
               {report.details && <p className="mt-4 border-l-2 border-line pl-4 text-sm leading-relaxed text-charcoal">{report.details}</p>}
-              {report.uploadId && <Link href={`/community/${report.uploadId}`} target="_blank" className="mt-4 inline-block text-[10px] tracking-label underline uppercase">Inspect artifact ↗</Link>}
+              {report.uploadId && <Link href={`/community/${report.uploadId}`} target="_blank" className="mt-4 inline-block text-xs tracking-label underline uppercase">Inspect artifact ↗</Link>}
             </div>
             <div className="flex shrink-0 items-start gap-3">
-              <button type="button" disabled={pendingId === report.id} onClick={() => void resolve(report.id, "DISMISS")} className="border border-line px-5 py-2.5 text-[10px] tracking-label uppercase disabled:opacity-50">Dismiss</button>
-              <button type="button" disabled={pendingId === report.id} onClick={() => setRemoveId(report.id)} className="bg-red-800 px-5 py-2.5 text-[10px] tracking-label text-white uppercase disabled:opacity-50">{report.uploadId ? "Remove Artifact" : "Clear Report"}</button>
+              <button type="button" disabled={pendingId === report.id} onClick={() => void resolve(report.id, "DISMISS")} className="border border-line px-5 py-2.5 text-xs tracking-label uppercase disabled:opacity-50">Dismiss</button>
+              <button type="button" disabled={pendingId === report.id} onClick={() => setRemoveId(report.id)} className="bg-red-800 px-5 py-2.5 text-xs tracking-label text-white uppercase disabled:opacity-50">{report.uploadId ? "Remove Artifact" : "Clear Report"}</button>
             </div>
           </div>
         </article>

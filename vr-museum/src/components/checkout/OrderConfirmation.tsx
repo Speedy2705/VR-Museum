@@ -37,7 +37,7 @@ export default function OrderConfirmation({ initialOrder }: { initialOrder: Orde
       }`}>
         {paid ? "✓" : <span className="h-5 w-5 animate-spin rounded-full border border-current border-t-transparent" />}
       </span>
-      <p className="mt-6 text-[11px] tracking-label text-stone uppercase">
+      <p className="mt-6 text-xs tracking-label text-stone uppercase">
         {paid ? "Payment confirmed" : "Payment submitted"}
       </p>
       <h1 className="font-display mt-4 max-w-md text-4xl italic md:text-[44px]">
@@ -56,12 +56,12 @@ export default function OrderConfirmation({ initialOrder }: { initialOrder: Orde
       </div>
       <div className="mt-9 flex flex-col gap-4 sm:flex-row">
         <Link href="/assets" aria-disabled={!paid}
-          className={`px-7 py-3.5 text-center text-[11px] tracking-label uppercase ${
+          className={`px-7 py-3.5 text-center text-xs tracking-label uppercase ${
             paid ? "bg-ink text-cream hover:bg-charcoal" : "pointer-events-none bg-stone-light text-stone"
           }`}>
           View Your Assets
         </Link>
-        <Link href="/marketplace" className="border border-line px-7 py-3.5 text-center text-[11px] tracking-label text-ink uppercase hover:bg-black/5">
+        <Link href="/marketplace" className="border border-line px-7 py-3.5 text-center text-xs tracking-label text-ink uppercase hover:bg-black/5">
           Keep Browsing
         </Link>
       </div>

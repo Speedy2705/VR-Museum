@@ -105,10 +105,10 @@ export default function CartView() {
                     by {item.artist}
                   </p>
                   <div className="mt-2 flex gap-2">
-                    <span data-no-translate className="border border-line px-2 py-1 text-[9px] tracking-label text-stone uppercase">
+                    <span data-no-translate className="border border-line px-2 py-1 text-xs tracking-label text-stone uppercase">
                       {item.material}
                     </span>
-                    <span className="border border-line px-2 py-1 text-[9px] tracking-label text-stone uppercase">
+                    <span className="border border-line px-2 py-1 text-xs tracking-label text-stone uppercase">
                       {item.license}
                     </span>
                   </div>
@@ -120,9 +120,9 @@ export default function CartView() {
                   <button
                     type="button"
                     onClick={() => setRemoveSlug(item.slug)}
-                    className="text-[10px] tracking-label text-stone uppercase hover:text-ink"
+                    className="text-xs tracking-label text-stone uppercase hover:text-ink"
                   >
-                    + Remove
+                    Remove
                   </button>
                 </div>
               </motion.div>
@@ -132,7 +132,7 @@ export default function CartView() {
 
           <div>
             <div className="border border-line px-6 py-6">
-              <p className="text-[10px] tracking-label text-stone uppercase">
+              <p className="text-xs tracking-label text-stone uppercase">
                 Order Summary
               </p>
 
@@ -159,18 +159,19 @@ export default function CartView() {
 
               <Link
                 href="/checkout"
-                className="mt-6 flex w-full items-center justify-center bg-ink px-7 py-3.5 text-[11px] tracking-label text-cream uppercase hover:bg-charcoal"
+                className="mt-6 flex w-full items-center justify-center bg-ink px-7 py-3.5 text-xs tracking-label text-cream uppercase hover:bg-charcoal"
               >
                 Proceed to Payment →
               </Link>
-              <p className="mt-3 text-center text-[10px] text-stone">
+              <p className="mt-3 text-center text-xs text-stone">
                 Secure checkout. Purchases appear in Your Assets immediately after
                 payment.
               </p>
+              <p className="mt-2 text-center text-xs leading-relaxed text-stone">The 5% museum service fee supports hosting, preservation, and payment processing.</p>
             </div>
 
             <div data-no-translate className="mt-4 border border-line bg-cream-dark px-5 py-4">
-              <p className="text-[10px] tracking-label text-stone uppercase">
+              <p className="text-xs tracking-label text-stone uppercase">
                 License Notice
               </p>
               <p className="mt-2 text-xs leading-relaxed text-charcoal/70">

@@ -31,7 +31,7 @@ export default async function CommunityCreatorPage({ params }: {
       <Navbar hasHeroBackground={false} />
       <main className="min-h-[560px] bg-cream px-6 py-16 md:px-10">
         <div className="mx-auto max-w-6xl">
-          <p className="text-[10px] tracking-label text-stone uppercase">Community creator</p>
+          <p className="text-xs tracking-label text-stone uppercase">Community creator</p>
           <h1 className="font-display mt-3 text-4xl italic">{creator.name ?? "Museum community member"}</h1>
           <div className="mt-10 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
             {localizedUploads.map((upload) => (

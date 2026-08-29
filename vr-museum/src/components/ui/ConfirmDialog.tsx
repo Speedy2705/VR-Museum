@@ -86,15 +86,15 @@ export default function ConfirmDialog({
             className="max-h-[calc(100dvh-3rem)] w-full max-w-md overflow-y-auto bg-cream p-8 text-ink"
             onClick={(event) => event.stopPropagation()}
           >
-            <p className="text-[10px] tracking-label uppercase text-stone">Please confirm</p>
+            <p className="text-xs tracking-label uppercase text-stone">Please confirm</p>
             <h2 id="confirm-dialog-title" className="font-display mt-3 text-3xl italic">{title}</h2>
             <p id="confirm-dialog-description" className="mt-4 text-sm leading-relaxed text-stone">{description}</p>
             {children}
             <div className="mt-8 flex justify-end gap-3">
-              <button ref={cancelRef} type="button" disabled={pending} onClick={onCancel} className="border border-line px-6 py-3 text-[10px] tracking-label uppercase hover:bg-cream-dark disabled:opacity-50">
+              <button ref={cancelRef} type="button" disabled={pending} onClick={onCancel} className="border border-line px-6 py-3 text-xs tracking-label uppercase hover:bg-cream-dark disabled:opacity-50">
                 Keep
               </button>
-              <button type="button" disabled={pending || confirmDisabled} onClick={onConfirm} className={`px-6 py-3 text-[10px] tracking-label uppercase text-white disabled:cursor-not-allowed disabled:opacity-50 ${tone === "danger" ? "bg-red-900 hover:bg-red-800" : "bg-ink hover:bg-charcoal"}`}>
+              <button type="button" disabled={pending || confirmDisabled} onClick={onConfirm} className={`px-6 py-3 text-xs tracking-label uppercase text-white disabled:cursor-not-allowed disabled:opacity-50 ${tone === "danger" ? "bg-red-900 hover:bg-red-800" : "bg-ink hover:bg-charcoal"}`}>
                 {pending ? "Working…" : confirmLabel}
               </button>
             </div>

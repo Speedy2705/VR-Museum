@@ -15,7 +15,7 @@ type ButtonProps = {
 };
 
 const base =
-  "inline-flex items-center justify-center gap-2 px-7 py-3.5 text-[11px] tracking-label uppercase transition-colors duration-200 whitespace-nowrap";
+  "inline-flex items-center justify-center gap-2 px-7 py-3.5 text-xs tracking-label uppercase transition-colors duration-200 whitespace-nowrap";
 
 const variants = {
   filled: "bg-cream text-ink hover:bg-white",

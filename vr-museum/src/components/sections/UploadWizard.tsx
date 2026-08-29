@@ -120,6 +120,8 @@ const steps = [
   { key: 5, label: "Review" },
 ];
 
+const UPLOAD_DRAFT_KEY = "viswaroop-upload-draft-v1";
+
 export default function UploadWizard() {
   const router = useRouter();
   const [step, setStep] = useState(1);
@@ -149,6 +151,9 @@ export default function UploadWizard() {
   const [license, setLicense] = useState(licenseOptions[0].key);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [rightsConfirmed, setRightsConfirmed] = useState(false);
+  const [aiConsent, setAiConsent] = useState(false);
+  const [draftSaved, setDraftSaved] = useState(false);
 
   const selectedLicense = licenseOptions.find((l) => l.key === license);
   const selectedType = typeOptions.find((option) => option.key === type);
@@ -160,6 +165,46 @@ export default function UploadWizard() {
       if (fileUrlRef.current) URL.revokeObjectURL(fileUrlRef.current);
     };
   }, []);
+
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem(UPLOAD_DRAFT_KEY);
+      if (!saved) return;
+      const draft = JSON.parse(saved) as Partial<{ type: ArtifactType; category: CollectionSlug; name: string; description: string; origin: string; material: string; materialChoice: string; priceMode: PriceMode; price: string; license: string }>;
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- restore an explicitly saved browser draft once on mount
+      if (draft.type) setType(draft.type);
+      if (draft.category) setCategory(draft.category);
+      if (draft.name) setName(draft.name);
+      if (draft.description) setDescription(draft.description);
+      if (draft.origin) setOrigin(draft.origin);
+      if (draft.material) setMaterial(draft.material);
+      if (draft.materialChoice) setMaterialChoice(draft.materialChoice);
+      if (draft.priceMode) setPriceMode(draft.priceMode);
+      if (draft.price) setPrice(draft.price);
+      if (draft.license) setLicense(draft.license);
+      setDraftSaved(true);
+    } catch {
+      window.localStorage.removeItem(UPLOAD_DRAFT_KEY);
+    }
+  }, []);
+
+  useEffect(() => {
+    const hasWork = Boolean(type || category || name || description || origin || file || photo);
+    if (!hasWork || submitting) return;
+    const warnBeforeLeaving = (event: BeforeUnloadEvent) => event.preventDefault();
+    window.addEventListener("beforeunload", warnBeforeLeaving);
+    return () => window.removeEventListener("beforeunload", warnBeforeLeaving);
+  }, [type, category, name, description, origin, file, photo, submitting]);
+
+  function saveDraft() {
+    window.localStorage.setItem(UPLOAD_DRAFT_KEY, JSON.stringify({ type, category, name, description, origin, material, materialChoice, priceMode, price, license }));
+    setDraftSaved(true);
+    museumToast.success("Draft saved on this device", "Text and choices were saved. For security, you will need to choose the media files again.");
+  }
+
+  function clearDraft() {
+    window.localStorage.removeItem(UPLOAD_DRAFT_KEY);
+  }
 
   function updateFile(nextFile: File | null) {
     if (fileUrlRef.current) URL.revokeObjectURL(fileUrlRef.current);
@@ -174,13 +219,17 @@ export default function UploadWizard() {
   const maxFileSizeLabel =
     type === "video-scan" ? MAX_VIDEO_FILE_SIZE_LABEL : MAX_MODEL_FILE_SIZE_LABEL;
 
-  const canReview = name.trim().length > 0 && material.trim().length > 0 && origin.trim().length > 0 && description.trim().length >= 40 && file !== null && photo !== null && category !== null && (!isModelType || (lightTemperature !== null && lightDirection !== null));
+  const canReview = name.trim().length > 0 && material.trim().length > 0 && origin.trim().length > 0 && description.trim().length >= 40 && file !== null && photo !== null && category !== null && rightsConfirmed && (type !== "image-to-3d" || aiConsent) && (!isModelType || (lightTemperature !== null && lightDirection !== null));
   const canContinueFromStudio = file !== null && (!isModelType || (modelFormat !== null && lightTemperature !== null && lightDirection !== null));
 
   async function generateModel() {
     const views: SourceView[] = ["front", "side", "back"];
     if (views.some((view) => !sourceImages[view])) {
       museumToast.warning("Three views are required", "Add front, side, and back images of the same object.");
+      return;
+    }
+    if (!aiConsent) {
+      museumToast.warning("AI processing consent is required", "Confirm that the three source images may be sent to Meshy to generate the model.");
       return;
     }
     setGenerating(true);
@@ -234,7 +283,7 @@ export default function UploadWizard() {
   }
 
   async function submitUpload() {
-    if (!file || !photo || !type || !category || (isModelType && (!lightTemperature || !lightDirection))) {
+    if (!file || !photo || !type || !category || !rightsConfirmed || (type === "image-to-3d" && !aiConsent) || (isModelType && (!lightTemperature || !lightDirection))) {
       museumToast.warning("Upload details are incomplete", "Choose an artifact file and a display photo before submitting.");
       return;
     }
@@ -299,6 +348,7 @@ export default function UploadWizard() {
         };
         if (!body.success) throw new Error(body.error?.message ?? "Upload failed");
         museumToast.success("Upload submitted", "Your artifact has been sent to the moderation queue.");
+        clearDraft();
         router.push(`/assets?uploadId=${encodeURIComponent(body.data?.id ?? "")}`);
         router.refresh();
         return;
@@ -316,6 +366,7 @@ export default function UploadWizard() {
         throw new Error(body.error?.message ?? "Upload failed");
       }
       museumToast.success("Upload submitted", "Your artifact has been sent to the moderation queue.");
+      clearDraft();
       router.push(`/assets?uploadId=${encodeURIComponent(body.data?.id ?? "")}`);
       router.refresh();
     } catch (uploadError) {
@@ -327,6 +378,10 @@ export default function UploadWizard() {
   return (
     <section className="bg-cream px-6 py-14 md:px-10">
       <div className={`mx-auto transition-[max-width] duration-300 ${step === 3 ? "max-w-6xl" : "max-w-2xl"}`}>
+        <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border border-line bg-cream-dark px-4 py-3">
+          <p className="text-sm text-stone">{draftSaved ? "A text draft is saved on this device. Media files are not stored." : "You can save your text and choices before leaving this page."}</p>
+          <button type="button" onClick={saveDraft} className="min-h-11 border border-ink px-4 py-2 text-xs tracking-label uppercase">Save draft</button>
+        </div>
         <div className="flex items-center gap-3">
           {steps.map((s, i) => (
             <div key={s.key} className="flex items-center gap-3">
@@ -338,7 +393,7 @@ export default function UploadWizard() {
                 className="flex items-center gap-1.5 disabled:cursor-not-allowed"
               >
                 <span
-                  className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] ${
+                  className={`flex h-5 w-5 items-center justify-center rounded-full text-xs ${
                     step === s.key
                       ? "bg-ink text-cream"
                       : step > s.key
@@ -349,7 +404,7 @@ export default function UploadWizard() {
                   {s.key}
                 </span>
                 <span
-                  className={`text-[10px] tracking-label uppercase ${
+                  className={`text-xs tracking-label uppercase ${
                     step === s.key ? "text-ink" : "text-stone"
                   }`}
                 >
@@ -407,7 +462,7 @@ export default function UploadWizard() {
                   <p className="mt-1.5 text-xs leading-relaxed text-stone">
                     {opt.desc}
                   </p>
-                  <p className="mt-3 text-[10px] tracking-label text-stone-light uppercase">
+                  <p className="mt-3 text-xs tracking-label text-stone-light uppercase">
                     {opt.formats}
                   </p>
                 </button>
@@ -423,7 +478,7 @@ export default function UploadWizard() {
                 }
                 setStep(2);
               }}
-              className={`mt-8 w-full py-3.5 text-[11px] tracking-label uppercase transition-colors ${
+              className={`mt-8 w-full py-3.5 text-xs tracking-label uppercase transition-colors ${
                 type
                   ? "bg-ink text-cream hover:bg-charcoal"
                   : "cursor-not-allowed bg-cream-dark text-stone-light"
@@ -466,7 +521,7 @@ export default function UploadWizard() {
               ))}
             </div>
             <div className="mt-8 flex gap-3">
-              <button type="button" onClick={() => setStep(1)} className="border border-line px-6 py-3.5 text-[11px] tracking-label text-ink uppercase hover:bg-black/5">Back</button>
+              <button type="button" onClick={() => setStep(1)} className="border border-line px-6 py-3.5 text-xs tracking-label text-ink uppercase hover:bg-black/5">Back</button>
               <button
                 type="button"
                 onClick={() => {
@@ -476,7 +531,7 @@ export default function UploadWizard() {
                   }
                   setStep(3);
                 }}
-                className={`flex-1 py-3.5 text-[11px] tracking-label uppercase transition-colors ${category ? "bg-ink text-cream hover:bg-charcoal" : "cursor-not-allowed bg-cream-dark text-stone-light"}`}
+                className={`flex-1 py-3.5 text-xs tracking-label uppercase transition-colors ${category ? "bg-ink text-cream hover:bg-charcoal" : "cursor-not-allowed bg-cream-dark text-stone-light"}`}
               >Continue</button>
             </div>
           </motion.div>
@@ -532,21 +587,21 @@ export default function UploadWizard() {
               <p className="mt-1 text-xs text-stone-light">
                 {fileName ? "Click to choose a different file" : "or click to browse"}
               </p>
-              <p className="mt-3 text-[10px] tracking-label text-stone uppercase">
+              <p className="mt-3 text-xs tracking-label text-stone uppercase">
                 Accepted: {acceptedExtensions.join(", ")} — max {maxFileSizeLabel}
               </p>
             </label>}
             {type === "image-to-3d" && (
               <div className="border border-line bg-cream-dark/40 p-5">
                 <div>
-                  <p className="text-[10px] tracking-label text-stone uppercase">Meshy three-view capture</p>
+                  <p className="text-xs tracking-label text-stone uppercase">Meshy three-view capture</p>
                   <h2 className="font-display mt-2 text-2xl italic text-ink">Show the same object from three sides</h2>
                   <p className="mt-2 text-xs leading-relaxed text-stone">Use a plain background, even lighting, and keep the object at a similar scale in every frame.</p>
                 </div>
                 <div className="mt-5 grid gap-3 sm:grid-cols-3">
                   {(["front", "side", "back"] as SourceView[]).map((view) => (
                     <label key={view} className="cursor-pointer border border-dashed border-line bg-cream px-4 py-6 text-center hover:border-stone">
-                      <span className="text-[10px] tracking-label text-stone uppercase">{view} view</span>
+                      <span className="text-xs tracking-label text-stone uppercase">{view} view</span>
                       <span className="mt-2 block truncate text-xs text-ink">{sourceImages[view]?.name ?? "Choose image"}</span>
                       <input type="file" accept="image/jpeg,image/png" className="hidden" onChange={(event) => {
                         const selected = event.target.files?.[0];
@@ -564,7 +619,11 @@ export default function UploadWizard() {
                     </label>
                   ))}
                 </div>
-                <button type="button" onClick={generateModel} disabled={generating || (["front", "side", "back"] as SourceView[]).some((view) => !sourceImages[view])} className="mt-5 w-full bg-ink px-5 py-3.5 text-[11px] tracking-label text-cream uppercase disabled:cursor-not-allowed disabled:opacity-40">
+                <label className="mt-5 flex items-start gap-3 text-sm leading-relaxed text-charcoal">
+                  <input type="checkbox" checked={aiConsent} onChange={(event) => setAiConsent(event.target.checked)} className="mt-1 h-4 w-4 accent-ink" />
+                  <span>I consent to sending these three images to Meshy for AI-assisted 3D generation. I understand that processing may take several minutes.</span>
+                </label>
+                <button type="button" onClick={generateModel} disabled={generating || (["front", "side", "back"] as SourceView[]).some((view) => !sourceImages[view])} className="mt-5 w-full bg-ink px-5 py-3.5 text-xs tracking-label text-cream uppercase disabled:cursor-not-allowed disabled:opacity-40">
                   {generating ? `Generating model${generationProgress !== null ? ` · ${generationProgress}%` : "…"}` : file ? "Regenerate 3D Model" : "Generate 3D Model with Meshy"}
                 </button>
                 {generating && <p className="mt-3 text-center text-xs text-stone">Meshy generation can take several minutes. Keep this page open.</p>}
@@ -583,27 +642,27 @@ export default function UploadWizard() {
                   studioSplit
                   overlayLabel="Upload lighting controls"
                   viewer={<LightingStudioViewer src={fileUrl} format={modelFormat} lightTemperature={lightTemperature} lightDirection={lightDirection} title={name || fileName || "Uploaded artifact"} displayStyle={getExhibitDisplayStyle(category, material)} />}
-                  overlay={<div><p className="text-[9px] tracking-label text-stone uppercase">Step 3 of 5 · Lighting Studio</p><h2 className="font-display mt-3 text-3xl italic">Shape the viewing light</h2><p className="mt-2 text-xs leading-relaxed text-stone">Changes appear immediately in the 3D exhibit on the left.</p><div className="mt-6"><LightingPresetPicker stepped temperature={lightTemperature} direction={lightDirection} onTemperatureChange={setLightTemperature} onDirectionChange={setLightDirection} suggestedTemperature={category ? getDefaultTemperatureForCategory(category) : undefined} /></div></div>}
+                  overlay={<div><p className="text-xs tracking-label text-stone uppercase">Step 3 of 5 · Lighting Studio</p><h2 className="font-display mt-3 text-3xl italic">Shape the viewing light</h2><p className="mt-2 text-xs leading-relaxed text-stone">Changes appear immediately in the 3D exhibit on the left.</p><div className="mt-6"><LightingPresetPicker stepped temperature={lightTemperature} direction={lightDirection} onTemperatureChange={setLightTemperature} onDirectionChange={setLightDirection} suggestedTemperature={category ? getDefaultTemperatureForCategory(category) : undefined} /></div></div>}
                 />
               </div>
             )}
             <div className="mt-8 flex gap-3">
-              <button type="button" onClick={() => setStep(2)} className="border border-line px-6 py-3.5 text-[11px] tracking-label text-ink uppercase hover:bg-black/5">Back</button>
-              <button type="button" onClick={() => { if (!canContinueFromStudio) { museumToast.warning("Media is incomplete", "Upload a valid artifact file and choose its lighting before continuing."); return; } setStep(4); }} className={`flex-1 py-3.5 text-[11px] tracking-label uppercase ${canContinueFromStudio ? "bg-ink text-cream hover:bg-charcoal" : "cursor-not-allowed bg-cream-dark text-stone-light"}`}>Continue to Details</button>
+              <button type="button" onClick={() => setStep(2)} className="border border-line px-6 py-3.5 text-xs tracking-label text-ink uppercase hover:bg-black/5">Back</button>
+              <button type="button" onClick={() => { if (!canContinueFromStudio) { museumToast.warning("Media is incomplete", "Upload a valid artifact file and choose its lighting before continuing."); return; } setStep(4); }} className={`flex-1 py-3.5 text-xs tracking-label uppercase ${canContinueFromStudio ? "bg-ink text-cream hover:bg-charcoal" : "cursor-not-allowed bg-cream-dark text-stone-light"}`}>Continue to Details</button>
             </div>
             </>}
             {step === 4 && <>
-            <div className="mb-7"><p className="text-[10px] tracking-label text-stone uppercase">Step 4 of 5 · Artifact Details</p><h2 className="font-display mt-3 text-3xl italic text-ink">Tell the artifact&apos;s story</h2><p className="mt-2 text-sm leading-relaxed text-stone">Add the public record, display image, provenance, license, and listing details that the curator will review.</p></div>
+            <div className="mb-7"><p className="text-xs tracking-label text-stone uppercase">Step 4 of 5 · Artifact Details</p><h2 className="font-display mt-3 text-3xl italic text-ink">Tell the artifact&apos;s story</h2><p className="mt-2 text-sm leading-relaxed text-stone">Add the public record, display image, provenance, license, and listing details that the curator will review.</p></div>
             <div className="mt-7 flex flex-col gap-6">
               <div>
-                <label className="text-[10px] tracking-label uppercase text-stone">
+                <label className="text-xs tracking-label uppercase text-stone">
                   Display Photo <span className="text-red-700">*</span>
                 </label>
                 <label className="mt-2.5 flex cursor-pointer items-center justify-between border border-line px-4 py-3 hover:border-stone">
                   <span className="truncate text-sm text-ink">
                     {photo?.name ?? "Choose a clear artifact photo"}
                   </span>
-                  <span className="ms-4 text-[10px] tracking-label text-stone uppercase">Browse</span>
+                  <span className="ms-4 text-xs tracking-label text-stone uppercase">Browse</span>
                   <input
                     type="file"
                     accept="image/jpeg,image/png,image/webp,image/avif"
@@ -624,7 +683,7 @@ export default function UploadWizard() {
                 <p className="mt-1.5 text-xs text-stone">JPG, PNG, WebP, or AVIF · max 10 MB. This image appears on artifact cards and detail pages.</p>
               </div>
               <div>
-                <label className="text-[10px] tracking-label uppercase text-stone">
+                <label className="text-xs tracking-label uppercase text-stone">
                   Artifact Name
                 </label>
                 <input
@@ -635,7 +694,7 @@ export default function UploadWizard() {
                 />
               </div>
               <div>
-                <label className="text-[10px] tracking-label uppercase text-stone">
+                <label className="text-xs tracking-label uppercase text-stone">
                   Public Description <span className="text-red-700">*</span>
                 </label>
                 <textarea
@@ -651,7 +710,7 @@ export default function UploadWizard() {
                 <p className="mt-1 text-xs leading-relaxed text-stone">The 3D museum panel presents a concise five-line preview; the complete description remains available on the artifact page.</p>
               </div>
               <div>
-                <label className="text-[10px] tracking-label uppercase text-stone">
+                <label className="text-xs tracking-label uppercase text-stone">
                   Origin / Provenance
                 </label>
                 <input
@@ -662,7 +721,7 @@ export default function UploadWizard() {
                 />
               </div>
               <div>
-                <label className="text-[10px] tracking-label uppercase text-stone">
+                <label className="text-xs tracking-label uppercase text-stone">
                   Primary Material <span className="text-red-700">*</span>
                 </label>
                 <select value={materialChoice} onChange={(event) => { const value = event.target.value; setMaterialChoice(value); setMaterial(value === "other" ? "" : value); }} required className="mt-2.5 w-full border border-line bg-transparent px-3 py-3 text-sm text-ink focus:border-ink focus:outline-none">
@@ -676,7 +735,7 @@ export default function UploadWizard() {
             </div>
 
             <div className="mt-8 border-t border-line pt-7">
-              <p className="text-[10px] tracking-label uppercase text-stone">Language</p>
+              <p className="text-xs tracking-label uppercase text-stone">Language</p>
               <p className="mt-2 text-xs leading-relaxed text-stone">Enter the artifact details in English. When a visitor views this artifact in another language, Gemini translates it on demand and the translation is saved for future visits.</p>
             </div>
 
@@ -686,7 +745,7 @@ export default function UploadWizard() {
               </div>
             )}
 
-            <p className="mt-8 text-[10px] tracking-label text-stone uppercase">
+            <p className="mt-8 text-xs tracking-label text-stone uppercase">
               Listing Price
             </p>
             <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -728,13 +787,13 @@ export default function UploadWizard() {
                   inputMode="decimal"
                   className="w-full bg-transparent px-2 text-sm text-ink focus:outline-none"
                 />
-                <span data-no-translate className="text-[10px] tracking-label text-stone-light uppercase">
+                <span data-no-translate className="text-xs tracking-label text-stone-light uppercase">
                   USD
                 </span>
               </div>
             )}
 
-            <p className="mt-8 text-[10px] tracking-label text-stone uppercase">
+            <p className="mt-8 text-xs tracking-label text-stone uppercase">
               License Type
             </p>
             <div data-no-translate className="mt-3 divide-y divide-line border-t border-b border-line">
@@ -760,11 +819,16 @@ export default function UploadWizard() {
               ))}
             </div>
 
+            <label className="mt-5 flex items-start gap-3 border border-line p-4 text-sm leading-relaxed text-charcoal">
+              <input type="checkbox" checked={rightsConfirmed} onChange={(event) => setRightsConfirmed(event.target.checked)} className="mt-1 h-4 w-4 accent-ink" />
+              <span>I confirm that I created this material or have permission to upload and license it, and that the artifact information is accurate to the best of my knowledge.</span>
+            </label>
+
             <div className="mt-8 flex gap-3">
               <button
                 type="button"
                 onClick={() => setStep(3)}
-                className="border border-line px-6 py-3.5 text-[11px] tracking-label text-ink uppercase hover:bg-black/5"
+                className="border border-line px-6 py-3.5 text-xs tracking-label text-ink uppercase hover:bg-black/5"
               >
                 Back
               </button>
@@ -777,7 +841,7 @@ export default function UploadWizard() {
                   }
                   setStep(5);
                 }}
-                className={`flex-1 py-3.5 text-[11px] tracking-label uppercase transition-colors ${
+                className={`flex-1 py-3.5 text-xs tracking-label uppercase transition-colors ${
                   canReview
                     ? "bg-ink text-cream hover:bg-charcoal"
                     : "cursor-not-allowed bg-cream-dark text-stone-light"
@@ -805,16 +869,16 @@ export default function UploadWizard() {
 
             {fileUrl && isModelType && modelFormat && lightTemperature && lightDirection && (
               <div className="mt-6 -mx-6 md:-mx-10">
-                <ArtifactStageFullscreen immersiveDetails hideOverlayActions viewer={<LightingStudioViewer src={fileUrl} format={modelFormat} lightTemperature={lightTemperature} lightDirection={lightDirection} title={name || fileName || "Uploaded artifact"} museumLayout="details" focusArtifactWithExhibit plaqueOrigin={origin || "Origin pending"} displayStyle={getExhibitDisplayStyle(category, material)} panelDetails={{ uploadType: "Upload Review · Draft", title: name || fileName || "Uploaded artifact", uploader: "Museum Contributor", description, material: material || selectedCategory?.name || "Artifact", origin: origin || "Not specified", license: selectedLicense?.name ?? "Creator-specified", price: priceMode === "free" ? "Free" : `$${price}` }} />} overlay={<div><p className="text-[9px] tracking-label text-stone uppercase">Step 5 of 5 · Review</p><h2 className="font-display mt-3 text-2xl italic">{name}</h2><p className="mt-2 text-xs text-stone">{selectedCategory?.name} · {getLightTemperature(lightTemperature).name} · {getLightDirection(lightDirection).name}</p><p className="mt-4 text-sm leading-relaxed text-charcoal/80">{description}</p></div>} />
+                <ArtifactStageFullscreen immersiveDetails hideOverlayActions viewer={<LightingStudioViewer src={fileUrl} format={modelFormat} lightTemperature={lightTemperature} lightDirection={lightDirection} title={name || fileName || "Uploaded artifact"} museumLayout="details" focusArtifactWithExhibit plaqueOrigin={origin || "Origin pending"} displayStyle={getExhibitDisplayStyle(category, material)} panelDetails={{ uploadType: "Upload Review · Draft", title: name || fileName || "Uploaded artifact", uploader: "Museum Contributor", description, material: material || selectedCategory?.name || "Artifact", origin: origin || "Not specified", license: selectedLicense?.name ?? "Creator-specified", price: priceMode === "free" ? "Free" : `$${price}` }} />} overlay={<div><p className="text-xs tracking-label text-stone uppercase">Step 5 of 5 · Review</p><h2 className="font-display mt-3 text-2xl italic">{name}</h2><p className="mt-2 text-xs text-stone">{selectedCategory?.name} · {getLightTemperature(lightTemperature).name} · {getLightDirection(lightDirection).name}</p><p className="mt-4 text-sm leading-relaxed text-charcoal/80">{description}</p></div>} />
               </div>
             )}
             {fileUrl && type === "video-scan" && (
-              <div className="mt-6 -mx-6 md:-mx-10"><ArtifactStageFullscreen splitDetails viewer={<video className="h-full w-full bg-black object-contain" controls src={fileUrl}>Your browser does not support video playback.</video>} overlay={<div><p className="text-[9px] tracking-label text-stone uppercase">Step 5 of 5 · Review</p><h2 className="font-display mt-3 text-2xl italic">{name}</h2><p className="mt-4 text-sm leading-relaxed text-charcoal/80">{description}</p><div className="mt-6 flex gap-3"><button type="button" onClick={() => setStep(4)} className="border border-line px-5 py-3 text-[10px] tracking-label uppercase">Back</button><button type="button" onClick={submitUpload} disabled={submitting} className="flex-1 bg-ink px-5 py-3 text-[10px] tracking-label text-cream uppercase">{submitting ? "Uploading…" : "Submit Artifact"}</button></div></div>} /></div>
+              <div className="mt-6 -mx-6 md:-mx-10"><ArtifactStageFullscreen splitDetails viewer={<video className="h-full w-full bg-black object-contain" controls src={fileUrl}>Your browser does not support video playback.</video>} overlay={<div><p className="text-xs tracking-label text-stone uppercase">Step 5 of 5 · Review</p><h2 className="font-display mt-3 text-2xl italic">{name}</h2><p className="mt-4 text-sm leading-relaxed text-charcoal/80">{description}</p><div className="mt-6 flex gap-3"><button type="button" onClick={() => setStep(4)} className="border border-line px-5 py-3 text-xs tracking-label uppercase">Back</button><button type="button" onClick={submitUpload} disabled={submitting} className="flex-1 bg-ink px-5 py-3 text-xs tracking-label text-cream uppercase">{submitting ? "Uploading…" : "Submit Artifact"}</button></div></div>} /></div>
             )}
 
             <div className="mt-6 divide-y divide-line border-t border-b border-line">
               <div className="flex items-center justify-between py-3.5">
-                <span className="text-[10px] tracking-label text-stone uppercase">
+                <span className="text-xs tracking-label text-stone uppercase">
                   Type
                 </span>
                 <span className="text-sm text-ink">
@@ -822,7 +886,7 @@ export default function UploadWizard() {
                 </span>
               </div>
               <div className="flex items-center justify-between py-3.5">
-                <span className="text-[10px] tracking-label text-stone uppercase">
+                <span className="text-xs tracking-label text-stone uppercase">
                   Category
                 </span>
                 <span className="text-sm text-ink">
@@ -830,7 +894,7 @@ export default function UploadWizard() {
                 </span>
               </div>
               <div className="flex items-center justify-between py-3.5">
-                <span className="text-[10px] tracking-label text-stone uppercase">
+                <span className="text-xs tracking-label text-stone uppercase">
                   File
                 </span>
                 <span className="text-sm text-ink">
@@ -838,7 +902,7 @@ export default function UploadWizard() {
                 </span>
               </div>
               <div className="flex items-center justify-between py-3.5">
-                <span className="text-[10px] tracking-label text-stone uppercase">
+                <span className="text-xs tracking-label text-stone uppercase">
                   Display Photo
                 </span>
                 <span className="max-w-[65%] truncate text-sm text-ink">
@@ -846,7 +910,7 @@ export default function UploadWizard() {
                 </span>
               </div>
               <div className="flex items-center justify-between py-3.5">
-                <span className="text-[10px] tracking-label text-stone uppercase">
+                <span className="text-xs tracking-label text-stone uppercase">
                   Lighting
                 </span>
                 <span className="text-sm text-ink">
@@ -854,7 +918,7 @@ export default function UploadWizard() {
                 </span>
               </div>
               <div className="flex items-center justify-between py-3.5">
-                <span className="text-[10px] tracking-label text-stone uppercase">
+                <span className="text-xs tracking-label text-stone uppercase">
                   Price
                 </span>
                 <span className="text-sm text-ink">
@@ -862,7 +926,7 @@ export default function UploadWizard() {
                 </span>
               </div>
               <div className="flex items-center justify-between py-3.5">
-                <span className="text-[10px] tracking-label text-stone uppercase">
+                <span className="text-xs tracking-label text-stone uppercase">
                   License
                 </span>
                 <span className="text-sm text-ink">
@@ -884,7 +948,7 @@ export default function UploadWizard() {
               <button
                 type="button"
                 onClick={() => setStep(4)}
-                className="border border-line px-6 py-3.5 text-[11px] tracking-label text-ink uppercase hover:bg-black/5"
+                className="border border-line px-6 py-3.5 text-xs tracking-label text-ink uppercase hover:bg-black/5"
               >
                 Edit
               </button>
@@ -892,7 +956,7 @@ export default function UploadWizard() {
                 type="button"
                 onClick={submitUpload}
                 disabled={submitting}
-                className="flex-1 bg-ink py-3.5 text-[11px] tracking-label text-cream uppercase hover:bg-charcoal"
+                className="flex-1 bg-ink py-3.5 text-xs tracking-label text-cream uppercase hover:bg-charcoal"
               >
                 {submitting ? "Uploading…" : "Submit Artifact"}
               </button>

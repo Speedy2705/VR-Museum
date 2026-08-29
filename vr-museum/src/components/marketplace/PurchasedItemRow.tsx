@@ -1,5 +1,6 @@
 import ArtifactMediaThumb from "@/components/media/ArtifactMediaThumb";
 import type { PurchasedAssetView } from "@/types/catalog";
+import Link from "next/link";
 
 type PurchasedItemRowProps = {
   asset: PurchasedAssetView;
@@ -26,21 +27,25 @@ export default function PurchasedItemRow({ asset }: PurchasedItemRowProps) {
           by {asset.artist} · {asset.period}
         </p>
         <div className="mt-2.5 flex flex-wrap gap-1.5">
-          <span data-no-translate className="border border-line px-2 py-1 text-[9px] tracking-label text-stone uppercase">
+          <span data-no-translate className="border border-line px-2 py-1 text-xs tracking-label text-stone uppercase">
             {asset.license}
           </span>
           {asset.formats.map((f) => (
             <span
               key={f}
-              className="border border-line px-2 py-1 text-[9px] tracking-label text-stone uppercase"
+              className="border border-line px-2 py-1 text-xs tracking-label text-stone uppercase"
             >
               {f}
             </span>
           ))}
         </div>
-        <p className="mt-2.5 text-[10px] text-stone-light">
+        <p className="mt-2.5 text-xs text-stone-light">
           Acquired {asset.acquiredDate}
         </p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <Link href={`/marketplace/${asset.slug}`} className="border border-line px-3 py-2 text-xs tracking-label uppercase">View details</Link>
+          {asset.model && <Link href={`/vr/${asset.slug}`} className="bg-ink px-3 py-2 text-xs tracking-label text-cream uppercase">Open 3D gallery</Link>}
+        </div>
       </div>
 
     </div>

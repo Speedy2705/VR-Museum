@@ -52,7 +52,7 @@ export default function AssetsStatsBar({
     <div className="grid grid-cols-1 divide-y divide-line border-b border-line bg-cream-dark sm:grid-cols-3 sm:divide-x sm:divide-y-0">
       {stats.map((s) => (
         <div key={s.label} className="px-10 py-7 md:px-16">
-          <p className="flex items-center gap-1.5 text-[10px] tracking-label text-stone uppercase">
+          <p className="flex items-center gap-1.5 text-xs tracking-label text-stone uppercase">
             {s.icon}
             {s.label}
           </p>

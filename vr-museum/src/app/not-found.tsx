@@ -11,7 +11,7 @@ export default function NotFound() {
         <div>
           <BrandLogo markOnly className="mx-auto mb-6 h-auto w-24 opacity-70" />
           <p className="font-display text-7xl text-stone-light italic">404</p>
-          <p className="mt-5 text-[10px] tracking-label text-stone uppercase">
+          <p className="mt-5 text-xs tracking-label text-stone uppercase">
             Object not on display
           </p>
           <h1 className="font-display mt-4 text-4xl italic">
@@ -22,7 +22,7 @@ export default function NotFound() {
           </p>
           <Link
             href="/"
-            className="mt-8 inline-flex bg-ink px-7 py-3.5 text-[11px] tracking-label text-cream uppercase"
+            className="mt-8 inline-flex bg-ink px-7 py-3.5 text-xs tracking-label text-cream uppercase"
           >
             Return to the museum
           </Link>

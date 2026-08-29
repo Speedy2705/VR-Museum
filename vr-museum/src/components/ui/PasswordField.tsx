@@ -7,6 +7,9 @@ type PasswordFieldProps = {
   placeholder?: string;
   name?: string;
   id?: string;
+  required?: boolean;
+  error?: string;
+  autoComplete?: string;
 };
 
 export default function PasswordField({
@@ -14,6 +17,9 @@ export default function PasswordField({
   placeholder,
   name = "password",
   id = "password",
+  required = false,
+  error,
+  autoComplete = "current-password",
 }: PasswordFieldProps) {
   const [visible, setVisible] = useState(false);
 
@@ -21,23 +27,27 @@ export default function PasswordField({
     <div>
       <label
         htmlFor={id}
-        className="text-[10px] tracking-label uppercase text-stone"
+        className="text-xs tracking-label uppercase text-stone"
       >
-        {label}
+        {label}{required && <span className="ms-1 text-red-700" aria-hidden="true">*</span>}
       </label>
-      <div className="relative mt-2.5 border-b border-line focus-within:border-ink">
+      <div className={`relative mt-2.5 border-b focus-within:border-ink ${error ? "border-red-700" : "border-line"}`}>
         <input
           id={id}
           name={name}
           type={visible ? "text" : "password"}
           placeholder={placeholder}
-          className="w-full bg-transparent pb-2.5 pr-8 text-sm text-ink placeholder:text-stone-light focus:outline-none"
+          required={required}
+          autoComplete={autoComplete}
+          aria-invalid={Boolean(error)}
+          aria-describedby={error ? `${id}-error` : undefined}
+          className="w-full bg-transparent pb-2.5 pr-12 text-base text-ink placeholder:text-stone-light focus:outline-none"
         />
         <button
           type="button"
           onClick={() => setVisible((v) => !v)}
           aria-label={visible ? "Hide password" : "Show password"}
-          className="absolute right-0 bottom-2 text-stone hover:text-ink"
+          className="absolute right-0 bottom-0 grid h-11 w-11 place-items-center text-stone hover:text-ink"
         >
           {visible ? (
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -51,6 +61,7 @@ export default function PasswordField({
           )}
         </button>
       </div>
+      {error && <p id={`${id}-error`} role="alert" className="mt-1.5 text-sm text-red-700">{error}</p>}
     </div>
   );
 }

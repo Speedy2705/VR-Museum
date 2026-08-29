@@ -5,6 +5,7 @@ import Link from "next/link";
 import ArtifactMediaThumb from "@/components/media/ArtifactMediaThumb";
 import type { CollectionView } from "@/types/catalog";
 import EmptyState from "@/components/ui/EmptyState";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 type Filter = "All" | "Marble" | "Bronze" | "Ceramic" | "Glass";
 
@@ -15,10 +16,28 @@ type CollectionsGridProps = {
 };
 
 export default function CollectionsGrid({ items }: CollectionsGridProps) {
-  const [filter, setFilter] = useState<Filter>("All");
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+  const router = useRouter();
+  const requested = searchParams.get("material");
+  const [filter, setFilterState] = useState<Filter>(filters.includes(requested as Filter) ? requested as Filter : "All");
+  const [query, setQueryState] = useState(searchParams.get("query") ?? "");
+  const updateParams = (nextFilter: Filter, nextQuery: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (nextFilter === "All") params.delete("material"); else params.set("material", nextFilter);
+    if (nextQuery.trim()) params.set("query", nextQuery.trim()); else params.delete("query");
+    router.replace(`${pathname}${params.size ? `?${params.toString()}` : ""}`, { scroll: false });
+  };
+  const setFilter = (next: Filter) => {
+    setFilterState(next);
+    updateParams(next, query);
+  };
+  const setQuery = (next: string) => { setQueryState(next); updateParams(filter, next); };
 
   const filtered = items.filter(
-    (c) => c.count > 0 && (filter === "All" || c.category === filter)
+    (c) => c.count > 0
+      && (filter === "All" || c.category === filter)
+      && (!query.trim() || `${c.title} ${c.subtitle} ${c.description} ${c.category}`.toLowerCase().includes(query.trim().toLowerCase()))
   );
 
   return (
@@ -31,7 +50,7 @@ export default function CollectionsGrid({ items }: CollectionsGridProps) {
                 key={f}
                 type="button"
                 onClick={() => setFilter(f)}
-                className={`px-3.5 py-1.5 text-[10px] tracking-label uppercase transition-colors ${
+                className={`px-3.5 py-1.5 text-xs tracking-label uppercase transition-colors ${
                   filter === f
                     ? "bg-ink text-cream"
                     : "text-stone hover:text-ink"
@@ -44,6 +63,10 @@ export default function CollectionsGrid({ items }: CollectionsGridProps) {
           <span className="text-xs text-stone">
             {filtered.length} {filtered.length === 1 ? "collection" : "collections"}
           </span>
+        </div>
+        <div className="mt-5 max-w-xl">
+          <label htmlFor="collection-search" className="text-xs tracking-label uppercase text-stone">Search collections</label>
+          <input id="collection-search" type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search by title, material, or description" className="mt-2 min-h-11 w-full border border-line bg-transparent px-4 py-3 text-base placeholder:text-stone-light focus:border-ink focus:outline-none" />
         </div>
 
         {filtered.length ? <div className="mt-9 grid grid-cols-1 gap-x-7 gap-y-14 sm:grid-cols-2">
@@ -76,7 +99,7 @@ export default function CollectionsGrid({ items }: CollectionsGridProps) {
               </p>
               <Link
                 href={`/collections/${collection.slug}`}
-                className="mt-4 inline-block border border-line px-6 py-2.5 text-[10px] tracking-label text-ink uppercase hover:bg-ink hover:text-cream"
+                className="mt-4 inline-block border border-line px-6 py-2.5 text-xs tracking-label text-ink uppercase hover:bg-ink hover:text-cream"
               >
                 View Collection
               </Link>

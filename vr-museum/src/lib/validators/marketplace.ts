@@ -1,17 +1,4 @@
 import { z } from "zod";
-import {
-  artifactMediaTypeSchema,
-  modelFormatSchema,
-  modelUrlSchema,
-  videoUrlSchema,
-} from "@/lib/validators/artifact";
-
-export const marketplaceMediaSchema = z.object({
-  videoUrl: videoUrlSchema.nullable().optional(),
-  modelUrl: modelUrlSchema.nullable().optional(),
-  modelFormat: modelFormatSchema.nullable().optional(),
-  primaryMediaType: artifactMediaTypeSchema.optional(),
-});
 
 export const marketplaceQuerySchema = z.object({
   page: z.coerce.number().int().positive().default(1),

@@ -5,6 +5,7 @@ import ProductCard from "@/components/marketplace/ProductCard";
 import type { MarketplaceView } from "@/types/catalog";
 import EmptyState from "@/components/ui/EmptyState";
 import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 type Filter = "all" | "free" | "paid";
 type Sort = "featured" | "price-low" | "price-high";
@@ -21,8 +22,26 @@ type MarketplaceGridProps = {
 };
 
 export default function MarketplaceGrid({ items, pagination }: MarketplaceGridProps) {
-  const [filter, setFilter] = useState<Filter>("all");
-  const [sort, setSort] = useState<Sort>("featured");
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+  const router = useRouter();
+  const requestedFilter = searchParams.get("price");
+  const requestedSort = searchParams.get("sort");
+  const [filter, setFilterState] = useState<Filter>(requestedFilter === "free" || requestedFilter === "paid" ? requestedFilter : "all");
+  const [sort, setSortState] = useState<Sort>(requestedSort === "price-low" || requestedSort === "price-high" ? requestedSort : "featured");
+  const updateUrl = (nextFilter: Filter, nextSort: Sort) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (nextFilter === "all") params.delete("price"); else params.set("price", nextFilter);
+    if (nextSort === "featured") params.delete("sort"); else params.set("sort", nextSort);
+    router.replace(`${pathname}${params.size ? `?${params.toString()}` : ""}`, { scroll: false });
+  };
+  const setFilter = (next: Filter) => { setFilterState(next); updateUrl(next, sort); };
+  const setSort = (next: Sort) => { setSortState(next); updateUrl(filter, next); };
+  const pageHref = (page: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("page", String(page));
+    return `${pathname}?${params.toString()}`;
+  };
 
   const filtered = items.filter((p) => {
     if (filter === "free") return p.price === null;
@@ -40,7 +59,7 @@ export default function MarketplaceGrid({ items, pagination }: MarketplaceGridPr
       <div className="mx-auto max-w-[1600px]">
         <div className="flex flex-col gap-4 border-b border-line pb-5 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:gap-6">
-            <span className="text-[10px] tracking-label text-stone uppercase">
+            <span className="text-xs tracking-label text-stone uppercase">
               Filters
             </span>
             <div className="-mx-2 flex max-w-full items-center gap-1 overflow-x-auto px-2 sm:mx-0 sm:gap-2 sm:px-0">
@@ -49,7 +68,7 @@ export default function MarketplaceGrid({ items, pagination }: MarketplaceGridPr
                   key={f.key}
                   type="button"
                   onClick={() => setFilter(f.key)}
-                  className={`px-3.5 py-1.5 text-[10px] tracking-label uppercase transition-colors ${
+                  className={`px-3.5 py-1.5 text-xs tracking-label uppercase transition-colors ${
                     filter === f.key
                       ? "bg-ink text-cream"
                       : "text-stone hover:text-ink"
@@ -66,7 +85,7 @@ export default function MarketplaceGrid({ items, pagination }: MarketplaceGridPr
               id="marketplace-sort"
               value={sort}
               onChange={(event) => setSort(event.target.value as Sort)}
-              className="border border-line bg-transparent px-3 py-2 text-[10px] tracking-label text-ink uppercase"
+              className="border border-line bg-transparent px-3 py-2 text-xs tracking-label text-ink uppercase"
             >
               <option value="featured">Featured</option>
               <option value="price-low">Price: Low to High</option>
@@ -89,11 +108,12 @@ export default function MarketplaceGrid({ items, pagination }: MarketplaceGridPr
             <EmptyState title="No models match this filter" message="Try a different price filter to see more artifacts." />
           </div>
         )}
+        <p className="mt-5 text-center text-xs text-stone">Price filters and sorting apply to the items on this results page.</p>
         {pagination.pages > 1 && (
           <nav aria-label="Marketplace pages" className="mt-12 flex items-center justify-center gap-4">
-            {pagination.page > 1 && <Link href={`/marketplace?page=${pagination.page - 1}`} className="border border-line px-5 py-2.5 text-[10px] tracking-label uppercase"><span className="inline-block rtl:-scale-x-100">←</span> Previous</Link>}
+            {pagination.page > 1 && <Link href={pageHref(pagination.page - 1)} className="border border-line px-5 py-2.5 text-xs tracking-label uppercase"><span className="inline-block rtl:-scale-x-100">←</span> Previous</Link>}
             <span className="text-xs text-stone">Page {pagination.page} of {pagination.pages}</span>
-            {pagination.page < pagination.pages && <Link href={`/marketplace?page=${pagination.page + 1}`} className="border border-line px-5 py-2.5 text-[10px] tracking-label uppercase">Next <span className="inline-block rtl:-scale-x-100">→</span></Link>}
+            {pagination.page < pagination.pages && <Link href={pageHref(pagination.page + 1)} className="border border-line px-5 py-2.5 text-xs tracking-label uppercase">Next <span className="inline-block rtl:-scale-x-100">→</span></Link>}
           </nav>
         )}
       </div>

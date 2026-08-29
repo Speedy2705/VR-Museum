@@ -148,7 +148,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
     })
       .then((response) => {
         if (!response.ok) throw new Error("Cart removal failed");
-        museumToast.info("Removed from your cart", `${item.title} was removed.`);
+        museumToast.infoAction("Removed from your cart", `${item.title} was removed.`, "Undo", () => {
+          addItem({ listingId: item.listingId, slug: item.slug, title: item.title, artist: item.artist, material: item.material, license: item.license, price: item.price, image: item.image });
+        });
       })
       .catch((error) => {
         setItems((current) => {

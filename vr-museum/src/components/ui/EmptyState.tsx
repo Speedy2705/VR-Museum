@@ -20,7 +20,7 @@ export default function EmptyState({
       <h2 className="font-display mt-5 text-2xl italic">{title}</h2>
       <p className="mt-3 max-w-sm text-sm leading-relaxed text-stone">{message}</p>
       {action && (
-        <Link href={action.href} className="mt-7 bg-ink px-6 py-3 text-[10px] tracking-label text-cream uppercase">
+        <Link href={action.href} className="mt-7 bg-ink px-6 py-3 text-xs tracking-label text-cream uppercase">
           {action.label}
         </Link>
       )}

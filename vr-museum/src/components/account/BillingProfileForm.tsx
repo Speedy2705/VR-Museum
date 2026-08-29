@@ -9,16 +9,17 @@ const fields: Array<{
   label: string;
   type?: string;
   required?: boolean;
+  autoComplete?: string;
 }> = [
-  { key: "name", label: "Full name", required: true },
-  { key: "email", label: "Email", type: "email", required: true },
-  { key: "phone", label: "Phone", type: "tel", required: true },
-  { key: "addressLine1", label: "Address line 1", required: true },
-  { key: "addressLine2", label: "Address line 2" },
-  { key: "city", label: "City", required: true },
-  { key: "state", label: "State / Province", required: true },
-  { key: "postalCode", label: "Postal code", required: true },
-  { key: "country", label: "Country", required: true },
+  { key: "name", label: "Full name", required: true, autoComplete: "name" },
+  { key: "email", label: "Email", type: "email", required: true, autoComplete: "email" },
+  { key: "phone", label: "Phone", type: "tel", required: true, autoComplete: "tel" },
+  { key: "addressLine1", label: "Address line 1", required: true, autoComplete: "address-line1" },
+  { key: "addressLine2", label: "Address line 2", autoComplete: "address-line2" },
+  { key: "city", label: "City", required: true, autoComplete: "address-level2" },
+  { key: "state", label: "State / Province", required: true, autoComplete: "address-level1" },
+  { key: "postalCode", label: "Postal code", required: true, autoComplete: "postal-code" },
+  { key: "country", label: "Country", required: true, autoComplete: "country-name" },
 ];
 
 export default function BillingProfileForm({ initialProfile }: {
@@ -61,14 +62,15 @@ export default function BillingProfileForm({ initialProfile }: {
         }
       }}
     >
-      {fields.map(({ key, label, type = "text", required }) => (
+      {fields.map(({ key, label, type = "text", required, autoComplete }) => (
         <label key={key} className={key.startsWith("address") ? "sm:col-span-2" : ""}>
-          <span className="text-[10px] tracking-label uppercase text-stone">
+          <span className="text-xs tracking-label uppercase text-stone">
             {label}{required && <span className="ml-1 text-red-700">*</span>}
           </span>
           <input
             type={type}
             required={required}
+            autoComplete={autoComplete}
             value={profile[key]}
             onChange={(event) => setProfile((current) => ({
               ...current,
@@ -81,7 +83,7 @@ export default function BillingProfileForm({ initialProfile }: {
       {error && <p role="alert" className="text-sm text-red-700 sm:col-span-2">{error}</p>}
       <button
         disabled={saving}
-        className="w-fit bg-ink px-6 py-3 text-[10px] tracking-label text-cream uppercase disabled:opacity-60 sm:col-span-2"
+        className="w-fit bg-ink px-6 py-3 text-xs tracking-label text-cream uppercase disabled:opacity-60 sm:col-span-2"
       >
         {saving ? "Saving…" : "Save checkout details"}
       </button>

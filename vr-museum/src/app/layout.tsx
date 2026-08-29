@@ -56,7 +56,10 @@ export default async function RootLayout({
   return (
     <html lang={locale} dir={rtlLocales.has(locale) ? "rtl" : "ltr"}>
       <body className={`${playfair.variable} ${inter.variable} antialiased`}>
-        <AppProviders locale={locale}>{children}</AppProviders>
+        <a href="#main-content" className="skip-link">Skip to main content</a>
+        <div id="main-content" tabIndex={-1}>
+          <AppProviders locale={locale}>{children}</AppProviders>
+        </div>
       </body>
     </html>
   );

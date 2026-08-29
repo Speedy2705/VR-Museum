@@ -23,14 +23,14 @@ export default function Hero() {
 
       <SlideUp className="relative z-10 mx-auto flex max-w-3xl flex-col items-center px-6 text-center">
         <BrandLogo variant="light" markOnly className="mb-6 h-auto w-40 drop-shadow-[0_8px_22px_rgba(0,0,0,0.4)]" priority />
-        <p className="text-[11px] tracking-[0.35em] text-white/50 uppercase">
+        <p className="text-xs tracking-[0.35em] text-white/50 uppercase">
           The Museum Without Walls
         </p>
 
         <h1 className="font-display mt-6 text-5xl leading-[1.15] font-normal text-white italic sm:text-6xl md:text-[64px]">
           Explore. Experience.
           <br />
-          Own History.
+          Discover Living History.
         </h1>
 
         <p className="mt-7 max-w-xl text-[15px] leading-relaxed text-white/70">
@@ -45,10 +45,11 @@ export default function Hero() {
             View Collections
           </Button>
         </div>
+        <p className="mt-4 text-sm text-white/80">Works in your browser—no VR headset required.</p>
       </SlideUp>
 
       <div className="absolute bottom-8 left-1/2 z-10 flex -translate-x-1/2 flex-col items-center gap-2 text-white/50">
-        <span className="text-[10px] tracking-label uppercase">Scroll</span>
+        <span className="text-xs tracking-label uppercase">Scroll</span>
         <span className="h-8 w-px bg-white/40" />
       </div>
     </section>

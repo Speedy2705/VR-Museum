@@ -62,7 +62,7 @@ export default function PlaceholderImage({
       } ${className}`}
     >
       <span
-        className={`px-4 text-center text-[11px] tracking-label uppercase ${
+        className={`px-4 text-center text-xs tracking-label uppercase ${
           dark ? "text-white/40" : "text-black/40"
         }`}
       >

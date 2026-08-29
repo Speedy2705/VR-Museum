@@ -34,7 +34,7 @@ export default async function CommunityArtifactPage({ params }: { params: Promis
   const localizedTitle = String(localized.title ?? upload.title);
   const details = (
     <div className="[&_a]:text-cream">
-      <p className="text-[8px] tracking-label text-cream/55 uppercase">Community Upload · Curator Approved</p>
+      <p className="text-xs tracking-label text-cream/55 uppercase">Community Upload · Curator Approved</p>
       <h1 className="font-display mt-2 text-2xl italic xl:text-3xl">{localizedTitle}</h1>
       <p className="mt-2 text-xs text-cream/60">Uploaded by <Link className="underline hover:text-cream" href={`/community/creator/${upload.owner.id}`}>{uploaderName}</Link></p>
       <p className="mt-3 text-xs leading-relaxed text-cream/80">{description}</p>

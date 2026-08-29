@@ -10,6 +10,7 @@ import { notifyError } from "@/lib/client-error";
 import { getLightDirection, getLightTemperature } from "@/lib/lighting-presets";
 import { museumToast } from "@/lib/museum-toast";
 import type { ModelFormat } from "@/lib/three/loaders";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 
 type ModerationItem = {
   id: string;
@@ -35,7 +36,7 @@ type DialogState = { id: string; decision: CommentDecision } | null;
 function DetailRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-col justify-between gap-1 py-3.5 sm:flex-row sm:items-start sm:gap-8">
-      <span className="text-[10px] tracking-label uppercase text-stone">{label}</span>
+      <span className="text-xs tracking-label uppercase text-stone">{label}</span>
       <span className="text-sm leading-relaxed text-ink sm:max-w-[70%] sm:text-right">{children || "—"}</span>
     </div>
   );
@@ -47,6 +48,7 @@ export default function ModerationQueue({ initialItems }: { initialItems: Modera
   const [pendingId, setPendingId] = useState("");
   const [error, setError] = useState("");
   const [dialog, setDialog] = useState<DialogState>(null);
+  const [approveId, setApproveId] = useState<string | null>(null);
   const [previewTemperatures, setPreviewTemperatures] = useState<Record<string, LightTemperatureKey>>({});
   const [previewDirections, setPreviewDirections] = useState<Record<string, LightDirectionKey>>({});
 
@@ -94,11 +96,11 @@ export default function ModerationQueue({ initialItems }: { initialItems: Modera
               className="flex w-full flex-col justify-between gap-5 p-6 text-left hover:bg-cream-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink sm:flex-row sm:items-center"
             >
               <span>
-                <span className="text-[9px] tracking-label uppercase text-stone">{categoryName}</span>
+                <span className="text-xs tracking-label uppercase text-stone">{categoryName}</span>
                 <span className="font-display mt-2 block text-xl">{item.title}</span>
                 <span className="mt-2 block text-xs text-stone">{item.ownerName} · {item.ownerEmail}</span>
               </span>
-              <span className="text-[10px] tracking-label uppercase text-stone">{expanded ? "Close details −" : "Review upload +"}</span>
+              <span className="text-xs tracking-label uppercase text-stone">{expanded ? "Close details −" : "Review upload +"}</span>
             </button>
 
             {expanded && (
@@ -112,13 +114,13 @@ export default function ModerationQueue({ initialItems }: { initialItems: Modera
                   overlay={<div>
                     <div className="flex items-start justify-between gap-4">
                       <div>
-                        <p className="text-[9px] tracking-label uppercase text-stone">Curator review · {categoryName}</p>
+                        <p className="text-xs tracking-label uppercase text-stone">Curator review · {categoryName}</p>
                         <h2 className="font-display mt-3 text-3xl italic">{item.title}</h2>
                         <p className="mt-2 text-xs leading-relaxed text-stone">Submitted by {item.ownerName} · {item.ownerEmail}</p>
                       </div>
-                      <button type="button" onClick={() => setExpandedId(null)} className="shrink-0 text-[10px] tracking-label uppercase text-stone hover:text-ink">Close ×</button>
+                      <button type="button" onClick={() => setExpandedId(null)} className="shrink-0 text-xs tracking-label uppercase text-stone hover:text-ink">Close ×</button>
                     </div>
-                    {previewTemperature && previewDirection && <div className="mt-6"><p className="text-xs leading-relaxed text-stone">Preview the model under each museum lighting combination before making a decision.</p><span className="mt-4 inline-block border border-line bg-cream-dark px-3 py-1.5 text-[9px] tracking-label uppercase text-charcoal">Contributor&apos;s choice: {getLightTemperature(item.lightTemperature ?? previewTemperature).name} · {getLightDirection(item.lightDirection ?? previewDirection).name}</span><div className="mt-5"><LightingPresetPicker stepped temperature={previewTemperature} direction={previewDirection} onTemperatureChange={(value) => setPreviewTemperatures((current) => ({ ...current, [item.id]: value }))} onDirectionChange={(value) => setPreviewDirections((current) => ({ ...current, [item.id]: value }))} /></div></div>}
+                    {previewTemperature && previewDirection && <div className="mt-6"><p className="text-xs leading-relaxed text-stone">Preview the model under each museum lighting combination before making a decision.</p><span className="mt-4 inline-block border border-line bg-cream-dark px-3 py-1.5 text-xs tracking-label uppercase text-charcoal">Contributor&apos;s choice: {getLightTemperature(item.lightTemperature ?? previewTemperature).name} · {getLightDirection(item.lightDirection ?? previewDirection).name}</span><div className="mt-5"><LightingPresetPicker stepped temperature={previewTemperature} direction={previewDirection} onTemperatureChange={(value) => setPreviewTemperatures((current) => ({ ...current, [item.id]: value }))} onDirectionChange={(value) => setPreviewDirections((current) => ({ ...current, [item.id]: value }))} /></div></div>}
                     <div className="mt-6 divide-y divide-line border-y border-line">
                   <DetailRow label="Public Description">{item.description}</DetailRow>
                   <DetailRow label="Origin / Provenance">{item.origin}</DetailRow>
@@ -128,9 +130,9 @@ export default function ModerationQueue({ initialItems }: { initialItems: Modera
                   <DetailRow label="Price">{item.price === null ? "Free" : `$${item.price.toFixed(2)}`}</DetailRow>
                     </div>
                     <div className="mt-6 grid gap-3 sm:grid-cols-3">
-                  <button type="button" disabled={pendingId === item.id} onClick={() => setDialog({ id: item.id, decision: "REJECTED" })} className="border border-red-900 px-5 py-2.5 text-[10px] tracking-label uppercase text-red-900 hover:bg-red-900 hover:text-white disabled:opacity-50">Reject</button>
-                  <button type="button" disabled={pendingId === item.id} onClick={() => setDialog({ id: item.id, decision: "CHANGES_REQUESTED" })} className="border border-line px-5 py-2.5 text-[10px] tracking-label uppercase hover:border-ink disabled:opacity-50">Request Changes</button>
-                  <button type="button" disabled={pendingId === item.id} onClick={() => moderate(item.id, "APPROVED")} className="bg-ink px-5 py-2.5 text-[10px] tracking-label uppercase text-cream hover:bg-charcoal disabled:opacity-50">Approve</button>
+                  <button type="button" disabled={pendingId === item.id} onClick={() => setDialog({ id: item.id, decision: "REJECTED" })} className="border border-red-900 px-5 py-2.5 text-xs tracking-label uppercase text-red-900 hover:bg-red-900 hover:text-white disabled:opacity-50">Reject</button>
+                  <button type="button" disabled={pendingId === item.id} onClick={() => setDialog({ id: item.id, decision: "CHANGES_REQUESTED" })} className="border border-line px-5 py-2.5 text-xs tracking-label uppercase hover:border-ink disabled:opacity-50">Request Changes</button>
+                  <button type="button" disabled={pendingId === item.id} onClick={() => setApproveId(item.id)} className="bg-ink px-5 py-2.5 text-xs tracking-label uppercase text-cream hover:bg-charcoal disabled:opacity-50">Approve</button>
                     </div>
                   </div>}
                 />
@@ -148,6 +150,15 @@ export default function ModerationQueue({ initialItems }: { initialItems: Modera
           onConfirm={(comment) => moderate(dialog.id, dialog.decision, comment)}
         />
       )}
+      <ConfirmDialog
+        open={approveId !== null}
+        title="Approve this artifact?"
+        description="The artifact will become available according to its listing settings. Confirm that you reviewed its media, description, provenance, license, and lighting."
+        confirmLabel="Approve Artifact"
+        pending={approveId !== null && pendingId === approveId}
+        onCancel={() => setApproveId(null)}
+        onConfirm={async () => { if (approveId) await moderate(approveId, "APPROVED"); setApproveId(null); }}
+      />
     </div>
   );
 }

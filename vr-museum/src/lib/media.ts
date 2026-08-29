@@ -29,19 +29,6 @@ export function getArtifactModel(slug: string): string {
   return `/models/artifacts/${artifactSlugAliases[slug] ?? slug}.glb`;
 }
 
-type ArtifactWithImmersiveMedia = {
-  videoUrl?: string | null;
-  modelUrl?: string | null;
-};
-
-export function hasImmersiveMedia<T extends ArtifactWithImmersiveMedia>(
-  artifact: T,
-): artifact is T & (
-  { videoUrl: string } | { modelUrl: string }
-) {
-  return Boolean(artifact.videoUrl || artifact.modelUrl);
-}
-
 export const categoryStripImages: Record<string, string> = {
   "Hellenistic Bust": getArtifactImage("portrait-bust-of-a-philosopher"),
   "Cycladic Figure": getArtifactImage("cycladic-marble-figure"),

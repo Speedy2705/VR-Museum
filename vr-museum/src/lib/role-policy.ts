@@ -21,6 +21,3 @@ export function hasPermission(
 ) {
   return role ? rolePermissions[role].includes(permission) : false;
 }
-
-export const uploadRoles = ["ARTIST", "ARCHAEOLOGIST", "CURATOR"] as const;
-export const moderationRoles = ["CURATOR"] as const;

@@ -35,7 +35,7 @@ export default function MainExperience() {
       </div>
 
       <div className="bg-ink px-10 py-20 text-white md:px-16 md:py-24">
-        <p className="text-[11px] tracking-[0.3em] text-white/40 uppercase">
+        <p className="text-xs tracking-[0.3em] text-white/40 uppercase">
           Immersive 3D Experience
         </p>
 

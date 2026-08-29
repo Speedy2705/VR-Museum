@@ -9,7 +9,7 @@ export default function MarketplaceCTABanner() {
 
   return (
     <section className="bg-ink px-6 py-20 text-center">
-      <p className="text-[11px] tracking-[0.35em] text-white/45 uppercase">
+      <p className="text-xs tracking-[0.35em] text-white/45 uppercase">
         For Artists, Archaeologists &amp; Curators
       </p>
       <h2 className="font-display mx-auto mt-6 max-w-lg text-3xl text-white italic md:text-4xl">

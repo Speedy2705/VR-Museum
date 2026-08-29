@@ -22,16 +22,18 @@ export default function CollectionGrid({
 
           <div className="flex flex-wrap gap-2">
             {filters.map((f, i) => (
-              <button
+              <Button
                 key={f}
-                className={`px-4 py-2 text-[10px] tracking-label uppercase transition-colors ${
+                href={i === 0 ? "/collections" : `/collections?material=${encodeURIComponent(f)}`}
+                variant="outline-dark"
+                className={`px-4 py-2 text-xs tracking-label uppercase transition-colors ${
                   i === 0
                     ? "bg-ink text-white"
                     : "border border-line text-stone hover:border-ink hover:text-ink"
                 }`}
               >
                 {f}
-              </button>
+              </Button>
             ))}
           </div>
         </div>

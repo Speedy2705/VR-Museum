@@ -51,6 +51,7 @@ export default function ProductCard({ product, imageSizes }: ProductCardProps) {
       material: product.material,
       license: product.license,
       price: product.price ?? 0,
+      image: product.image,
     });
   };
 
@@ -72,7 +73,7 @@ export default function ProductCard({ product, imageSizes }: ProductCardProps) {
             sizes={imageSizes}
           />
           <span data-no-translate><Tag className="absolute top-3 start-3">{isFree ? "Free" : `$${product.price}`}</Tag></span>
-          <span data-no-translate className="absolute end-3 bottom-3 bg-ink/70 px-2 py-1 text-[9px] tracking-label text-white uppercase">
+          <span data-no-translate className="absolute end-3 bottom-3 bg-ink/70 px-2 py-1 text-xs tracking-label text-white uppercase">
             {product.license}
           </span>
         </div>
@@ -82,7 +83,7 @@ export default function ProductCard({ product, imageSizes }: ProductCardProps) {
         <p data-no-translate className="mt-1 text-xs text-stone">
           {product.source === "community" ? "Uploaded by" : "by"} {product.artist} · {product.period}
           {product.sellerRole && (
-            <span className="ms-2 border border-line px-1.5 py-0.5 text-[8px] tracking-label uppercase">
+            <span className="ms-2 border border-line px-1.5 py-0.5 text-xs tracking-label uppercase">
               Seller
             </span>
           )}
@@ -93,7 +94,7 @@ export default function ProductCard({ product, imageSizes }: ProductCardProps) {
         type="button"
         onClick={handleAdd}
         disabled={inCart}
-        className={`mt-2.5 flex w-full items-center justify-center gap-1.5 border px-3 py-2.5 text-[10px] tracking-label uppercase transition-colors ${
+        className={`mt-2.5 flex w-full items-center justify-center gap-1.5 border px-3 py-2.5 text-xs tracking-label uppercase transition-colors ${
           inCart
             ? "border-line bg-cream-dark text-stone"
             : "border-line text-ink hover:bg-ink hover:text-cream"
@@ -102,7 +103,7 @@ export default function ProductCard({ product, imageSizes }: ProductCardProps) {
         {inCart ? (
           "✓ In Cart"
         ) : isFree ? (
-          "Get Free"
+          "Add Free License"
         ) : (
           <>
             {cartIcon}${product.price}

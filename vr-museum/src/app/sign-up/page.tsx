@@ -17,12 +17,15 @@ import { museumToast } from "@/lib/museum-toast";
 export default function SignUpPage() {
   const router = useRouter();
   const [error, setError] = useState("");
+  type SignUpField = "name" | "email" | "phone" | "password" | "role";
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<SignUpField, string>>>({});
   const [submitting, setSubmitting] = useState(false);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSubmitting(true);
     setError("");
+    setFieldErrors({});
     const data = new FormData(event.currentTarget);
     const parsed = registerSchema.safeParse({
       name: String(data.get("name") ?? ""),
@@ -32,6 +35,14 @@ export default function SignUpPage() {
       role: String(data.get("role") ?? ""),
     });
     if (!parsed.success) {
+      const nextErrors: Partial<Record<SignUpField, string>> = {};
+      for (const issue of parsed.error.issues) {
+        const field = issue.path[0];
+        if (typeof field === "string" && ["name", "email", "phone", "password", "role"].includes(field) && !nextErrors[field as SignUpField]) {
+          nextErrors[field as SignUpField] = issue.message;
+        }
+      }
+      setFieldErrors(nextErrors);
       const message = parsed.error.issues[0]?.message ?? "Check your details";
       setError(message);
       museumToast.warning("Check your account details", message);
@@ -84,7 +95,7 @@ export default function SignUpPage() {
       <main className="grid grid-cols-1 md:grid-cols-2">
         <div className="flex flex-col justify-center bg-cream px-10 py-16 md:px-16 lg:px-20">
           <div className="mx-auto w-full max-w-sm">
-            <p className="text-[10px] tracking-label uppercase text-stone">
+            <p className="text-xs tracking-label uppercase text-stone">
               Join The Museum
             </p>
             <h1 className="font-display mt-3 text-4xl italic">
@@ -99,37 +110,49 @@ export default function SignUpPage() {
                 label="Full Name"
                 name="name"
                 placeholder="Jane Doe"
+                required
+                autoComplete="name"
+                error={fieldErrors.name}
               />
               <FormField
                 label="Email (optional)"
                 type="email"
                 name="email"
                 placeholder="you@studio.com"
+                autoComplete="email"
+                error={fieldErrors.email}
               />
               <FormField
                 label="Mobile number (optional)"
                 type="tel"
                 name="phone"
                 placeholder="+919876543210"
+                autoComplete="tel"
+                inputMode="tel"
+                error={fieldErrors.phone}
               />
               <p className="-mt-4 text-xs leading-relaxed text-stone">
                 Enter at least one. Mobile numbers must include the international country code.
               </p>
-              <PasswordField placeholder="••••••••" />
+              <PasswordField placeholder="••••••••" required autoComplete="new-password" error={fieldErrors.password} />
+              <p className="-mt-4 text-xs leading-relaxed text-stone">Use at least 8 characters.</p>
 
               <div>
                 <label
                   htmlFor="role"
-                  className="text-[10px] tracking-label uppercase text-stone"
+                  className="text-xs tracking-label uppercase text-stone"
                 >
-                  Role
+                  Role<span className="ms-1 text-red-700" aria-hidden="true">*</span>
                 </label>
                 <div className="relative mt-2.5 border-b border-line focus-within:border-ink">
                   <select
                     id="role"
                     name="role"
+                    required
                     defaultValue=""
-                    className="w-full appearance-none bg-transparent pb-2.5 text-sm text-ink focus:outline-none"
+                    aria-invalid={Boolean(fieldErrors.role)}
+                    aria-describedby={fieldErrors.role ? "role-error" : "role-help"}
+                    className="w-full appearance-none bg-transparent pb-2.5 text-base text-ink focus:outline-none"
                   >
                     <option value="" disabled className="text-stone-light">
                       Select your role
@@ -152,13 +175,19 @@ export default function SignUpPage() {
                     <path d="M5 8l7 7 7-7" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </div>
+                {fieldErrors.role && <p id="role-error" role="alert" className="mt-1.5 text-sm text-red-700">{fieldErrors.role}</p>}
+                <div id="role-help" className="mt-4 space-y-2 rounded-sm bg-cream-dark p-4">
+                  {userRoles.map((role) => (
+                    <p key={role.value} className="text-sm leading-relaxed text-charcoal"><strong className="font-medium text-ink">{role.label}:</strong> {role.description}</p>
+                  ))}
+                </div>
               </div>
 
               {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
               <button
                 type="submit"
                 disabled={submitting}
-                className="mt-2 bg-ink py-3.5 text-[11px] tracking-label uppercase text-white hover:bg-charcoal disabled:cursor-wait disabled:opacity-60"
+                className="mt-2 bg-ink py-3.5 text-xs tracking-label uppercase text-white hover:bg-charcoal disabled:cursor-wait disabled:opacity-60"
               >
                 {submitting ? "Creating Account…" : "Create Account"}
               </button>
@@ -166,7 +195,7 @@ export default function SignUpPage() {
 
             <div className="mt-7 flex items-center gap-4">
               <span className="h-px flex-1 bg-line" />
-              <span className="text-[10px] tracking-label text-stone uppercase">
+              <span className="text-xs tracking-label text-stone uppercase">
                 Or
               </span>
               <span className="h-px flex-1 bg-line" />

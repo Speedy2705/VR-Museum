@@ -6,7 +6,7 @@ export default function MissionSplit() {
     <section className="grid grid-cols-1 md:grid-cols-2">
       <div className="bg-cream px-10 py-20 md:px-16 md:py-24">
         <SlideUp>
-        <p className="text-[11px] tracking-[0.3em] text-stone uppercase">
+        <p className="text-xs tracking-[0.3em] text-stone uppercase">
           Our Mission
         </p>
         <h2 className="font-display mt-6 max-w-md text-4xl leading-[1.2] italic md:text-[38px]">
@@ -36,7 +36,7 @@ export default function MissionSplit() {
           <circle cx="16" cy="12" r="1.6" fill="currentColor" stroke="none" />
         </svg>
 
-        <p className="mt-6 text-[11px] tracking-[0.3em] text-white/40 uppercase">
+        <p className="mt-6 text-xs tracking-[0.3em] text-white/40 uppercase">
           The Digital Experience
         </p>
         <h2 className="font-display mt-4 max-w-md text-4xl leading-[1.2] italic md:text-[38px]">

@@ -54,8 +54,8 @@ export default async function AssetsPage() {
       <Navbar hasHeroBackground={false} />
       <main>
         <PageHero
-          title="Your Assets"
-          subtitle="Licensed acquisitions and your contributed artifacts"
+          title="My Library & Uploads"
+          subtitle="Purchased licenses, order records, and artifacts you have contributed"
           imageSrc={pageImages.galleryWall}
         >
           <AssetsStatsBar
@@ -69,14 +69,14 @@ export default async function AssetsPage() {
         <section className="border-b border-line bg-cream px-10 py-10 md:px-16">
           <div className="mx-auto grid max-w-6xl gap-8 md:grid-cols-[1fr_2fr]">
             <div>
-              <p className="text-[10px] tracking-label uppercase text-stone">Account</p>
+              <p className="text-xs tracking-label uppercase text-stone">Account</p>
               <h2 className="font-display mt-2 text-2xl italic">
                 {user.name ?? "Museum member"}
               </h2>
               <p className="mt-2 text-sm text-stone">{user.email}</p>
             </div>
             <div>
-              <p className="text-[10px] tracking-label uppercase text-stone">Order history</p>
+              <p className="text-xs tracking-label uppercase text-stone">Order history</p>
               {orders.length ? (
                 <div className="mt-3 grid gap-3 sm:grid-cols-3">
                   <div><p className="font-display text-2xl">{orders.length}</p><p className="text-xs text-stone">Orders</p></div>
@@ -98,7 +98,7 @@ export default async function AssetsPage() {
         </section>
         <section className="border-b border-line bg-cream px-10 py-10 md:px-16">
           <div className="mx-auto max-w-6xl">
-            <p className="text-[10px] tracking-label uppercase text-stone">Saved checkout profile</p>
+            <p className="text-xs tracking-label uppercase text-stone">Saved checkout profile</p>
             <h2 className="font-display mt-2 text-2xl italic">Billing and contact details</h2>
             <p className="mt-2 max-w-2xl text-sm text-stone">
               Save these once to autofill future checkouts. You can still edit every field before paying.

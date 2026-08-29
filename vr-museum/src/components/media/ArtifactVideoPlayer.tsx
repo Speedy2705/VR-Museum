@@ -90,7 +90,7 @@ export default function ArtifactVideoPlayer({ src, poster, title, className = ""
           <span className="absolute inset-y-0 left-0 bg-white/35" style={{ width: `${buffered}%` }} />
           <input aria-label="Seek video" type="range" min={0} max={duration || 0} step="0.1" value={currentTime} onChange={(e) => { const next = Number(e.target.value); if (videoRef.current) videoRef.current.currentTime = next; setCurrentTime(next); }} className="absolute -inset-y-2 left-0 h-5 w-full cursor-pointer accent-white" />
         </div>
-        <div className="mt-3 flex items-center gap-3 text-[10px] tracking-wide">
+        <div className="mt-3 flex items-center gap-3 text-xs tracking-wide">
           <button type="button" onClick={() => void togglePlay()} aria-label={playing ? "Pause video" : "Play video"} className="min-w-8 text-left text-lg">{playing ? "Ⅱ" : "▶"}</button>
           <span aria-live="off" className="tabular-nums">{formatTime(currentTime)} / {formatTime(duration)}</span>
           <button type="button" onClick={() => { const video = videoRef.current; if (!video) return; video.muted = !video.muted; setMuted(video.muted); }} aria-label={muted ? "Unmute video" : "Mute video"}>{muted || volume === 0 ? "Muted" : "Volume"}</button>

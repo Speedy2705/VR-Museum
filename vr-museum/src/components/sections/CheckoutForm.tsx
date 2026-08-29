@@ -40,7 +40,7 @@ function validateValue(field: keyof BillingProfile, value: string) {
   return "";
 }
 
-function CheckoutField({ field, label, profile, setValue, error, onBlur, type = "text", placeholder, required = true }: {
+function CheckoutField({ field, label, profile, setValue, error, onBlur, type = "text", placeholder, required = true, autoComplete, inputMode }: {
   field: keyof BillingProfile;
   label: string;
   profile: BillingProfile;
@@ -50,10 +50,12 @@ function CheckoutField({ field, label, profile, setValue, error, onBlur, type = 
   type?: string;
   placeholder?: string;
   required?: boolean;
+  autoComplete?: string;
+  inputMode?: React.HTMLAttributes<HTMLInputElement>["inputMode"];
 }) {
   return (
     <div>
-      <label htmlFor={`checkout-${field}`} className="text-[10px] tracking-label uppercase text-stone">
+      <label htmlFor={`checkout-${field}`} className="text-xs tracking-label uppercase text-stone">
         {label}{required && <span className="ms-1 text-red-700">*</span>}
       </label>
       <input
@@ -63,6 +65,8 @@ function CheckoutField({ field, label, profile, setValue, error, onBlur, type = 
         type={type}
         value={profile[field]}
         placeholder={placeholder}
+        autoComplete={autoComplete}
+        inputMode={inputMode}
         onChange={(event) => setValue(event.target.value)}
         onBlur={onBlur}
         aria-invalid={Boolean(error)}
@@ -125,7 +129,7 @@ function CardPayment({ orderId, onError, onSuccess }: {
             onSuccess(orderId);
           }
         }}
-        className="w-full bg-ink py-3.5 text-[11px] tracking-label text-cream uppercase disabled:cursor-not-allowed disabled:opacity-50"
+        className="w-full bg-ink py-3.5 text-xs tracking-label text-cream uppercase disabled:cursor-not-allowed disabled:opacity-50"
       >
         {confirming ? <><Spinner />Processing payment…</> : "Pay securely by card"}
       </button>
@@ -186,7 +190,7 @@ export default function CheckoutForm({ initialProfile }: { initialProfile: Billi
       <section className="flex min-h-[420px] flex-col items-center justify-center bg-cream px-6 text-center">
         <h1 className="font-display text-3xl italic">Your cart is empty</h1>
         <p className="mt-3 text-sm text-stone">Add something from the marketplace before checking out.</p>
-        <Link href="/marketplace" className="mt-8 bg-ink px-7 py-3.5 text-[11px] tracking-label text-cream uppercase">
+        <Link href="/marketplace" className="mt-8 bg-ink px-7 py-3.5 text-xs tracking-label text-cream uppercase">
           Go to Marketplace
         </Link>
       </section>
@@ -236,7 +240,7 @@ export default function CheckoutForm({ initialProfile }: { initialProfile: Billi
         amount: body.data.amount ?? 0,
         currency: body.data.currency ?? "INR",
         order_id: body.data.providerOrderId,
-        name: "Museum",
+        name: "ViswaRoop",
         description: "Digital artifact license",
         method: { upi: true },
         prefill: { name: profile.name, email: profile.email, contact: profile.phone },
@@ -250,7 +254,7 @@ export default function CheckoutForm({ initialProfile }: { initialProfile: Billi
   };
 
   const field = (key: keyof BillingProfile, label: string, options: {
-    type?: string; placeholder?: string; required?: boolean;
+    type?: string; placeholder?: string; required?: boolean; autoComplete?: string; inputMode?: React.HTMLAttributes<HTMLInputElement>["inputMode"];
   } = {}) => (
     <CheckoutField
       field={key}
@@ -271,16 +275,16 @@ export default function CheckoutForm({ initialProfile }: { initialProfile: Billi
         <form onSubmit={submit} noValidate className="mt-10 grid grid-cols-1 gap-14 lg:grid-cols-[1fr_360px]">
           <div className="flex flex-col gap-9">
             <section>
-              <p className="text-[10px] tracking-label text-stone uppercase">Contact</p>
+              <p className="text-xs tracking-label text-stone uppercase">Contact</p>
               <div className="mt-4 grid gap-6 sm:grid-cols-2">
-                {field("name", "Full name", { placeholder: "Jane Doe" })}
-                {field("phone", "Phone number", { type: "tel", placeholder: "+91 98765 43210" })}
+                {field("name", "Full name", { placeholder: "Jane Doe", autoComplete: "name" })}
+                {field("phone", "Phone number", { type: "tel", placeholder: "+91 98765 43210", autoComplete: "tel", inputMode: "tel" })}
               </div>
-              <div className="mt-6">{field("email", "Email address", { type: "email", placeholder: "you@studio.com" })}</div>
+              <div className="mt-6">{field("email", "Email address", { type: "email", placeholder: "you@studio.com", autoComplete: "email" })}</div>
             </section>
 
             <section>
-              <p className="text-[10px] tracking-label text-stone uppercase">Payment method</p>
+              <p className="text-xs tracking-label text-stone uppercase">Payment method</p>
               <div className="mt-4 grid grid-cols-2 gap-3" role="radiogroup" aria-label="Payment method">
                 {(["card", "upi"] as const).map((method) => (
                   <button
@@ -321,17 +325,18 @@ export default function CheckoutForm({ initialProfile }: { initialProfile: Billi
             </section>
 
             <section>
-              <p className="text-[10px] tracking-label text-stone uppercase">Billing address</p>
+              <p className="text-xs tracking-label text-stone uppercase">Billing address</p>
               <div className="mt-4 flex flex-col gap-6">
-                {field("addressLine1", "Address line 1", { placeholder: "123 Museum Street" })}
-                {field("addressLine2", "Address line 2", { placeholder: "Apartment, suite, etc.", required: false })}
+                <p className="text-sm leading-relaxed text-stone">Your billing address is used for payment verification and purchase records; no physical item will be shipped.</p>
+                {field("addressLine1", "Address line 1", { placeholder: "123 Museum Street", autoComplete: "address-line1" })}
+                {field("addressLine2", "Address line 2", { placeholder: "Apartment, suite, etc.", required: false, autoComplete: "address-line2" })}
                 <div className="grid gap-6 sm:grid-cols-2">
-                  {field("city", "City", { placeholder: "Mumbai" })}
-                  {field("state", "State / Province", { placeholder: "Maharashtra" })}
+                  {field("city", "City", { placeholder: "Mumbai", autoComplete: "address-level2" })}
+                  {field("state", "State / Province", { placeholder: "Maharashtra", autoComplete: "address-level1" })}
                 </div>
                 <div className="grid gap-6 sm:grid-cols-2">
-                  {field("postalCode", "Postal code", { placeholder: "400001" })}
-                  {field("country", "Country", { placeholder: "India" })}
+                  {field("postalCode", "Postal code", { placeholder: "400001", autoComplete: "postal-code" })}
+                  {field("country", "Country", { placeholder: "India", autoComplete: "country-name" })}
                 </div>
               </div>
             </section>
@@ -341,20 +346,21 @@ export default function CheckoutForm({ initialProfile }: { initialProfile: Billi
               <button
                 type="submit"
                 disabled={submitting}
-                className="bg-ink py-3.5 text-[11px] tracking-label text-cream uppercase disabled:cursor-wait disabled:opacity-60"
+                className="bg-ink py-3.5 text-xs tracking-label text-cream uppercase disabled:cursor-wait disabled:opacity-60"
               >
                 {submitting ? <><Spinner />Preparing secure payment…</> : paymentMethod === "card"
                   ? `Continue to Card Payment — $${total.toFixed(2)}`
                   : `Pay with UPI — $${total.toFixed(2)} (converted to INR)`}
               </button>
             )}
-            <p data-no-translate className="text-center text-[10px] text-stone">
+            <p data-no-translate className="text-center text-xs text-stone">
               🔒 Payment details are handled by Stripe or Razorpay and never stored here.
             </p>
+            <p className="text-center text-xs leading-relaxed text-stone">By continuing, you agree to the <Link href="/terms" className="underline underline-offset-2">purchase and license terms</Link> and acknowledge the <Link href="/privacy" className="underline underline-offset-2">privacy policy</Link>.</p>
           </div>
 
           <aside className="lg:sticky lg:top-24 lg:self-start">
-            <p className="text-[10px] tracking-label text-stone uppercase">Order summary</p>
+            <p className="text-xs tracking-label text-stone uppercase">Order summary</p>
             <div className="mt-4 divide-y divide-line border-t border-line">
               {items.map((item) => (
                 <div key={item.slug} className="flex items-center gap-3 py-4">
@@ -371,8 +377,8 @@ export default function CheckoutForm({ initialProfile }: { initialProfile: Billi
             </div>
             <div className="mt-4 space-y-3 border-t border-line pt-4 text-sm">
               <div className="flex justify-between"><span className="text-stone">Subtotal</span><span>${subtotal.toFixed(2)}</span></div>
-              <div className="flex justify-between"><span className="text-stone">Taxes</span><span>$0.00</span></div>
-              <div className="flex justify-between"><span className="text-stone">Service fee</span><span>${serviceFee.toFixed(2)}</span></div>
+              <div className="flex justify-between"><span className="text-stone">Taxes included</span><span>$0.00</span></div>
+              <div className="flex justify-between"><span className="text-stone">Museum service fee (5%)</span><span>${serviceFee.toFixed(2)}</span></div>
             </div>
             <div className="mt-4 flex justify-between border-t border-line pt-4">
               <span>Total</span><span className="font-display text-2xl italic">${total.toFixed(2)}</span>

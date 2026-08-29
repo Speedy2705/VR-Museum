@@ -32,7 +32,7 @@ export default function CollectionHero({
         <h1 data-no-translate className="font-display mt-5 text-5xl text-white italic md:text-[52px]">
           {title}
         </h1>
-        <p data-no-translate className="mt-3 text-[11px] tracking-label text-white/55 uppercase">
+        <p data-no-translate className="mt-3 text-xs tracking-label text-white/55 uppercase">
           {subtitle}
         </p>
       </div>

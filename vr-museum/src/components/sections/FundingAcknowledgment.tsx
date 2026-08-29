@@ -4,7 +4,7 @@ export default function FundingAcknowledgment() {
   return (
     <section className="border-y border-line bg-cream px-6 py-16 text-ink md:px-10 md:py-20">
       <SlideUp className="mx-auto grid max-w-6xl gap-6 md:grid-cols-[0.6fr_1.4fr] md:items-start">
-        <p className="text-[11px] tracking-[0.3em] text-stone uppercase">
+        <p className="text-xs tracking-[0.3em] text-stone uppercase">
           Research Support
         </p>
         <div>

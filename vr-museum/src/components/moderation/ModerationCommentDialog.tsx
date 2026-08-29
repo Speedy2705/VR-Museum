@@ -37,7 +37,7 @@ export default function ModerationCommentDialog({ open, decision, pending = fals
       onCancel={onCancel}
       onConfirm={() => onConfirm(trimmedComment)}
     >
-      <label className="mt-6 block text-[10px] tracking-label uppercase text-stone">
+      <label className="mt-6 block text-xs tracking-label uppercase text-stone">
         Curator comment
         <textarea
           ref={textareaRef}
@@ -50,7 +50,7 @@ export default function ModerationCommentDialog({ open, decision, pending = fals
           className="mt-2 block w-full resize-y border border-line bg-transparent px-3 py-3 text-sm normal-case tracking-normal text-ink outline-none focus:border-ink disabled:opacity-60"
         />
       </label>
-      <p className="mt-2 text-right text-[10px] text-stone" aria-live="polite">
+      <p className="mt-2 text-right text-xs text-stone" aria-live="polite">
         {comment.length}/{MAX_COMMENT_LENGTH}
       </p>
     </ConfirmDialog>

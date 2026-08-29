@@ -55,14 +55,14 @@ export default function SignInPrompt({
         <div className="mt-7 flex justify-center gap-3">
           <Link
             href={`/sign-in?returnTo=${encodeURIComponent(returnTo)}`}
-            className="bg-ink px-7 py-3.5 text-[11px] tracking-label text-cream uppercase hover:bg-charcoal"
+            className="bg-ink px-7 py-3.5 text-xs tracking-label text-cream uppercase hover:bg-charcoal"
           >
             Sign In
           </Link>
           <button
             type="button"
             onClick={onClose}
-            className="border border-line px-7 py-3.5 text-[11px] tracking-label text-ink uppercase hover:bg-cream-dark"
+            className="border border-line px-7 py-3.5 text-xs tracking-label text-ink uppercase hover:bg-cream-dark"
           >
             Not Now
           </button>

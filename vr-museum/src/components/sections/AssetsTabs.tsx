@@ -10,6 +10,7 @@ import type {
 } from "@/types/catalog";
 import EmptyState from "@/components/ui/EmptyState";
 import { useRole } from "@/hooks/useRole";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 type Tab = "purchased" | "uploaded";
 
@@ -25,8 +26,17 @@ const uploadIcon = (
 );
 
 export default function AssetsTabs({ purchased, uploaded }: AssetsTabsProps) {
-  const [tab, setTab] = useState<Tab>("purchased");
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+  const router = useRouter();
+  const [tab, setTabState] = useState<Tab>(searchParams.get("tab") === "uploaded" ? "uploaded" : "purchased");
   const { canUpload } = useRole();
+  const setTab = (next: Tab) => {
+    setTabState(next);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("tab", next);
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  };
 
   return (
     <section className="bg-cream px-10 py-10 md:px-16">
@@ -59,7 +69,7 @@ export default function AssetsTabs({ purchased, uploaded }: AssetsTabsProps) {
 
           {canUpload && <Link
             href="/upload"
-            className="flex items-center gap-1.5 text-[10px] tracking-label text-stone uppercase hover:text-ink"
+            className="flex items-center gap-1.5 text-xs tracking-label text-stone uppercase hover:text-ink"
           >
             {uploadIcon} Upload New
           </Link>}
@@ -85,7 +95,7 @@ export default function AssetsTabs({ purchased, uploaded }: AssetsTabsProps) {
             ))}
             {canUpload && <Link
               href="/upload"
-              className="mt-3 inline-flex w-fit items-center gap-2 bg-ink px-7 py-3.5 text-[11px] tracking-label text-cream uppercase hover:bg-charcoal"
+              className="mt-3 inline-flex w-fit items-center gap-2 bg-ink px-7 py-3.5 text-xs tracking-label text-cream uppercase hover:bg-charcoal"
             >
               {uploadIcon} Upload Another Artifact
             </Link>}

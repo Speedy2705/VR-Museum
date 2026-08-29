@@ -33,7 +33,7 @@ export default function StudioPresets() {
     <section className="bg-cream border-t border-line px-10 py-24 md:px-16">
       <div className="mx-auto max-w-[1600px]">
         <SlideUp>
-        <p className="text-[11px] tracking-[0.3em] text-stone uppercase">
+        <p className="text-xs tracking-[0.3em] text-stone uppercase">
           Museum Lighting
         </p>
         <h2 className="font-display mt-5 text-4xl italic">
@@ -49,7 +49,7 @@ export default function StudioPresets() {
               }`}
             >
               <h3 className="text-base text-ink">{p.title}</h3>
-              <p className="mt-1.5 text-[11px] tracking-wide text-stone-light uppercase">
+              <p className="mt-1.5 text-xs tracking-wide text-stone-light uppercase">
                 {p.tags}
               </p>
               <p className="mt-3 max-w-md text-sm leading-relaxed text-stone">

@@ -31,10 +31,21 @@ function show(variant: ToastVariant, title: string, description?: string) {
   });
 }
 
+function showWithAction(variant: ToastVariant, title: string, description: string, actionLabel: string, onAction: () => void) {
+  return toast[variant](title, {
+    description,
+    icon: icon(variant),
+    closeButton: true,
+    action: { label: actionLabel, onClick: onAction },
+    className: `museum-toast museum-toast--${variant}`,
+  });
+}
+
 export const museumToast = {
   success: (title: string, description?: string) => show("success", title, description),
   error: (title: string, description?: string) => show("error", title, description),
   warning: (title: string, description?: string) => show("warning", title, description),
   info: (title: string, description?: string) => show("info", title, description),
+  infoAction: (title: string, description: string, actionLabel: string, onAction: () => void) => showWithAction("info", title, description, actionLabel, onAction),
   dismiss: toast.dismiss,
 };

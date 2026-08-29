@@ -22,7 +22,7 @@ export default function CategoryStrip({
               <h3 data-no-translate className="font-display text-2xl italic">{category.title}</h3>
               <Link
                 href={`/collections/${category.slug}`}
-                className="text-[10px] tracking-label whitespace-nowrap uppercase text-stone hover:text-ink"
+                className="text-xs tracking-label whitespace-nowrap uppercase text-stone hover:text-ink"
               >
                 All →
               </Link>
@@ -38,7 +38,7 @@ export default function CategoryStrip({
                       sizes="(min-width: 768px) 11vw, 33vw"
                     />
                   </div>
-                  <p data-no-translate className="mt-2 text-[11px] leading-snug text-stone">
+                  <p data-no-translate className="mt-2 text-xs leading-snug text-stone">
                     {item.name}
                   </p>
                 </Link>

@@ -17,7 +17,7 @@ export default function CollectionsHero() {
       <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
 
       <div className="relative z-10 w-full px-10 pb-10 md:px-16">
-        <p className="text-[11px] tracking-label text-white/55 uppercase">
+        <p className="text-xs tracking-label text-white/55 uppercase">
           The Virtual Museum
         </p>
         <h1 className="font-display mt-4 text-5xl text-white italic md:text-[52px]">

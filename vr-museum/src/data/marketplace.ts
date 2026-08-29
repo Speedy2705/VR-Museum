@@ -170,7 +170,3 @@ export const marketplaceProducts: MarketplaceProduct[] = [
       "A narrative vase showing armed warriors beside a horse, scanned from a private collection and released into the public domain.",
   },
 ];
-
-export function getProductBySlug(slug: string) {
-  return marketplaceProducts.find((p) => p.slug === slug);
-}

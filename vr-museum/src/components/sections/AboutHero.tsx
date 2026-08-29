@@ -17,7 +17,7 @@ export default function AboutHero() {
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
 
       <div className="relative z-10 w-full px-10 pb-14 md:px-16">
-        <p className="text-[11px] tracking-[0.3em] text-white/45 uppercase">
+        <p className="text-xs tracking-[0.3em] text-white/45 uppercase">
           About ViswaRoop
         </p>
 

@@ -28,7 +28,7 @@ export default function HowItWorks() {
     <section className="bg-cream px-10 py-24 md:px-16">
       <div className="mx-auto max-w-[1600px]">
         <SlideUp>
-        <p className="text-[11px] tracking-[0.3em] text-stone uppercase">
+        <p className="text-xs tracking-[0.3em] text-stone uppercase">
           Process
         </p>
         <h2 className="font-display mt-5 text-4xl italic">How It Works</h2>

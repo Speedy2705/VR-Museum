@@ -51,6 +51,7 @@ export default function MarketplaceItemDetail({
       material: product.material,
       license: product.license,
       price: product.price ?? 0,
+      image: product.image,
     });
   };
 
@@ -61,8 +62,8 @@ export default function MarketplaceItemDetail({
     { label: "Period", value: product.period },
   ];
 
-  const immersiveDetails = <div><Breadcrumbs items={[{ label: "Marketplace", href: "/marketplace" }, { label: product.title }]} /><p className="mt-4 text-[9px] tracking-label uppercase text-stone">Marketplace artifact</p><h1 data-no-translate className="font-display mt-2 text-3xl italic">{product.title}</h1><p className="mt-2 text-xs text-stone">By {product.artist}</p><p data-no-translate className="mt-4 text-sm leading-relaxed text-charcoal/80">{product.description}</p><div className="mt-5 divide-y divide-line border-y border-line">{specs.map((spec) => <div key={spec.label} className="flex justify-between gap-4 py-2 text-xs"><span className="text-stone">{spec.label}</span><span data-no-translate>{spec.value}</span></div>)}</div></div>;
-  const immersiveActions = <div><button type="button" onClick={handleAdd} disabled={inCart} className="w-full bg-ink px-5 py-3 text-[10px] tracking-label text-cream uppercase disabled:opacity-60">{inCart ? "In Cart" : isFree ? "Get Free Model" : `Add to Cart · $${product.price}`}</button><div className="mt-3 grid grid-cols-2 gap-3"><button type="button" onClick={() => { handleAdd(); if (isAuthenticated) router.push("/cart"); }} className="border border-white/30 px-5 py-3 text-[10px] tracking-label uppercase">Buy Now</button><VrEntryModal href={`/vr/${product.slug}`} label="Enter VR" variant="dark" className="w-full px-5" /></div></div>;
+  const immersiveDetails = <div><Breadcrumbs items={[{ label: "Marketplace", href: "/marketplace" }, { label: product.title }]} /><p className="mt-4 text-xs tracking-label uppercase text-stone">Marketplace artifact</p><h1 data-no-translate className="font-display mt-2 text-3xl italic">{product.title}</h1><p className="mt-2 text-xs text-stone">By {product.artist}</p><p data-no-translate className="mt-4 text-sm leading-relaxed text-charcoal/80">{product.description}</p><div className="mt-5 divide-y divide-line border-y border-line">{specs.map((spec) => <div key={spec.label} className="flex justify-between gap-4 py-2 text-xs"><span className="text-stone">{spec.label}</span><span data-no-translate>{spec.value}</span></div>)}</div></div>;
+  const immersiveActions = <div><button type="button" onClick={handleAdd} disabled={inCart} className="w-full bg-ink px-5 py-3 text-xs tracking-label text-cream uppercase disabled:opacity-60">{inCart ? "In Cart" : isFree ? "Add Free License" : `Add to Cart · $${product.price}`}</button><div className="mt-3 grid grid-cols-2 gap-3"><button type="button" onClick={() => { handleAdd(); if (isAuthenticated) router.push("/cart"); }} className="border border-white/30 px-5 py-3 text-xs tracking-label uppercase">Add & Review Cart</button><VrEntryModal href={`/vr/${product.slug}`} label="Open 3D Gallery" variant="dark" className="w-full px-5" /></div></div>;
 
   if (product.model) return <section className="bg-ink"><ArtifactMediaStage title={product.title} image={product.image} video={product.video} model={product.model} lighting={product.lighting} primaryMediaType="model" fullscreen overlay={immersiveDetails} overlayActions={immersiveActions} immersiveDetails plaqueOrigin={product.period} exhibitMaterial={product.material} panelDetails={{ uploadType: "Marketplace · Museum Presented", title: product.title, uploader: product.artist, description: product.description, material: product.material, origin: product.period, license: product.license, price: isFree ? "Free" : `$${product.price}` }} /><SignInPrompt open={signInPromptOpen} onClose={() => setSignInPromptOpen(false)} title="Sign in to add to cart" description="Your cart is saved securely to your museum account." returnTo={`/marketplace/${product.slug}`} /></section>;
   if (product.video && product.primaryMediaType === "video") return <section className="bg-ink"><ArtifactMediaStage title={product.title} image={product.image} video={product.video} lighting={product.lighting} primaryMediaType="video" fullscreen overlay={<>{immersiveDetails}<div className="mt-6">{immersiveActions}</div></>} /><SignInPrompt open={signInPromptOpen} onClose={() => setSignInPromptOpen(false)} title="Sign in to add to cart" description="Your cart is saved securely to your museum account." returnTo={`/marketplace/${product.slug}`} /></section>;
@@ -81,7 +82,7 @@ export default function MarketplaceItemDetail({
           <p className="mt-5 text-xs tracking-wide text-stone uppercase">
             By {product.artist}
             {product.sellerRole && (
-              <span className="ml-2 border border-line px-2 py-1 text-[9px] tracking-label">
+              <span className="ml-2 border border-line px-2 py-1 text-xs tracking-label">
                 Seller
               </span>
             )}
@@ -94,7 +95,7 @@ export default function MarketplaceItemDetail({
           </p>
 
           <div className="mt-6 border border-line bg-cream-dark px-5 py-4">
-            <span className="text-[10px] tracking-label text-stone uppercase">
+            <span className="text-xs tracking-label text-stone uppercase">
               Price
             </span>
             <p className="font-display mt-1 text-3xl italic">
@@ -108,7 +109,7 @@ export default function MarketplaceItemDetail({
                 key={s.label}
                 className="flex items-center justify-between py-3"
               >
-                <span className="text-[10px] tracking-label text-stone uppercase">
+                <span className="text-xs tracking-label text-stone uppercase">
                   {s.label}
                 </span>
                 <span data-no-translate className="text-sm text-ink">{s.value}</span>
@@ -120,7 +121,7 @@ export default function MarketplaceItemDetail({
             type="button"
             onClick={handleAdd}
             disabled={inCart}
-            className={`mt-7 flex w-full items-center justify-center gap-2 px-7 py-3.5 text-[11px] tracking-label uppercase transition-colors duration-200 ${
+            className={`mt-7 flex w-full items-center justify-center gap-2 px-7 py-3.5 text-xs tracking-label uppercase transition-colors duration-200 ${
               inCart
                 ? "border border-line bg-cream-dark text-stone"
                 : "bg-ink text-cream hover:bg-charcoal"
@@ -129,7 +130,7 @@ export default function MarketplaceItemDetail({
             {inCart ? (
               "✓ In Cart"
             ) : isFree ? (
-              "Get Free Model"
+              "Add Free License"
             ) : (
               <>
                 {cartIcon} Add to Cart — ${product.price}
@@ -137,18 +138,19 @@ export default function MarketplaceItemDetail({
             )}
           </button>
           <div className="mt-3 grid grid-cols-2 gap-3">
-            <button type="button" onClick={() => { handleAdd(); if (isAuthenticated) router.push("/cart"); }} className="border border-line px-5 py-3.5 text-[10px] tracking-label uppercase">Buy Now</button>
-            <VrEntryModal href={`/vr/${product.slug}`} label="Enter VR" variant="dark" className="w-full px-5" />
+            <button type="button" onClick={() => { handleAdd(); if (isAuthenticated) router.push("/cart"); }} className="border border-line px-5 py-3.5 text-xs tracking-label uppercase">Add & Review Cart</button>
+            <VrEntryModal href={`/vr/${product.slug}`} label="Open 3D Gallery" variant="dark" className="w-full px-5" />
           </div>
 
           {inCart && (
             <Link
               href="/cart"
-              className="mt-3 text-center text-[10px] tracking-label text-stone uppercase hover:text-ink"
+              className="mt-3 text-center text-xs tracking-label text-stone uppercase hover:text-ink"
             >
               View Cart
             </Link>
           )}
+          <p className="mt-4 text-sm leading-relaxed text-stone">The displayed license controls how you may reuse this digital artifact. Review the license notice in your cart before checkout.</p>
           <SignInPrompt
             open={signInPromptOpen}
             onClose={() => setSignInPromptOpen(false)}

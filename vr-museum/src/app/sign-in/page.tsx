@@ -17,18 +17,26 @@ import { museumToast } from "@/lib/museum-toast";
 export default function SignInPage() {
   const router = useRouter();
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<"identifier" | "password", string>>>({});
   const [submitting, setSubmitting] = useState(false);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSubmitting(true);
     setError("");
+    setFieldErrors({});
     const data = new FormData(event.currentTarget);
     const credentials = credentialsSchema.safeParse({
       identifier: data.get("identifier"),
       password: data.get("password"),
     });
     if (!credentials.success) {
+      const nextErrors: Partial<Record<"identifier" | "password", string>> = {};
+      for (const issue of credentials.error.issues) {
+        const field = issue.path[0];
+        if ((field === "identifier" || field === "password") && !nextErrors[field]) nextErrors[field] = issue.message;
+      }
+      setFieldErrors(nextErrors);
       const message = credentials.error.issues[0]?.message ?? "Check your details";
       setError(message);
       museumToast.warning("Check your sign-in details", message);
@@ -61,7 +69,7 @@ export default function SignInPage() {
       <main className="grid grid-cols-1 md:grid-cols-2">
         <div className="flex flex-col justify-center bg-cream px-10 py-16 md:px-16 lg:px-20">
           <div className="mx-auto w-full max-w-sm">
-            <p className="text-[10px] tracking-label uppercase text-stone">
+            <p className="text-xs tracking-label uppercase text-stone">
               Welcome Back
             </p>
             <h1 className="font-display mt-3 text-4xl italic">Sign in</h1>
@@ -75,9 +83,12 @@ export default function SignInPage() {
                 type="text"
                 name="identifier"
                 placeholder="you@studio.com or +919876543210"
+                required
+                autoComplete="username"
+                error={fieldErrors.identifier}
               />
               <div>
-                <PasswordField placeholder="••••••••" />
+                <PasswordField placeholder="••••••••" required error={fieldErrors.password} />
                 <div className="mt-2.5 flex justify-end">
                   <Link
                     href="#"
@@ -92,7 +103,7 @@ export default function SignInPage() {
               <button
                 type="submit"
                 disabled={submitting}
-                className="mt-2 bg-ink py-3.5 text-[11px] tracking-label uppercase text-white hover:bg-charcoal disabled:cursor-wait disabled:opacity-60"
+                className="mt-2 bg-ink py-3.5 text-xs tracking-label uppercase text-white hover:bg-charcoal disabled:cursor-wait disabled:opacity-60"
               >
                 {submitting ? "Signing In…" : "Sign In"}
               </button>
@@ -100,7 +111,7 @@ export default function SignInPage() {
 
             <div className="mt-7 flex items-center gap-4">
               <span className="h-px flex-1 bg-line" />
-              <span className="text-[10px] tracking-label text-stone uppercase">
+              <span className="text-xs tracking-label text-stone uppercase">
                 Or
               </span>
               <span className="h-px flex-1 bg-line" />

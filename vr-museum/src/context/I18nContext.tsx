@@ -44,7 +44,7 @@ export function LanguageSelector({ authenticated = false }: { authenticated?: bo
     }
   }
   return <>
-    <label data-no-translate className="flex items-center gap-2 text-[10px] tracking-label uppercase text-white/70">
+    <label data-no-translate className="flex items-center gap-2 text-xs tracking-label uppercase text-white/70">
       <span className="sr-only">{t.language}</span>
       <select aria-label={t.language} value={changingTo ?? locale} disabled={changingTo !== null} onChange={(event) => void change(event.target.value as Locale)} className="max-w-28 bg-transparent py-2 text-white outline-none disabled:cursor-wait disabled:opacity-70 [&>option]:bg-ink">
         {(Object.keys(languageNames) as Locale[]).map((code) => <option key={code} value={code}>{languageNames[code]}</option>)}
@@ -55,7 +55,7 @@ export function LanguageSelector({ authenticated = false }: { authenticated?: bo
         <div className="flex flex-col items-center gap-5">
           <BrandLogo variant="light" className="h-auto w-40" />
           <span aria-hidden className="h-7 w-7 animate-spin rounded-full border border-cream/35 border-t-cream" />
-          <span data-no-translate className="text-[10px] tracking-label uppercase text-cream/65">{languageNames[changingTo]}</span>
+          <span data-no-translate className="text-xs tracking-label uppercase text-cream/65">{languageNames[changingTo]}</span>
           <span className="sr-only">Changing language…</span>
         </div>
       </div>,

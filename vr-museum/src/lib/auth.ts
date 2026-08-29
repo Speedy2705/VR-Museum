@@ -102,10 +102,6 @@ export async function getCurrentUser() {
   return { ...session.user, id };
 }
 
-export async function getCurrentUserRole() {
-  return (await getCurrentUser())?.role ?? null;
-}
-
 export async function requirePermission(request: Request, permission: Permission) {
   const user = await getCurrentUser();
   if (user && hasPermission(user.role, permission)) return user;

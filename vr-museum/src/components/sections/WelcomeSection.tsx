@@ -6,7 +6,7 @@ export default function WelcomeSection() {
   return (
     <section className="grid grid-cols-1 md:grid-cols-2">
       <div className="flex flex-col justify-center bg-cream px-10 py-20 md:px-16 md:py-24">
-        <p className="text-[11px] tracking-[0.3em] text-stone uppercase">
+        <p className="text-xs tracking-[0.3em] text-stone uppercase">
           Welcome
         </p>
 
@@ -23,7 +23,7 @@ export default function WelcomeSection() {
 
         <Link
           href="/about"
-          className="mt-8 text-[11px] tracking-label uppercase text-ink underline decoration-line underline-offset-4 hover:decoration-ink"
+          className="mt-8 text-xs tracking-label uppercase text-ink underline decoration-line underline-offset-4 hover:decoration-ink"
         >
           Read More →
         </Link>

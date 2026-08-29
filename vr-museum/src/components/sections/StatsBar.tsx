@@ -17,7 +17,7 @@ export default function StatsBar() {
         {stats.map((s) => (
           <motion.div key={s.label} variants={staggerItem} className="px-10 py-12">
             <p className="font-display text-4xl italic">{s.value}</p>
-            <p className="mt-2 text-[10px] tracking-label text-stone uppercase">
+            <p className="mt-2 text-xs tracking-label text-stone uppercase">
               {s.label}
             </p>
           </motion.div>

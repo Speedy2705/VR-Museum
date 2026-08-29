@@ -31,7 +31,7 @@ export default async function UploadPage() {
             </p>
             <Link
               href="/sign-in?returnTo=%2Fupload"
-              className="mt-8 bg-ink px-7 py-3.5 text-[11px] tracking-label text-cream uppercase hover:bg-charcoal"
+              className="mt-8 bg-ink px-7 py-3.5 text-xs tracking-label text-cream uppercase hover:bg-charcoal"
             >
               Sign In
             </Link>

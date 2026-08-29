@@ -48,7 +48,10 @@ function createPlaqueTexture(title: string, origin: string) {
 function createBrandTexture() {
   // The light mark is intentionally used here: the gallery wall is dark, and
   // the mark-only asset keeps the 3D space free of the ViswaRoop wordmark.
-  const texture = new THREE.TextureLoader().load("/brand/viswaroop-mark-light.svg");
+  // Use the rasterized copy in WebGL. Browsers can display the source SVG in
+  // regular page markup, but SVG-backed WebGL textures are not reliable across
+  // renderers and previously left this wall blank.
+  const texture = new THREE.TextureLoader().load("/brand/viswaroop-mark-light.png");
   texture.colorSpace = THREE.SRGBColorSpace;
   texture.anisotropy = 8;
   return texture;

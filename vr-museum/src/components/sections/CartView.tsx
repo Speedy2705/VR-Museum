@@ -7,6 +7,7 @@ import { useCart } from "@/context/CartContext";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import { useState } from "react";
+import LogoLoader from "@/components/ui/LogoLoader";
 
 const SERVICE_FEE_RATE = 0.05;
 
@@ -19,7 +20,7 @@ export default function CartView() {
   if (loading) {
     return (
       <section className="flex min-h-[520px] items-center justify-center bg-cream px-6">
-        <p className="text-sm text-stone" role="status">Loading your cart…</p>
+        <LogoLoader label="Loading your cart" className="text-stone" />
       </section>
     );
   }

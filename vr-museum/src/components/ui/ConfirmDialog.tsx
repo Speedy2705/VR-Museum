@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, type ReactNode, type RefObject } from "react";
 import { createPortal } from "react-dom";
+import LogoLoader from "@/components/ui/LogoLoader";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 
 type ConfirmDialogProps = {
@@ -95,7 +96,7 @@ export default function ConfirmDialog({
                 Keep
               </button>
               <button type="button" disabled={pending || confirmDisabled} onClick={onConfirm} className={`px-6 py-3 text-xs tracking-label uppercase text-white disabled:cursor-not-allowed disabled:opacity-50 ${tone === "danger" ? "bg-red-900 hover:bg-red-800" : "bg-ink hover:bg-charcoal"}`}>
-                {pending ? "Working…" : confirmLabel}
+                {pending ? <><LogoLoader label="Working" size="sm" tone="light" showLabel={false} className="me-2 align-middle" />Working…</> : confirmLabel}
               </button>
             </div>
           </motion.div>

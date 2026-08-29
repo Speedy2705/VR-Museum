@@ -88,6 +88,21 @@ body {
   letter-spacing: 0.18em;
 }
 
+.logo-loader__piece {
+  opacity: 0;
+  transform: scale(0.72);
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: logo-piece-assemble 2.4s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+  animation-delay: calc(var(--piece) * 80ms);
+}
+
+@keyframes logo-piece-assemble {
+  0%, 8% { opacity: 0; transform: scale(0.72); }
+  22%, 76% { opacity: 1; transform: scale(1); }
+  92%, 100% { opacity: 0; transform: scale(1.04); }
+}
+
 [data-sonner-toaster] .museum-toast {
   min-width: min(23rem, calc(100vw - 2rem));
   padding: 1rem 1rem 1rem 1.1rem;
@@ -161,5 +176,10 @@ body {
 
   .motion-underline::after {
     display: none;
+  }
+
+  .logo-loader__piece {
+    opacity: 1;
+    transform: none;
   }
 }

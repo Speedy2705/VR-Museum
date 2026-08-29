@@ -10,6 +10,7 @@ import { useCart } from "@/context/CartContext";
 import { notifyError } from "@/lib/client-error";
 import { museumToast } from "@/lib/museum-toast";
 import type { BillingProfile } from "@/types/billing";
+import LogoLoader from "@/components/ui/LogoLoader";
 
 const SERVICE_FEE_RATE = 0.05;
 const stripePromise = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
@@ -81,7 +82,7 @@ function CheckoutField({ field, label, profile, setValue, error, onBlur, type = 
 }
 
 function Spinner() {
-  return <span aria-hidden className="me-2 inline-block h-3 w-3 animate-spin rounded-full border border-current border-t-transparent" />;
+  return <LogoLoader label="Working" size="sm" tone="light" showLabel={false} className="me-2 align-middle" />;
 }
 
 function CardPayment({ orderId, onError, onSuccess }: {

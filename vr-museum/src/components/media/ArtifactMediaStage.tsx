@@ -7,13 +7,14 @@ import ArtifactStageFullscreen from "./ArtifactStageFullscreen";
 import { keyFromDisplayName } from "@/lib/lighting-presets";
 import type { MuseumPanelDetails } from "@/lib/three/museum-environment";
 import { getExhibitDisplayStyle } from "@/lib/artifact-categories";
+import LogoLoader from "@/components/ui/LogoLoader";
 
 const VideoPlayer = dynamic(() => import("./ArtifactVideoPlayer"), { ssr: false, loading: () => <MediaLoading label="Preparing video" /> });
 const ModelViewer = dynamic(() => import("./LightingStudioViewer"), { ssr: false, loading: () => <MediaLoading label="Preparing 3D view" /> });
 type MediaKind = "image" | "video" | "model";
 type Props = { title: string; image?: string; video?: string; model?: { url: string; format: "glb" | "gltf" | "obj" | "stl" | "usdz" }; lighting?: string | null; primaryMediaType?: MediaKind; fullscreen?: boolean; overlay?: ReactNode; overlayActions?: ReactNode; immersiveDetails?: boolean; plaqueOrigin?: string; panelDetails?: MuseumPanelDetails; exhibitCategory?: string; exhibitMaterial?: string };
 
-function MediaLoading({ label }: { label: string }) { return <div className="flex h-full items-center justify-center bg-cream-dark text-xs tracking-label text-stone uppercase">{label}…</div>; }
+function MediaLoading({ label }: { label: string }) { return <div className="flex h-full items-center justify-center bg-cream-dark text-stone"><LogoLoader label={label} /></div>; }
 
 export default function ArtifactMediaStage({ title, image, video, model, lighting, primaryMediaType = "image", fullscreen = false, overlay, overlayActions, immersiveDetails = false, plaqueOrigin, panelDetails, exhibitCategory, exhibitMaterial }: Props) {
   const available: MediaKind[] = immersiveDetails && model

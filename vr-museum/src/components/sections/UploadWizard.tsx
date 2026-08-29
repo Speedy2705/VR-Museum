@@ -8,6 +8,7 @@ import { museumToast } from "@/lib/museum-toast";
 import LightingPresetPicker from "@/components/media/LightingPresetPicker";
 import LightingStudioViewer from "@/components/media/LightingStudioViewer";
 import ArtifactStageFullscreen from "@/components/media/ArtifactStageFullscreen";
+import LogoLoader from "@/components/ui/LogoLoader";
 import {
   ARTIFACT_CATEGORIES,
   getCategoryByKey,
@@ -873,7 +874,7 @@ export default function UploadWizard() {
               </div>
             )}
             {fileUrl && type === "video-scan" && (
-              <div className="mt-6 -mx-6 md:-mx-10"><ArtifactStageFullscreen splitDetails viewer={<video className="h-full w-full bg-black object-contain" controls src={fileUrl}>Your browser does not support video playback.</video>} overlay={<div><p className="text-xs tracking-label text-stone uppercase">Step 5 of 5 · Review</p><h2 className="font-display mt-3 text-2xl italic">{name}</h2><p className="mt-4 text-sm leading-relaxed text-charcoal/80">{description}</p><div className="mt-6 flex gap-3"><button type="button" onClick={() => setStep(4)} className="border border-line px-5 py-3 text-xs tracking-label uppercase">Back</button><button type="button" onClick={submitUpload} disabled={submitting} className="flex-1 bg-ink px-5 py-3 text-xs tracking-label text-cream uppercase">{submitting ? "Uploading…" : "Submit Artifact"}</button></div></div>} /></div>
+              <div className="mt-6 -mx-6 md:-mx-10"><ArtifactStageFullscreen splitDetails viewer={<video className="h-full w-full bg-black object-contain" controls src={fileUrl}>Your browser does not support video playback.</video>} overlay={<div><p className="text-xs tracking-label text-stone uppercase">Step 5 of 5 · Review</p><h2 className="font-display mt-3 text-2xl italic">{name}</h2><p className="mt-4 text-sm leading-relaxed text-charcoal/80">{description}</p><div className="mt-6 flex gap-3"><button type="button" onClick={() => setStep(4)} className="border border-line px-5 py-3 text-xs tracking-label uppercase">Back</button><button type="button" onClick={submitUpload} disabled={submitting} className="flex-1 bg-ink px-5 py-3 text-xs tracking-label text-cream uppercase">{submitting ? <><LogoLoader label="Uploading artifact" size="sm" tone="light" showLabel={false} className="me-2 align-middle" />Uploading…</> : "Submit Artifact"}</button></div></div>} /></div>
             )}
 
             <div className="mt-6 divide-y divide-line border-t border-b border-line">
@@ -958,7 +959,7 @@ export default function UploadWizard() {
                 disabled={submitting}
                 className="flex-1 bg-ink py-3.5 text-xs tracking-label text-cream uppercase hover:bg-charcoal"
               >
-                {submitting ? "Uploading…" : "Submit Artifact"}
+                {submitting ? <><LogoLoader label="Uploading artifact" size="sm" tone="light" showLabel={false} className="me-2 align-middle" />Uploading…</> : "Submit Artifact"}
               </button>
             </div>
             {error && <p role="alert" className="mt-4 text-sm text-red-700">{error}</p>}

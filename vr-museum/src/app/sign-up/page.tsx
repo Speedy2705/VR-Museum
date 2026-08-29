@@ -13,6 +13,7 @@ import SocialAuthButtons from "@/components/auth/SocialAuthButtons";
 import { registerSchema, userRoles } from "@/lib/validators/user";
 import { notifyError } from "@/lib/client-error";
 import { museumToast } from "@/lib/museum-toast";
+import LogoLoader from "@/components/ui/LogoLoader";
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -189,7 +190,7 @@ export default function SignUpPage() {
                 disabled={submitting}
                 className="mt-2 bg-ink py-3.5 text-xs tracking-label uppercase text-white hover:bg-charcoal disabled:cursor-wait disabled:opacity-60"
               >
-                {submitting ? "Creating Account…" : "Create Account"}
+                {submitting ? <><LogoLoader label="Creating account" size="sm" tone="light" showLabel={false} className="me-2 align-middle" />Creating Account…</> : "Create Account"}
               </button>
             </form>
 
@@ -201,7 +202,7 @@ export default function SignUpPage() {
               <span className="h-px flex-1 bg-line" />
             </div>
 
-            <Suspense fallback={<div className="mt-7 h-10" />}>
+            <Suspense fallback={<div className="mt-7 flex h-10 items-center justify-center"><LogoLoader label="Loading sign-up options" size="sm" showLabel={false} /></div>}>
               <SocialAuthButtons />
             </Suspense>
 

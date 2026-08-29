@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react";
 import { museumToast } from "@/lib/museum-toast";
 import { useSession } from "next-auth/react";
 import SignInPrompt from "@/components/ui/SignInPrompt";
+import LogoLoader from "@/components/ui/LogoLoader";
 
 export default function ReportFlagButton({ uploadId, artifactSlug }: { uploadId?: string; artifactSlug?: string }) {
   const [open, setOpen] = useState(false);
@@ -60,7 +61,7 @@ export default function ReportFlagButton({ uploadId, artifactSlug }: { uploadId?
             </label>
             <div className="mt-6 flex justify-end gap-3">
               <button type="button" disabled={sending} onClick={() => setOpen(false)} className="border border-line px-5 py-2.5 text-xs tracking-label uppercase">Cancel</button>
-              <button type="submit" disabled={sending} className="bg-ink px-5 py-2.5 text-xs tracking-label text-white uppercase disabled:opacity-60">{sending ? "Submitting…" : "Submit Report"}</button>
+              <button type="submit" disabled={sending} className="bg-ink px-5 py-2.5 text-xs tracking-label text-white uppercase disabled:opacity-60">{sending ? <><LogoLoader label="Submitting report" size="sm" tone="light" showLabel={false} className="me-2 align-middle" />Submitting…</> : "Submit Report"}</button>
             </div>
           </form>
         </div>

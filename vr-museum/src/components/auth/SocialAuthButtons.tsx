@@ -42,7 +42,7 @@ export default function SocialAuthButtons() {
           onClick={() => start("google")}
           className="border border-line py-3 text-xs text-charcoal hover:border-ink disabled:cursor-wait disabled:opacity-60"
         >
-          {pending === "google" ? <><LogoLoader label="Connecting to Google" size="sm" showLabel={false} className="me-2 align-middle" />Connecting…</> : "Continue with Google"}
+          {pending === "google" ? <LogoLoader label="Connecting to Google" size="sm" /> : "Continue with Google"}
         </button>
         <button
           type="button"
@@ -50,7 +50,7 @@ export default function SocialAuthButtons() {
           onClick={() => start("apple")}
           className="border border-line py-3 text-xs text-charcoal hover:border-ink disabled:cursor-wait disabled:opacity-60"
         >
-          {pending === "apple" ? <><LogoLoader label="Connecting to Apple" size="sm" showLabel={false} className="me-2 align-middle" />Connecting…</> : "Continue with Apple"}
+          {pending === "apple" ? <LogoLoader label="Connecting to Apple" size="sm" /> : "Continue with Apple"}
         </button>
       </div>
       {error && <p role="alert" className="mt-4 text-sm text-red-700">{error}</p>}

@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { languageNames, localizePath, messages, rtlLocales, type Locale, type Messages } from "@/lib/i18n";
 import { useSession } from "next-auth/react";
 import { museumToast } from "@/lib/museum-toast";
-import BrandLogo from "@/components/ui/BrandLogo";
+import LogoLoader from "@/components/ui/LogoLoader";
 
 const I18nContext = createContext<{ locale: Locale; messages: Messages }>({ locale: "en", messages: messages.en });
 
@@ -52,11 +52,8 @@ export function LanguageSelector({ authenticated = false }: { authenticated?: bo
     </label>
     {changingTo && typeof document !== "undefined" && createPortal(
       <div role="status" aria-live="polite" aria-label="Changing language" className="fixed inset-0 z-[100] flex items-center justify-center bg-ink/95 text-cream backdrop-blur-sm">
-        <div className="flex flex-col items-center gap-5">
-          <BrandLogo variant="light" className="h-auto w-40" />
-          <span aria-hidden className="h-7 w-7 animate-spin rounded-full border border-cream/35 border-t-cream" />
-          <span data-no-translate className="text-xs tracking-label uppercase text-cream/65">{languageNames[changingTo]}</span>
-          <span className="sr-only">Changing language…</span>
+        <div className="flex items-center justify-center">
+          <LogoLoader label="Changing language" size="lg" tone="light" showLabel={false} />
         </div>
       </div>,
       document.body,

@@ -132,7 +132,7 @@ function CardPayment({ orderId, onError, onSuccess }: {
         }}
         className="w-full bg-ink py-3.5 text-xs tracking-label text-cream uppercase disabled:cursor-not-allowed disabled:opacity-50"
       >
-        {confirming ? <><Spinner />Processing payment…</> : "Pay securely by card"}
+        {confirming ? <Spinner /> : "Pay securely by card"}
       </button>
     </div>
   );
@@ -349,7 +349,7 @@ export default function CheckoutForm({ initialProfile }: { initialProfile: Billi
                 disabled={submitting}
                 className="bg-ink py-3.5 text-xs tracking-label text-cream uppercase disabled:cursor-wait disabled:opacity-60"
               >
-                {submitting ? <><Spinner />Preparing secure payment…</> : paymentMethod === "card"
+                {submitting ? <Spinner /> : paymentMethod === "card"
                   ? `Continue to Card Payment — $${total.toFixed(2)}`
                   : `Pay with UPI — $${total.toFixed(2)} (converted to INR)`}
               </button>

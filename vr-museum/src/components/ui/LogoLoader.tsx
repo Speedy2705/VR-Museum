@@ -3,6 +3,7 @@ type LogoLoaderProps = {
   size?: "sm" | "md" | "lg";
   tone?: "ink" | "light";
   showLabel?: boolean;
+  progress?: number;
   className?: string;
 };
 
@@ -23,10 +24,11 @@ const pieces = [
 
 const sizes = { sm: "w-5", md: "w-24", lg: "w-40" };
 
-export default function LogoLoader({ label = "Loading", size = "md", tone = "ink", showLabel = true, className = "" }: LogoLoaderProps) {
+export default function LogoLoader({ label = "Loading", size = "md", tone = "ink", showLabel = false, progress, className = "" }: LogoLoaderProps) {
   const base = tone === "light" ? "#f4efe4" : "#17130f";
+  const percentage = progress === undefined ? null : Math.max(0, Math.min(100, Math.round(progress)));
   return (
-    <div className={`logo-loader inline-flex flex-col items-center justify-center ${className}`} role="status" aria-live="polite">
+    <div className={`logo-loader inline-flex items-center justify-center ${size === "sm" && percentage !== null ? "flex-row gap-2" : "flex-col"} ${className}`} role="status" aria-live="polite">
       <svg aria-hidden="true" viewBox="185 145 220 75" className={`${sizes[size]} h-auto overflow-visible`}>
         <g fill="none">
           {pieces.map((piece, index) => (
@@ -40,6 +42,7 @@ export default function LogoLoader({ label = "Loading", size = "md", tone = "ink
           ))}
         </g>
       </svg>
+      {percentage !== null && <span className={`${size === "sm" ? "text-[11px]" : "mt-4 text-xs"} tracking-label tabular-nums`}>{percentage}%</span>}
       {showLabel && <span className={`${size === "sm" ? "sr-only" : "mt-4 text-xs tracking-label uppercase"}`}>{label}</span>}
       {!showLabel && <span className="sr-only">{label}</span>}
     </div>

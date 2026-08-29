@@ -190,7 +190,7 @@ export default function SignUpPage() {
                 disabled={submitting}
                 className="mt-2 bg-ink py-3.5 text-xs tracking-label uppercase text-white hover:bg-charcoal disabled:cursor-wait disabled:opacity-60"
               >
-                {submitting ? <><LogoLoader label="Creating account" size="sm" tone="light" showLabel={false} className="me-2 align-middle" />Creating Account…</> : "Create Account"}
+                {submitting ? <LogoLoader label="Creating account" size="sm" tone="light" /> : "Create Account"}
               </button>
             </form>
 

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import LogoLoader from "@/components/ui/LogoLoader";
 
 type OrderSummary = {
   id: string;
@@ -32,10 +33,10 @@ export default function OrderConfirmation({ initialOrder }: { initialOrder: Orde
   const paid = order.paymentStatus === "PAID";
   return (
     <section className="flex min-h-[560px] flex-col items-center justify-center bg-cream px-6 py-16 text-center">
-      <span className={`flex h-14 w-14 items-center justify-center rounded-full border ${
+      <span className={`flex min-h-14 min-w-14 items-center justify-center ${
         paid ? "border-ink bg-ink text-cream" : "border-line text-ink"
       }`}>
-        {paid ? "✓" : <span className="h-5 w-5 animate-spin rounded-full border border-current border-t-transparent" />}
+        {paid ? <span className="flex h-14 w-14 items-center justify-center rounded-full bg-ink">✓</span> : <LogoLoader label="Confirming payment" size="md" showLabel={false} />}
       </span>
       <p className="mt-6 text-xs tracking-label text-stone uppercase">
         {paid ? "Payment confirmed" : "Payment submitted"}

@@ -625,9 +625,8 @@ export default function UploadWizard() {
                   <span>I consent to sending these three images to Meshy for AI-assisted 3D generation. I understand that processing may take several minutes.</span>
                 </label>
                 <button type="button" onClick={generateModel} disabled={generating || (["front", "side", "back"] as SourceView[]).some((view) => !sourceImages[view])} className="mt-5 w-full bg-ink px-5 py-3.5 text-xs tracking-label text-cream uppercase disabled:cursor-not-allowed disabled:opacity-40">
-                  {generating ? `Generating model${generationProgress !== null ? ` · ${generationProgress}%` : "…"}` : file ? "Regenerate 3D Model" : "Generate 3D Model with Meshy"}
+                  {generating ? <LogoLoader label="Generating model" size="sm" tone="light" progress={generationProgress ?? undefined} /> : file ? "Regenerate 3D Model" : "Generate 3D Model with Meshy"}
                 </button>
-                {generating && <p className="mt-3 text-center text-xs text-stone">Meshy generation can take several minutes. Keep this page open.</p>}
               </div>
             )}
             {rejectedFile && (
@@ -874,7 +873,7 @@ export default function UploadWizard() {
               </div>
             )}
             {fileUrl && type === "video-scan" && (
-              <div className="mt-6 -mx-6 md:-mx-10"><ArtifactStageFullscreen splitDetails viewer={<video className="h-full w-full bg-black object-contain" controls src={fileUrl}>Your browser does not support video playback.</video>} overlay={<div><p className="text-xs tracking-label text-stone uppercase">Step 5 of 5 · Review</p><h2 className="font-display mt-3 text-2xl italic">{name}</h2><p className="mt-4 text-sm leading-relaxed text-charcoal/80">{description}</p><div className="mt-6 flex gap-3"><button type="button" onClick={() => setStep(4)} className="border border-line px-5 py-3 text-xs tracking-label uppercase">Back</button><button type="button" onClick={submitUpload} disabled={submitting} className="flex-1 bg-ink px-5 py-3 text-xs tracking-label text-cream uppercase">{submitting ? <><LogoLoader label="Uploading artifact" size="sm" tone="light" showLabel={false} className="me-2 align-middle" />Uploading…</> : "Submit Artifact"}</button></div></div>} /></div>
+              <div className="mt-6 -mx-6 md:-mx-10"><ArtifactStageFullscreen splitDetails viewer={<video className="h-full w-full bg-black object-contain" controls src={fileUrl}>Your browser does not support video playback.</video>} overlay={<div><p className="text-xs tracking-label text-stone uppercase">Step 5 of 5 · Review</p><h2 className="font-display mt-3 text-2xl italic">{name}</h2><p className="mt-4 text-sm leading-relaxed text-charcoal/80">{description}</p><div className="mt-6 flex gap-3"><button type="button" onClick={() => setStep(4)} className="border border-line px-5 py-3 text-xs tracking-label uppercase">Back</button><button type="button" onClick={submitUpload} disabled={submitting} className="flex-1 bg-ink px-5 py-3 text-xs tracking-label text-cream uppercase">{submitting ? <LogoLoader label="Uploading artifact" size="sm" tone="light" /> : "Submit Artifact"}</button></div></div>} /></div>
             )}
 
             <div className="mt-6 divide-y divide-line border-t border-b border-line">
@@ -959,7 +958,7 @@ export default function UploadWizard() {
                 disabled={submitting}
                 className="flex-1 bg-ink py-3.5 text-xs tracking-label text-cream uppercase hover:bg-charcoal"
               >
-                {submitting ? <><LogoLoader label="Uploading artifact" size="sm" tone="light" showLabel={false} className="me-2 align-middle" />Uploading…</> : "Submit Artifact"}
+                {submitting ? <LogoLoader label="Uploading artifact" size="sm" tone="light" /> : "Submit Artifact"}
               </button>
             </div>
             {error && <p role="alert" className="mt-4 text-sm text-red-700">{error}</p>}

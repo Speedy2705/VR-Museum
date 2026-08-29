@@ -106,7 +106,7 @@ export default function SignInPage() {
                 disabled={submitting}
                 className="mt-2 bg-ink py-3.5 text-xs tracking-label uppercase text-white hover:bg-charcoal disabled:cursor-wait disabled:opacity-60"
               >
-                {submitting ? <><LogoLoader label="Signing in" size="sm" tone="light" showLabel={false} className="me-2 align-middle" />Signing In…</> : "Sign In"}
+                {submitting ? <LogoLoader label="Signing in" size="sm" tone="light" /> : "Sign In"}
               </button>
             </form>
 

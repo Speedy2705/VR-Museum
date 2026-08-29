@@ -46,6 +46,8 @@ function createPlaqueTexture(title: string, origin: string) {
 }
 
 function createBrandTexture() {
+  // The light mark is intentionally used here: the gallery wall is dark, and
+  // the mark-only asset keeps the 3D space free of the ViswaRoop wordmark.
   const texture = new THREE.TextureLoader().load("/brand/viswaroop-mark-light.svg");
   texture.colorSpace = THREE.SRGBColorSpace;
   texture.anisotropy = 8;
@@ -173,12 +175,13 @@ export function createMuseumEnvironment(options: MuseumEnvironmentOptions = {}):
   const brandTexture = createBrandTexture();
   const brandSign = new THREE.Group();
   brandSign.name = "viswaroop-gallery-sign";
-  brandSign.position.set(backdropX, options.showInfoDisplay ? 2.32 : 2.45, -3.52);
+  brandSign.position.set(backdropX, options.showInfoDisplay ? 2.05 : 2.18, -3.48);
   const signFace = new THREE.Mesh(
-    new THREE.PlaneGeometry(options.showInfoDisplay ? 2.4 : 2.1, options.showInfoDisplay ? 0.85 : 0.75),
-    new THREE.MeshBasicMaterial({ map: brandTexture, transparent: true, toneMapped: false }),
+    new THREE.PlaneGeometry(options.showInfoDisplay ? 3.2 : 2.8, options.showInfoDisplay ? 1.1 : 0.96),
+    new THREE.MeshBasicMaterial({ color: 0xffffff, map: brandTexture, transparent: true, alphaTest: 0.02, depthWrite: false, side: THREE.DoubleSide, toneMapped: false }),
   );
   signFace.name = "brand-logo-mark";
+  signFace.renderOrder = 10;
   brandSign.add(signFace);
 
   if (options.showInfoDisplay) {

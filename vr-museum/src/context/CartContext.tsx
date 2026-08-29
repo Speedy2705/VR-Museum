@@ -149,7 +149,29 @@ export function CartProvider({ children }: { children: ReactNode }) {
       .then((response) => {
         if (!response.ok) throw new Error("Cart removal failed");
         museumToast.infoAction("Removed from your cart", `${item.title} was removed.`, "Undo", () => {
-          addItem({ listingId: item.listingId, slug: item.slug, title: item.title, artist: item.artist, material: item.material, license: item.license, price: item.price, image: item.image });
+          const restoredItem = { ...item, cartItemId: undefined };
+          setItems((current) => {
+            if (current.some((entry) => entry.slug === item.slug)) return current;
+            const restored = [...current];
+            restored.splice(Math.min(Math.max(0, originalIndex), restored.length), 0, restoredItem);
+            return restored;
+          });
+          fetch("/api/cart", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ listingId: item.listingId, quantity: item.quantity }),
+          })
+            .then(async (undoResponse) => {
+              const body = (await undoResponse.json()) as { success: boolean; data?: ApiCartItem };
+              if (!undoResponse.ok || !body.success || !body.data) throw new Error("Cart restore failed");
+              const persisted = fromApi(body.data);
+              setItems((current) => current.map((entry) => entry.slug === item.slug ? persisted : entry));
+              museumToast.success("Restored to your cart", `${persisted.title} is back in your cart.`);
+            })
+            .catch((undoError) => {
+              setItems((current) => current.filter((entry) => entry.slug !== item.slug));
+              notifyError(undoError, "This item could not be restored to your cart.");
+            });
         });
       })
       .catch((error) => {

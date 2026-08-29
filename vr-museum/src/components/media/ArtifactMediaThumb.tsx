@@ -21,6 +21,7 @@ type ArtifactMediaThumbProps = {
   priority?: boolean;
   compact?: boolean;
   notifyWhenUnavailable?: boolean;
+  showMediaBadge?: boolean;
 };
 
 const HOVER_DELAY_MS = 175;
@@ -44,6 +45,7 @@ export default function ArtifactMediaThumb({
   priority,
   compact = false,
   notifyWhenUnavailable = true,
+  showMediaBadge = true,
 }: ArtifactMediaThumbProps) {
   const reduceMotion = useReducedMotion();
   const rootRef = useRef<HTMLDivElement>(null);
@@ -209,7 +211,7 @@ export default function ArtifactMediaThumb({
         )}
       </AnimatePresence>
 
-      {availableType && <MediaBadge type={availableType} />}
+      {showMediaBadge && availableType && <MediaBadge type={availableType} />}
     </div>
   );
 }

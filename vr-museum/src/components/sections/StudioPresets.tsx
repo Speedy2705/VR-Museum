@@ -1,4 +1,6 @@
 import SlideUp from "@/components/motion/SlideUp";
+import { ARTIFACT_CATEGORIES } from "@/lib/artifact-categories";
+import { LIGHT_TEMPERATURES } from "@/lib/lighting-presets";
 
 const presets = [
   {
@@ -29,6 +31,11 @@ const presets = [
 ];
 
 export default function StudioPresets() {
+  const categoriesByTemperature = LIGHT_TEMPERATURES.map((temperature) => ({
+    ...temperature,
+    categories: ARTIFACT_CATEGORIES.filter((category) => category.lightTemperature === temperature.key),
+  }));
+
   return (
     <section className="bg-cream border-t border-line px-10 py-24 md:px-16">
       <div className="mx-auto max-w-[1600px]">
@@ -37,6 +44,36 @@ export default function StudioPresets() {
           Museum Lighting
         </p>
         <h2 className="font-display mt-5 text-4xl italic">
+          Tested Light Temperatures for Each Artifact Type
+        </h2>
+
+        <p className="mt-5 max-w-3xl text-sm leading-relaxed text-stone">
+          A key part of ViswaRoop is our project&apos;s tested lighting recommendations. We assign a suitable colour temperature to each artifact domain so its material, colour, carving, and surface detail remain clear in the digital exhibit.
+        </p>
+
+        <div className="mt-10 grid gap-4 lg:grid-cols-3">
+          {categoriesByTemperature.map((temperature) => (
+            <article key={temperature.key} className="border border-line bg-cream-dark p-6">
+              <p className="text-xs tracking-label uppercase text-stone">{temperature.kelvin} K</p>
+              <h3 className="font-display mt-2 text-2xl italic text-ink">{temperature.name}</h3>
+              <p className="mt-3 text-sm leading-relaxed text-stone">{temperature.description}</p>
+              {temperature.categories.length ? (
+                <div className="mt-5 border-t border-line pt-4">
+                  <p className="text-xs tracking-label uppercase text-stone">Best suited in our museum for</p>
+                  <ul className="mt-3 space-y-2 text-sm text-charcoal">
+                    {temperature.categories.map((category) => (
+                      <li key={category.key}><span className="font-medium text-ink">{category.name}</span> — {category.description}</li>
+                    ))}
+                  </ul>
+                </div>
+              ) : (
+                <p className="mt-5 border-t border-line pt-4 text-sm text-stone">Available as a tested alternative for clay, wood, aged finishes, and warm pigments when a warmer presentation is preferred.</p>
+              )}
+            </article>
+          ))}
+        </div>
+
+        <h2 className="font-display mt-20 text-4xl italic">
           Five Lighting Directions
         </h2>
 

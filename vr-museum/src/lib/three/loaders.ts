@@ -54,6 +54,14 @@ function modelRequestUrl(url: string) {
   return resolved;
 }
 
+export function modelResourceBaseUrl(resolvedUrl: URL, pageUrl: string) {
+  // Object URLs have opaque paths and cannot be used as a base URL. Generated
+  // previews are self-contained GLBs, so use the current page for the loader's
+  // resource path while GLTFLoader resolves embedded buffers internally.
+  if (resolvedUrl.protocol === "blob:") return new URL(".", pageUrl).href;
+  return new URL(".", resolvedUrl).href;
+}
+
 export async function loadModel(url: string, format: ModelFormat, presetKey: LightingPresetKey = "warm-diffuse"): Promise<THREE.Object3D> {
   try {
     if (format === "glb" || format === "gltf") {
@@ -70,7 +78,7 @@ export async function loadModel(url: string, format: ModelFormat, presetKey: Lig
       const payload = format === "glb" ? await response.arrayBuffer() : await response.text();
       beginTextureConsoleFilter();
       try {
-        return (await loader.parseAsync(payload, new URL(".", resolvedUrl).href)).scene;
+        return (await loader.parseAsync(payload, modelResourceBaseUrl(resolvedUrl, window.location.href))).scene;
       } finally {
         endTextureConsoleFilter();
         draco.dispose();

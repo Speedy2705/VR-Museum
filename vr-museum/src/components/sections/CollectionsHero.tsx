@@ -24,8 +24,9 @@ export default function CollectionsHero() {
           Collections
         </h1>
         <p className="mt-4 max-w-md text-sm leading-relaxed text-white/70">
-          Browse every gallery in the museum, grouped by material and era —
-          from carved marble to blown glass.
+          Enter galleries shaped by material, making tradition, and modes of
+          presentation—from carved stone and metalwork to pottery, painting,
+          and textiles.
         </p>
       </div>
     </section>

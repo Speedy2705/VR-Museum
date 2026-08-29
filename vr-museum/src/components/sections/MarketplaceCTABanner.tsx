@@ -10,18 +10,19 @@ export default function MarketplaceCTABanner() {
   return (
     <section className="bg-ink px-6 py-20 text-center">
       <p className="text-[11px] tracking-[0.35em] text-white/45 uppercase">
-        For Artists &amp; Curators
+        For Artists, Archaeologists &amp; Curators
       </p>
       <h2 className="font-display mx-auto mt-6 max-w-lg text-3xl text-white italic md:text-4xl">
-        List your models on the marketplace
+        Share and license documented digital artifacts
       </h2>
       <p className="mx-auto mt-5 max-w-md text-sm leading-relaxed text-white/55">
-        Upload your 3D artifact scans, set your price, choose a license, and
-        reach researchers, institutions, and collectors worldwide.
+        Contribute an artifact with reliable context and media, choose its
+        license and price, and reach researchers, institutions, educators,
+        and collectors after curatorial approval.
       </p>
       <div className="mt-8 flex justify-center">
         <Button href="/upload" variant="outline">
-          Upload &amp; List Artifact
+          Contribute an Artifact
         </Button>
       </div>
     </section>

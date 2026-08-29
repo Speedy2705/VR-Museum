@@ -3,23 +3,23 @@ import SlideUp from "@/components/motion/SlideUp";
 const steps = [
   {
     numeral: "I",
-    title: "Upload your artifact",
-    desc: "Artists and curators upload a 3D scan, model file (.glb, .obj, .fbx), or a video recording of the physical object. Our pipeline reconstructs a mesh from video automatically.",
+    title: "Contribute the artifact",
+    desc: "Eligible artists, archaeologists, and curators upload a display image with a supported 3D model or video, or optionally begin from three reference photographs.",
   },
   {
     numeral: "II",
-    title: "Configure the lighting",
-    desc: "Choose a preset matched to the material — warm diffuse for ceramics, directional spot for metal, backlit halo for glass. Adjust colour temperature and intensity.",
+    title: "Document and present it",
+    desc: "Add its story, material, origin, collection, license, and price, then choose lighting suited to how the object should be studied and displayed.",
   },
   {
     numeral: "III",
-    title: "Placed in the museum",
-    desc: "Our team places your artifact in a photorealistic virtual museum — pedestal, label, room, lighting rig — positioned alongside the broader collection.",
+    title: "Curators review it",
+    desc: "A curator evaluates the media and context, then approves the submission, requests focused changes, or rejects it with an explanation.",
   },
   {
     numeral: "IV",
-    title: "Explore in VR",
-    desc: "Visitors put on a headset and walk through the museum. They move around each artifact, examine surface detail, and switch lighting in real time.",
+    title: "Discover and collect it",
+    desc: "Approved work becomes discoverable in the museum and, when listed, can be licensed through the marketplace for study, presentation, or permitted commercial use.",
   },
 ];
 

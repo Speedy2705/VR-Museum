@@ -2,29 +2,29 @@ import SlideUp from "@/components/motion/SlideUp";
 
 const presets = [
   {
-    title: "Warm Diffuse",
-    tags: "Ceramic · Terracotta · Bone",
-    desc: "A broad, soft amber source from above. Eliminates harsh shadow and shows the warmth of fired clay surfaces.",
+    title: "Spotlight",
+    tags: "Focused · Dramatic · Sculptural",
+    desc: "A focused beam from above and one side creates clear highlights and directs attention to a selected feature.",
   },
   {
-    title: "Directional Spot",
-    tags: "Bronze · Gold · Silver",
-    desc: "A narrow, high-intensity key light at 45°. Creates specular highlights that reveal cast surface texture on metal.",
+    title: "Top Light",
+    tags: "Vertical · Contoured · Grounded",
+    desc: "Light falling from above defines upper contours while grounding the artifact with a controlled shadow.",
   },
   {
-    title: "Cool Ambient",
-    tags: "Marble · Limestone · Ivory",
-    desc: "A diffuse, bluish fill matching the colour temperature of overcast northern daylight — ideal for pale stone.",
-  },
-  {
-    title: "Backlit Halo",
-    tags: "Glass · Crystal · Resin",
-    desc: "A translucent rim source behind the artifact. Light passes through the material, revealing internal colour.",
+    title: "Front-Facing Light",
+    tags: "Even · Legible · Documentary",
+    desc: "Even illumination from the viewer’s direction preserves colour and makes form, pattern, and painted detail easy to read.",
   },
   {
     title: "Raking Light",
-    tags: "Stone · Wood · Leather",
-    desc: "A low-angle grazing light at 10–15° from the surface. Makes incised marks and surface texture legible.",
+    tags: "Low Angle · Textured · Revealing",
+    desc: "A low grazing beam stretches shadows across a surface to reveal carving, weave, inscriptions, folds, and tool marks.",
+  },
+  {
+    title: "Backlight",
+    tags: "Silhouette · Translucent · Atmospheric",
+    desc: "A source behind the artifact outlines its silhouette and can reveal translucency in glass, resin, or thin material.",
   },
 ];
 
@@ -34,10 +34,10 @@ export default function StudioPresets() {
       <div className="mx-auto max-w-[1600px]">
         <SlideUp>
         <p className="text-[11px] tracking-[0.3em] text-stone uppercase">
-          Lighting Science
+          Museum Lighting
         </p>
         <h2 className="font-display mt-5 text-4xl italic">
-          Five Studio Presets
+          Five Lighting Directions
         </h2>
 
         <div className="mt-14 grid grid-cols-1 border-t border-line md:grid-cols-2 md:divide-x md:divide-line">

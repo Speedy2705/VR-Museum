@@ -22,13 +22,13 @@ export default function AboutHero() {
         </p>
 
         <h1 className="font-display mt-5 max-w-2xl text-5xl leading-[1.15] text-white italic md:text-[56px]">
-          Where Artifacts Meet Virtual Light
+          A living museum without walls
         </h1>
 
         <p className="mt-6 max-w-md text-sm leading-relaxed text-white/65">
-          ViswaRoop is a platform for artists, archaeologists, and museum curators
-          to share 3D scans of historical artifacts — and present them to the
-          world in an immersive VR museum with physically accurate lighting.
+          ViswaRoop brings cultural heritage into a multilingual digital space
+          where people can explore, study, contribute, curate, license, and
+          collect artifacts through images, video, interactive 3D, and VR.
         </p>
       </div>
     </section>

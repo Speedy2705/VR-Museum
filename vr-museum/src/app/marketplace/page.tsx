@@ -14,7 +14,7 @@ import { getLocalizedArtifact, getLocalizedUpload } from "@/server/services/cont
 import { localizedMetadata } from "@/lib/localized-metadata";
 
 export async function generateMetadata(): Promise<Metadata> {
-  return { ...await localizedMetadata("Digital Artifact Marketplace", "Browse licensed, studio-grade 3D scans of historical artifacts."), openGraph: { images: ["/images/marketplace-hero.png"] } };
+  return { ...await localizedMetadata("Digital Artifact Marketplace", "Discover curator-approved digital cultural artifacts with clear licensing for study, education, presentation, collecting, and permitted commercial use."), openGraph: { images: ["/images/marketplace-hero.png"] } };
 }
 
 async function MarketplaceResults({ page }: { page: number }) {

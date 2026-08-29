@@ -25,7 +25,7 @@ const collectionForMaterial: Record<string, string> = {
 const collectionPresentation: Record<CollectionSlug, { subtitle: string; category: string }> = {
   "veins-of-marble": { subtitle: "Form revealed in luminous stone", category: "Marble" },
   "forged-in-time": { subtitle: "Metal shaped by ritual, craft, and history", category: "Metal" },
-  "stories-in-color": { subtitle: "Culture and memory carried through colour", category: "Painting" },
+  "stories-in-color": { subtitle: "Culture and memory carried through colour", category: "Painting & Textile" },
   "echoes-in-stone": { subtitle: "Marks, inscriptions, and weathered memory", category: "Stone" },
   "earth-and-ember": { subtitle: "Earthen forms born from hand and flame", category: "Terracotta" },
   "community-uploads": { subtitle: "Discoveries beyond the five galleries", category: "Community" },

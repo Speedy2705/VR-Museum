@@ -16,7 +16,7 @@ const columns = [
   {
     title: "Platform",
     links: [
-      { label: "Upload Model", href: "/upload" },
+      { label: "Contribute Artifact", href: "/upload" },
       { label: "Your Assets", href: "/assets" },
       { label: "Sign In", href: "/sign-in" },
     ],
@@ -75,9 +75,11 @@ export default function Footer() {
           <p className="mt-4 text-xs leading-relaxed text-white/45">
             Explore. Experience. Own History.
             <br />
-            Est. 2025
+            A multilingual museum for cultural discovery,
             <br />
-            Global · Online · VR
+            immersive 3D, and licensed digital artifacts.
+            <br />
+            Funded by ICSSR.
           </p>
         </div>
 

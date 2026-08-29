@@ -24,8 +24,8 @@ export async function generateMetadata(): Promise<Metadata> {
   const locale = isLocale(requestedLocale) ? requestedLocale : defaultLocale;
   const [title, description, openGraphDescription] = await getLocalizedUiPhrases(locale, [
     "ViswaRoop — Explore. Experience. Own History.",
-    "Upload and explore historically significant artifacts in an immersive virtual museum.",
-    "Explore historically significant artifacts in an immersive virtual museum.",
+    "Explore, contribute, curate, license, and collect cultural artifacts through a multilingual immersive 3D museum.",
+    "Step inside ViswaRoop, a multilingual virtual museum for cultural discovery, immersive 3D experiences, and licensed digital artifacts.",
   ]);
   return {
     metadataBase: new URL(process.env.AUTH_URL ?? "http://localhost:3000"),
@@ -41,7 +41,7 @@ export async function generateMetadata(): Promise<Metadata> {
       siteName: "ViswaRoop",
       title,
       description: openGraphDescription,
-      images: ["/images/hero-vr-banner.png"],
+      images: ["/images/hero-gallery.png"],
     },
   };
 }

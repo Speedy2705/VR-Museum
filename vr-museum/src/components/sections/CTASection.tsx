@@ -23,8 +23,8 @@ type CTASectionProps = {
 };
 
 export default function CTASection({
-  eyebrow = "Ready to Explore",
-  titleLines = ["The Entire Museum,", "Inside Your Headset"],
+  eyebrow = "Step Inside",
+  titleLines = ["Explore Culture", "Without Borders"],
   image = {
     src: pageImages.vrHeadset,
     alt: "Person wearing a VR headset with controllers",

@@ -55,7 +55,7 @@ export default async function AssetsPage() {
       <main>
         <PageHero
           title="Your Assets"
-          subtitle="Purchased files and your uploaded models"
+          subtitle="Licensed acquisitions and your contributed artifacts"
           imageSrc={pageImages.galleryWall}
         >
           <AssetsStatsBar

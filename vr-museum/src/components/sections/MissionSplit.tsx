@@ -10,20 +10,20 @@ export default function MissionSplit() {
           Our Mission
         </p>
         <h2 className="font-display mt-6 max-w-md text-4xl leading-[1.2] italic md:text-[38px]">
-          Making history accessible, one artifact at a time
+          Preserve stories and expand access
         </h2>
 
         <p className="mt-7 max-w-md text-sm leading-relaxed text-charcoal/80">
-          Most historical artifacts sit in storage or behind thick glass,
-          accessible to a tiny fraction of the world. ViswaRoop changes that —
-          giving every curator the tools to bring their objects into a shared
-          virtual space where anyone, anywhere, can study them in detail.
+          ViswaRoop reimagines the museum as a participatory digital space.
+          Visitors discover cultural objects beyond physical boundaries, while
+          artists, archaeologists, and curators can contribute documented digital
+          works for review and responsible public presentation.
         </p>
         <p className="mt-5 max-w-md text-sm leading-relaxed text-charcoal/80">
-          Our lighting engine simulates how photons interact with each
-          surface material. Bronze looks different under a directional spot
-          than under diffuse ambient light — and that difference matters for
-          researchers, conservators, and curious visitors alike.
+          The platform connects preservation with sustainable participation.
+          Approved contributors can publish licensed work, institutions can
+          present collections in context, and researchers or collectors can
+          acquire digital artifacts under clearly stated terms.
         </p>
         </SlideUp>
       </div>
@@ -37,21 +37,21 @@ export default function MissionSplit() {
         </svg>
 
         <p className="mt-6 text-[11px] tracking-[0.3em] text-white/40 uppercase">
-          The VR Experience
+          The Digital Experience
         </p>
         <h2 className="font-display mt-4 max-w-md text-4xl leading-[1.2] italic md:text-[38px]">
-          The Museum Comes to You
+          Study objects through space, media, and light
         </h2>
 
         <p className="mt-7 max-w-md text-sm leading-relaxed text-white/60">
-          Put on a VR headset and walk through a photorealistic museum. Move
-          around each pedestal at full scale, lean in to examine surface
-          texture, and switch lighting presets in real time — just as you
-          would with a physical spotlight.
+          Move from an artifact’s story to its photograph, video, or interactive
+          model, then enter a browser-based virtual exhibition with contextual
+          plaques and museum staging. Lighting controls help reveal the qualities
+          that matter for each material and making tradition.
         </p>
         <p className="mt-5 max-w-md text-sm leading-relaxed text-white/60">
-          Compatible with Meta Quest 2 &amp; 3, Apple Vision Pro, PlayStation
-          VR2, and any WebXR-capable browser.
+          The experience works on the web and supports immersive devices where
+          browser and hardware capabilities allow it.
         </p>
 
         <VrEntryModal label="Try VR Now" className="mt-10" />

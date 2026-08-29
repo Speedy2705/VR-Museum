@@ -4,20 +4,20 @@ import { pageImages } from "@/lib/media";
 
 const features = [
   {
-    title: "Physically-based lighting",
-    desc: "Simulates real photon behaviour per material",
+    title: "Material-aware lighting",
+    desc: "Reveal form, texture, colour, and surface detail",
   },
   {
-    title: "Full-scale artifacts",
-    desc: "Walk around at 1:1 size",
+    title: "Interactive 3D study",
+    desc: "Rotate, inspect, and focus on available models",
   },
   {
-    title: "Live lighting controls",
-    desc: "Switch presets inside the headset",
+    title: "Curated presentation",
+    desc: "Museum environments, labels, frames, and pedestals",
   },
   {
-    title: "All major headsets",
-    desc: "Quest, Vision Pro, PSVR2, WebXR",
+    title: "Browser-based access",
+    desc: "Immersive-device support where available",
   },
 ];
 
@@ -36,24 +36,23 @@ export default function MainExperience() {
 
       <div className="bg-ink px-10 py-20 text-white md:px-16 md:py-24">
         <p className="text-[11px] tracking-[0.3em] text-white/40 uppercase">
-          The Main Experience
+          Immersive 3D Experience
         </p>
 
         <h2 className="font-display mt-6 max-w-md text-4xl leading-[1.2] italic md:text-[42px]">
-          The Museum Comes to You
+          See every artifact in context
         </h2>
 
         <p className="mt-7 max-w-md text-sm leading-relaxed text-white/60">
-          ViswaRoop places every uploaded artifact inside a photorealistic museum.
-          You walk through it in full virtual reality — moving around each
-          pedestal, leaning in to examine surface texture, and switching the
-          studio lighting in real time.
+          ViswaRoop presents approved artifacts inside a spatial museum environment
+          with exhibition furniture, contextual plaques, and carefully designed
+          lighting. Inspect a model from multiple angles or enter its browser-based
+          virtual gallery for a more immersive encounter.
         </p>
         <p className="mt-5 max-w-md text-sm leading-relaxed text-white/60">
-          Our lighting engine simulates how photons interact with each
-          material. Bronze looks different under a directional spot than
-          under diffuse ambient — and that difference matters for artists,
-          researchers, and visitors alike.
+          Lighting can be adjusted to reveal form, colour, texture, inscriptions,
+          reflective surfaces, and textile depth. The presentation adapts to the
+          material instead of treating every cultural object in the same way.
         </p>
 
         <div className="mt-11 grid max-w-md grid-cols-2 gap-x-8 gap-y-7">

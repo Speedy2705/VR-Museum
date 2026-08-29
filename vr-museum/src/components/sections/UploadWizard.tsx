@@ -41,7 +41,7 @@ type PriceMode = "free" | "paid";
 const categoryDescriptions: Record<CollectionSlug, string> = {
   "veins-of-marble": "Carved marble sculptures and timeless decorative works",
   "forged-in-time": "Metal artifacts, ritual objects, ornaments, and historic craftsmanship",
-  "stories-in-color": "Paintings preserving culture, imagination, and moments in time",
+  "stories-in-color": "Paintings and textiles preserving culture through colour, pattern, surface, and story",
   "echoes-in-stone": "Carved stone sculptures, inscriptions, and weathered fragments",
   "earth-and-ember": "Red-clay pottery, terracotta figures, and hand-shaped earthen works",
   "community-uploads": "Artifacts beyond the five galleries, shared for public discovery",

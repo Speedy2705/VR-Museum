@@ -23,14 +23,15 @@ export default function MarketplaceHero() {
         </p>
 
         <h1 className="font-display mt-4 max-w-lg text-5xl leading-[1.15] text-white italic md:text-[52px]">
-          Buy &amp; Sell
+          Discover &amp; License
           <br />
-          Digital Models
+          Digital Heritage
         </h1>
 
         <p className="mt-5 max-w-md text-sm leading-relaxed text-white/70">
-          Acquire studio-grade 3D scans of historical artifacts — licensed
-          for personal study, research, or commercial use.
+          Discover curator-approved digital artifacts for personal study,
+          research, education, institutional presentation, or commercial use
+          where the selected license permits it.
         </p>
 
         <div className="mt-7 flex max-w-xl flex-col gap-4 sm:flex-row">
@@ -40,7 +41,7 @@ export default function MarketplaceHero() {
             className="w-full border border-white/25 bg-white/10 px-5 py-3.5 text-sm text-white placeholder:text-white/45 focus:border-white/60 focus:outline-none sm:max-w-xs"
           />
           <Button href="/upload" variant="outline">
-            Sell Your Models
+            Contribute Your Work
           </Button>
         </div>
       </div>

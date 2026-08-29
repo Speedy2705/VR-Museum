@@ -5,6 +5,7 @@ import { getRequestLocale } from "@/lib/request-locale";
 import type { Locale } from "@/lib/i18n";
 import { getLocalizedArtifact, getLocalizedCollection } from "@/server/services/content-translation.service";
 import { mapWithConcurrency } from "@/server/concurrency";
+import { getCategoryByKey, type CollectionSlug } from "@/lib/artifact-categories";
 
 export async function listCollections(localeOverride?: Locale) {
   const rows = await prisma.collection.findMany({
@@ -26,6 +27,7 @@ export async function listCollections(localeOverride?: Locale) {
   });
   const collectionsWithCurrentCovers = rows.map((row) => ({
     ...row,
+    description: getCategoryByKey(row.slug as CollectionSlug)?.description ?? row.description,
     heroImage: row.artifacts[0]?.image || row.heroImage || "/images/gallery-wall.png",
   }));
   const locale = localeOverride ?? await getRequestLocale();
@@ -142,17 +144,18 @@ export async function getCollection(slug: string, localeOverride?: Locale) {
     throw new ServiceError("Collection not found", "NOT_FOUND", 404);
   }
   const heroImage = collection.artifacts[0]?.image || "/images/gallery-wall.png";
+  const description = getCategoryByKey(collection.slug as CollectionSlug)?.description ?? collection.description;
+  const canonicalCollection = { ...collection, description, heroImage };
   const locale = localeOverride ?? await getRequestLocale();
   if (locale !== "en") {
     const [localizedCollection, artifacts] = await Promise.all([
-      getLocalizedCollection(collection, locale),
+      getLocalizedCollection(canonicalCollection, locale),
       mapWithConcurrency(collection.artifacts, 8, (artifact) => getLocalizedArtifact(artifact, locale)),
     ]);
-    return { ...localizedCollection, heroImage, artifacts };
+    return { ...localizedCollection, artifacts };
   }
   return {
-    ...localizeRecord(collection, locale, ["title", "subtitle", "description", "category"]),
-    heroImage,
+    ...localizeRecord(canonicalCollection, locale, ["title", "subtitle", "description", "category"]),
     artifacts: collection.artifacts.map((artifact) => localizeRecord(artifact, locale, ["title", "subtitle", "description"])),
   };
 }

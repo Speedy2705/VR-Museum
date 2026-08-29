@@ -14,7 +14,7 @@ import { mapWithConcurrency } from "@/server/concurrency";
 import { localizedMetadata } from "@/lib/localized-metadata";
 
 export async function generateMetadata(): Promise<Metadata> {
-  return { ...await localizedMetadata("Collections", "Browse virtual museum collections grouped by material, culture, and era."), openGraph: { images: ["/images/gallery-interior.png"] } };
+  return { ...await localizedMetadata("Collections", "Explore curated virtual galleries shaped by material, cultural context, making tradition, and immersive presentation."), openGraph: { images: ["/images/gallery-interior.png"] } };
 }
 export const dynamic = "force-dynamic";
 
@@ -35,8 +35,8 @@ export default function CollectionsPage() {
           <CollectionResults />
         </Suspense>
         <CTASection
-          eyebrow="Ready?"
-          titleLines={["Add your artifact to the museum"]}
+          eyebrow="Expand the Collection"
+          titleLines={["Contribute a Documented", "Digital Artifact"]}
           image={{
             src: pageImages.vrPerson,
             alt: "Person wearing a VR headset",

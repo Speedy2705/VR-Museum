@@ -4,10 +4,10 @@ import StaggerContainer, { staggerItem } from "@/components/motion/StaggerContai
 import { motion } from "motion/react";
 
 const stats = [
-  { value: "340+", label: "Artifacts" },
-  { value: "18", label: "Collections" },
-  { value: "12K+", label: "VR Visitors" },
-  { value: "5", label: "Lighting Presets" },
+  { value: "16", label: "Supported Languages" },
+  { value: "5", label: "Curated Galleries" },
+  { value: "3", label: "Media Experiences" },
+  { value: "5", label: "Lighting Directions" },
 ];
 
 export default function StatsBar() {

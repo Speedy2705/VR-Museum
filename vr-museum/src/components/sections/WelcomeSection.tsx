@@ -11,14 +11,14 @@ export default function WelcomeSection() {
         </p>
 
         <h2 className="font-display mt-6 max-w-md text-4xl leading-[1.2] italic md:text-[42px]">
-          Welcome to the Virtual Museum of Artifacts
+          Cultural heritage, brought closer
         </h2>
 
         <p className="mt-7 max-w-md text-sm leading-relaxed text-charcoal/80">
-          ViswaRoop is built for artists, archaeologists, and museum curators who
-          want their objects seen. Upload a 3D scan or model — we place it in
-          a museum environment with studio-grade lighting, curate it alongside
-          the broader collection, and open it to the world in VR.
+          ViswaRoop is a multilingual virtual museum where visitors can discover
+          cultural artifacts, contributors can share digital works, curators can
+          review them, and researchers or collectors can build a licensed library.
+          Every approved contribution becomes part of a living museum without walls.
         </p>
 
         <Link

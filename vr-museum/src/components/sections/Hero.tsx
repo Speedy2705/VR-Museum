@@ -24,19 +24,19 @@ export default function Hero() {
       <SlideUp className="relative z-10 mx-auto flex max-w-3xl flex-col items-center px-6 text-center">
         <BrandLogo variant="light" markOnly className="mb-6 h-auto w-40 drop-shadow-[0_8px_22px_rgba(0,0,0,0.4)]" priority />
         <p className="text-[11px] tracking-[0.35em] text-white/50 uppercase">
-          Virtual Reality Museum
+          The Museum Without Walls
         </p>
 
         <h1 className="font-display mt-6 text-5xl leading-[1.15] font-normal text-white italic sm:text-6xl md:text-[64px]">
-          Walk Through History
+          Explore. Experience.
           <br />
-          in Virtual Reality
+          Own History.
         </h1>
 
         <p className="mt-7 max-w-xl text-[15px] leading-relaxed text-white/70">
-          Upload 3D scans of artifacts. We place them in a photorealistic
-          museum environment with studio-grade lighting — ready for immersive
-          VR exploration.
+          Explore cultural heritage through images, video, interactive 3D, and
+          browser-based virtual galleries. Contribute, curate, license, and
+          collect digital artifacts in one multilingual museum.
         </p>
 
         <div className="mt-10 flex flex-col gap-4 sm:flex-row">

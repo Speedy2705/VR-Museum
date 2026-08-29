@@ -35,7 +35,7 @@ export default function CoreTeam() {
           <div className="mt-5 grid gap-6 border-b border-line pb-10 md:grid-cols-[minmax(0,1fr)_minmax(18rem,0.7fr)] md:items-end">
             <h2 id="core-team-title" className="font-display text-4xl leading-tight italic md:text-5xl">Meet the Core Team</h2>
             <p className="max-w-xl text-sm leading-relaxed text-charcoal/75 md:justify-self-end">
-              ViswaRoop brings together research, technology, immersive design, and visual identity to make cultural artifacts accessible in virtual space.
+              ViswaRoop brings together cultural research, technology, immersive design, commerce, and visual identity to make heritage accessible and sustainable in virtual space.
             </p>
           </div>
         </SlideUp>

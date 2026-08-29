@@ -30,6 +30,7 @@ import {
   VIDEO_FILE_ACCEPT,
   extensionOf,
   modelFormatFromExtension,
+  validateModelFile,
   validateUploadFile,
 } from "@/lib/upload-file-policy";
 import { uploadMediaDirect } from "@/lib/blob-upload.client";
@@ -200,9 +201,24 @@ export default function UploadWizard() {
         setGenerationProgress(statusBody.data.progress);
         if (statusBody.data.status === "FAILED" || statusBody.data.status === "CANCELED") throw new Error(statusBody.data.error ?? "Meshy could not generate this model");
         if (statusBody.data.status !== "SUCCEEDED") continue;
-        const download = await fetch(`/api/meshy/multi-image/${encodeURIComponent(taskId)}/download`);
-        if (!download.ok) throw new Error("The generated model could not be downloaded");
-        const generated = new File([await download.blob()], `meshy-${taskId}.glb`, { type: "model/gltf-binary" });
+        let generated: File | null = null;
+        let downloadFailure = "The generated model could not be downloaded";
+        for (let downloadAttempt = 0; downloadAttempt < 2; downloadAttempt += 1) {
+          const download = await fetch(`/api/meshy/multi-image/${encodeURIComponent(taskId)}/download`, { cache: "no-store" });
+          if (!download.ok) {
+            const body = await download.json().catch(() => null) as { error?: { message?: string } } | null;
+            downloadFailure = body?.error?.message ?? downloadFailure;
+            continue;
+          }
+          const candidate = new File([await download.blob()], `meshy-${taskId}.glb`, { type: "model/gltf-binary" });
+          const validation = await validateModelFile(candidate);
+          if (validation.valid) {
+            generated = candidate;
+            break;
+          }
+          downloadFailure = validation.reason;
+        }
+        if (!generated) throw new Error(`${downloadFailure} Please regenerate the model.`);
         updateFile(generated);
         setFileName(generated.name);
         setGenerationProgress(100);

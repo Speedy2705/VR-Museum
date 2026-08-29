@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { B2Storage, b2KeyFromUrl, createB2DownloadUrl } from "@/server/storage/b2";
 import type { FileStorage } from "@/server/storage/storage";
 import { BlobStorage } from "@/server/storage/vercel-blob.storage";
+import { MAX_MODEL_FILE_SIZE, validateGlbBytes } from "@/lib/upload-file-policy";
 
 const MESHY_ENDPOINT = "https://api.meshy.ai/openapi/v1";
 const ALLOWED_IMAGE_TYPES = new Set(["image/jpeg", "image/png"]);
@@ -187,7 +188,22 @@ export async function downloadGeneratedGlb(taskId: string) {
   if (task.status !== "SUCCEEDED" || !modelUrl) {
     throw new ServiceError("The generated model is not ready yet", "MODEL_NOT_READY", 409);
   }
-  const response = await fetch(modelUrl, { cache: "no-store" });
-  if (!response.ok) throw new ServiceError("The generated model could not be downloaded", "MESHY_DOWNLOAD_FAILED", 502);
-  return response;
+  let failure = "The generated model could not be downloaded";
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const response = await fetch(modelUrl, { cache: "no-store" });
+    if (!response.ok) {
+      failure = `Meshy returned HTTP ${response.status} while downloading the model`;
+      continue;
+    }
+    const payload = await response.arrayBuffer();
+    if (payload.byteLength > MAX_MODEL_FILE_SIZE) {
+      throw new ServiceError("The generated model exceeds the 150 MB upload limit", "MESHY_MODEL_TOO_LARGE", 413);
+    }
+    const reason = validateGlbBytes(new Uint8Array(payload, 0, Math.min(payload.byteLength, 65_536)), payload.byteLength);
+    if (!reason) {
+      return new Response(payload, { headers: { "content-type": "model/gltf-binary" } });
+    }
+    failure = reason;
+  }
+  throw new ServiceError(`${failure} Please regenerate the model.`, "MESHY_DOWNLOAD_FAILED", 502);
 }

@@ -227,7 +227,10 @@ describe("key API routes", () => {
     form.set(
       "file",
       new File(
-        [new Uint8Array([0x67, 0x6c, 0x54, 0x46, 2, 0, 0, 0, 12, 0, 0, 0])],
+        [new Uint8Array([
+          0x67, 0x6c, 0x54, 0x46, 2, 0, 0, 0, 24, 0, 0, 0,
+          4, 0, 0, 0, 0x4a, 0x53, 0x4f, 0x4e, 0x7b, 0x7d, 0x20, 0x20,
+        ])],
         "model.glb",
         { type: "model/gltf-binary" },
       ),

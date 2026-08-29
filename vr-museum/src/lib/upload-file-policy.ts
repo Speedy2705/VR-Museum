@@ -29,6 +29,22 @@ export function extensionOf(filename: string) {
 
 export type ModelFormat = "glb";
 
+const GLB_MAGIC = 0x46546c67;
+const GLB_JSON_CHUNK = 0x4e4f534a;
+
+export function validateGlbBytes(bytes: Uint8Array, totalSize: number): string | null {
+  if (bytes.byteLength < 20 || totalSize < 20) return "The generated GLB is incomplete.";
+  const header = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  if (header.getUint32(0, true) !== GLB_MAGIC) return "The downloaded file is not a GLB model.";
+  if (header.getUint32(4, true) !== 2) return "The generated model uses an unsupported GLB version.";
+  if (header.getUint32(8, true) !== totalSize) return "The generated GLB download is incomplete.";
+  const jsonLength = header.getUint32(12, true);
+  if (header.getUint32(16, true) !== GLB_JSON_CHUNK || jsonLength < 2 || 20 + jsonLength > totalSize) {
+    return "The generated GLB has an invalid scene description.";
+  }
+  return null;
+}
+
 export function modelFormatFromExtension(
   extension: string,
 ): ModelFormat | null {
@@ -76,17 +92,8 @@ export async function validateModelFile(file: File): Promise<FileValidationResul
 
   const bytes = new Uint8Array(await file.slice(0, 65_536).arrayBuffer());
   if (typedExtension === ".glb") {
-    const header = bytes.length >= 12
-      ? new DataView(bytes.buffer, bytes.byteOffset, 12)
-      : null;
-    if (
-      !header ||
-      String.fromCharCode(...bytes.slice(0, 4)) !== "glTF" ||
-      header.getUint32(4, true) !== 2 ||
-      header.getUint32(8, true) !== file.size
-    ) {
-      return { valid: false, reason: "The file does not contain a valid GLB signature." };
-    }
+    const reason = validateGlbBytes(bytes, file.size);
+    if (reason) return { valid: false, reason };
   }
 
   return { valid: true, extension: typedExtension };

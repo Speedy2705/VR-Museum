@@ -250,6 +250,14 @@ describe("Meshy multi-image service", () => {
   });
 
   it("returns the generated GLB response only after success", async () => {
+    const glb = new ArrayBuffer(24);
+    const view = new DataView(glb);
+    view.setUint32(0, 0x46546c67, true);
+    view.setUint32(4, 2, true);
+    view.setUint32(8, 24, true);
+    view.setUint32(12, 4, true);
+    view.setUint32(16, 0x4e4f534a, true);
+    new Uint8Array(glb).set([0x7b, 0x7d, 0x20, 0x20], 20);
     vi.mocked(fetch)
       .mockResolvedValueOnce(new Response(JSON.stringify({
         id: "task-123",
@@ -258,10 +266,28 @@ describe("Meshy multi-image service", () => {
         progress: 100,
         model_urls: { glb: "https://assets.meshy.ai/model.glb" },
       }), { status: 200 }))
-      .mockResolvedValueOnce(new Response("glb", { status: 200, headers: { "content-type": "model/gltf-binary" } }));
+      .mockResolvedValueOnce(new Response(glb, { status: 200, headers: { "content-type": "model/gltf-binary" } }));
 
     const response = await downloadGeneratedGlb("task-123");
-    expect(await response.text()).toBe("glb");
+    expect(await response.arrayBuffer()).toEqual(glb);
+  });
+
+  it("retries and rejects an incomplete generated GLB", async () => {
+    vi.mocked(fetch)
+      .mockResolvedValueOnce(new Response(JSON.stringify({
+        id: "task-123",
+        type: "multi-image-to-3d",
+        status: "SUCCEEDED",
+        progress: 100,
+        model_urls: { glb: "https://assets.meshy.ai/model.glb" },
+      }), { status: 200 }))
+      .mockImplementation(() => Promise.resolve(new Response("not-a-glb", { status: 200 })));
+
+    await expect(downloadGeneratedGlb("task-123")).rejects.toMatchObject({
+      code: "MESHY_DOWNLOAD_FAILED",
+      status: 502,
+    });
+    expect(fetch).toHaveBeenCalledTimes(4);
   });
 
   it("rejects a download while the task is still in progress", async () => {

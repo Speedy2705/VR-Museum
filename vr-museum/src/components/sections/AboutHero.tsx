@@ -13,11 +13,11 @@ export default function AboutHero() {
         dark
         className="absolute inset-0"
       />
-      <div className="absolute inset-0 bg-black/45" />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+      <div className="absolute inset-0 bg-black/55" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-black/20" />
 
       <div className="relative z-10 w-full px-10 pb-14 md:px-16">
-        <p className="text-xs tracking-[0.3em] text-white/45 uppercase">
+        <p className="text-xs tracking-[0.22em] text-white/85 uppercase">
           About ViswaRoop
         </p>
 
@@ -25,7 +25,7 @@ export default function AboutHero() {
           A living museum without walls
         </h1>
 
-        <p className="mt-6 max-w-md text-sm leading-relaxed text-white/65">
+        <p className="mt-6 max-w-lg text-[15px] leading-7 text-white/90">
           ViswaRoop brings cultural heritage into a multilingual digital space
           where people can explore, study, contribute, curate, license, and
           collect artifacts through images, video, interactive 3D, and VR.

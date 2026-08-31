@@ -14,11 +14,11 @@ export default function MarketplaceHero() {
         dark
         className="absolute inset-0"
       />
-      <div className="absolute inset-0 bg-black/45" />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+      <div className="absolute inset-0 bg-black/55" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-black/15" />
 
       <div className="relative z-10 w-full px-10 pb-12 md:px-16">
-        <p className="text-xs tracking-label text-white/55 uppercase">
+        <p className="text-xs tracking-[0.18em] text-white/85 uppercase">
           Digital Artifact Marketplace
         </p>
 
@@ -28,7 +28,7 @@ export default function MarketplaceHero() {
           Digital Heritage
         </h1>
 
-        <p className="mt-5 max-w-md text-sm leading-relaxed text-white/70">
+        <p className="mt-5 max-w-lg text-[15px] leading-7 text-white/90">
           Discover curator-approved digital artifacts for personal study,
           research, education, institutional presentation, or commercial use
           where the selected license permits it.
@@ -44,6 +44,9 @@ export default function MarketplaceHero() {
             Contribute Your Work
           </Button>
         </div>
+        <a href="#license-guide" className="mt-5 inline-block text-xs tracking-label text-white/90 underline decoration-white/50 underline-offset-4 uppercase hover:text-white">
+          Understand the licenses
+        </a>
       </div>
     </section>
   );

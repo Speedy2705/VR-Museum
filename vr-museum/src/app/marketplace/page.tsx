@@ -4,6 +4,7 @@ import MarketplaceHero from "@/components/sections/MarketplaceHero";
 import FeaturedListings from "@/components/sections/FeaturedListings";
 import MarketplaceGrid from "@/components/sections/MarketplaceGrid";
 import MarketplaceCTABanner from "@/components/sections/MarketplaceCTABanner";
+import LicenseGuide from "@/components/sections/LicenseGuide";
 import { listMarketplace } from "@/server/services/marketplace.service";
 import { publicUploadToMarketplaceView, toMarketplaceView } from "@/server/view-models";
 import { Suspense } from "react";
@@ -50,6 +51,7 @@ export default async function MarketplacePage({
       <Navbar hasHeroBackground />
       <main>
         <MarketplaceHero />
+        <LicenseGuide />
         <Suspense fallback={<GridSectionSkeleton />}>
           <MarketplaceResults page={page} />
         </Suspense>

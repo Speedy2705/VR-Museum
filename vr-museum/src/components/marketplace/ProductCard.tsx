@@ -74,7 +74,7 @@ export default function ProductCard({ product, imageSizes }: ProductCardProps) {
           />
           <span data-no-translate><Tag className="absolute top-3 start-3">{isFree ? "Free" : `$${product.price}`}</Tag></span>
           <span data-no-translate className="absolute end-3 bottom-3 bg-ink/70 px-2 py-1 text-xs tracking-label text-white uppercase">
-            {product.license}
+            <span className="sr-only">License: </span>{product.license}
           </span>
         </div>
         <h3 data-no-translate className="motion-underline mt-3 w-fit text-sm text-ink">

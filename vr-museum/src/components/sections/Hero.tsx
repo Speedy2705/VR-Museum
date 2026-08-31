@@ -51,7 +51,7 @@ export default function Hero({ brandAnchorRef, showBrand = true, sharedBrand = f
             )}
           </AnimatePresence>
         </div>
-        <p className="text-xs tracking-[0.35em] text-white/50 uppercase">
+        <p className="text-xs tracking-[0.24em] text-white/85 uppercase">
           The Museum Without Walls
         </p>
 
@@ -61,7 +61,7 @@ export default function Hero({ brandAnchorRef, showBrand = true, sharedBrand = f
           Discover Living History.
         </h1>
 
-        <p className="mt-7 max-w-xl text-[15px] leading-relaxed text-white/70">
+        <p className="mt-7 max-w-xl text-[15px] leading-7 text-white/90">
           Explore cultural heritage through images, video, interactive 3D, and
           browser-based virtual galleries. Contribute, curate, license, and
           collect digital artifacts in one multilingual museum.

@@ -12,7 +12,7 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import PlaceholderImage from "@/components/ui/PlaceholderImage";
 import type { ExhibitDisplayStyle, LightDirectionKey, LightTemperatureKey, LightingPresetKey } from "@/lib/artifact-categories";
 import { buildLighting, getLightingPreset } from "@/lib/lighting-presets";
-import { fitModelToExhibit, mountModelInFrontOfWall, orientFlatModelForWall, straightenFlatModelOnWall } from "@/lib/three/fit-model-to-exhibit";
+import { alignModelPlaneToWall, createWallArtMount, fitModelToExhibit, mountModelInFrontOfWall, orientFlatModelForWall, straightenFlatModelOnWall } from "@/lib/three/fit-model-to-exhibit";
 import { createMuseumEnvironment, MUSEUM_DETAILS_EXHIBIT_X, MUSEUM_EXHIBIT_FIT, MUSEUM_WALL_ART_FIT, type MuseumPanelDetails } from "@/lib/three/museum-environment";
 import { loadModel, type ModelFormat, type ModelLoadError } from "@/lib/three/loaders";
 import LogoLoader from "@/components/ui/LogoLoader";
@@ -159,12 +159,6 @@ export default function LightingStudioViewer({ src, format, presetKey = "raking-
     controls.enablePan = true;
     controls.enableDamping = true;
     controls.dampingFactor = 0.06;
-    if (displayStyle === "framed-art") {
-      controls.minAzimuthAngle = -THREE.MathUtils.degToRad(20);
-      controls.maxAzimuthAngle = THREE.MathUtils.degToRad(20);
-      controls.minPolarAngle = THREE.MathUtils.degToRad(80);
-      controls.maxPolarAngle = THREE.MathUtils.degToRad(100);
-    }
     const noteInteraction = () => { if (viewerReadyRef.current) userInteractedRef.current = true; };
     controls.addEventListener("start", noteInteraction);
     const exhibitOffsetX = museumLayout === "details" ? MUSEUM_DETAILS_EXHIBIT_X : 0;
@@ -268,6 +262,7 @@ export default function LightingStudioViewer({ src, format, presetKey = "raking-
       object.traverse((child) => { child.layers.set(1); if (child instanceof THREE.Mesh) { child.castShadow = true; child.receiveShadow = true; if (displayStyle === "framed-art") { const materials = Array.isArray(child.material) ? child.material : [child.material]; materials.forEach((material) => { material.side = THREE.DoubleSide; material.needsUpdate = true; }); } } });
       if (displayStyle === "framed-art") {
         orientFlatModelForWall(object);
+        alignModelPlaneToWall(object);
         straightenFlatModelOnWall(object);
       }
       const exhibit = environmentRef.current?.getObjectByName("artifact-exhibit");
@@ -280,14 +275,15 @@ export default function LightingStudioViewer({ src, format, presetKey = "raking-
         centerZ: 0,
         platformRotationY: displayStyle === "framed-art" ? 0 : exhibit?.rotation.y ?? 0,
       });
-      if (displayStyle === "framed-art") mountModelInFrontOfWall(object);
-      modelRef.current = object;
-      if (displayStyle === "framed-art" && exhibit) exhibit.add(object);
-      else scene.add(object);
+      const displayedObject = displayStyle === "framed-art" ? createWallArtMount(object) : object;
+      if (displayStyle === "framed-art") mountModelInFrontOfWall(displayedObject);
+      modelRef.current = displayedObject;
+      if (displayStyle === "framed-art" && exhibit) exhibit.add(displayedObject);
+      else scene.add(displayedObject);
       controls.enabled = false;
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
-          if (!active || modelRef.current !== object) return;
+          if (!active || modelRef.current !== displayedObject) return;
           reframeRef.current?.();
           for (const delay of [150, 500, 1200]) {
             settleTimers.push(window.setTimeout(() => {

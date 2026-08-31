@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import * as THREE from "three";
-import { fitModelToExhibit, mountModelInFrontOfWall, orientFlatModelForWall, straightenFlatModelOnWall } from "./fit-model-to-exhibit";
+import { alignModelPlaneToWall, createWallArtMount, fitModelToExhibit, mountModelInFrontOfWall, orientFlatModelForWall, straightenFlatModelOnWall } from "./fit-model-to-exhibit";
 
 const fit = {
   centerX: -2.35,
@@ -107,15 +107,69 @@ describe("straightenFlatModelOnWall", () => {
     expect(size.y).toBeCloseTo(5, 1);
     expect(size.z).toBeCloseTo(0.2);
   });
+
+  it("preserves the authored axes of square artwork", () => {
+    const object = model(4, 4, 0.2);
+
+    expect(straightenFlatModelOnWall(object)).toBe(0);
+    const size = new THREE.Box3().setFromObject(object, true).getSize(new THREE.Vector3());
+    expect(size.x).toBeCloseTo(4, 1);
+    expect(size.y).toBeCloseTo(4, 1);
+  });
+});
+
+describe("alignModelPlaneToWall", () => {
+  it("aligns an arbitrarily tilted artifact plane to the frame while preserving depth", () => {
+    const object = model(3, 5, 0.2);
+    object.rotation.set(0.62, -0.48, 0.17);
+    const originalDepth = 0.2;
+
+    expect(alignModelPlaneToWall(object)).toBeGreaterThan(0);
+    const size = new THREE.Box3().setFromObject(object, true).getSize(new THREE.Vector3());
+
+    expect(size.z).toBeCloseTo(originalDepth, 1);
+    expect(size.x).toBeGreaterThan(2.9);
+    expect(size.y).toBeGreaterThan(4.8);
+  });
+
+  it("remains parallel to the frame after its in-plane axes are straightened", () => {
+    const object = model(3, 5, 0.2);
+    object.rotation.set(0.7, -0.55, 0.42);
+
+    alignModelPlaneToWall(object);
+    straightenFlatModelOnWall(object);
+    const size = new THREE.Box3().setFromObject(object, true).getSize(new THREE.Vector3());
+
+    expect(size.z).toBeCloseTo(0.2, 1);
+    expect(size.x * size.y).toBeGreaterThan(14.5);
+  });
 });
 
 describe("mountModelInFrontOfWall", () => {
   it("places the deepest fold just in front of the wall without flattening it", () => {
     const object = model(3, 4, 1.25);
     const originalDepth = new THREE.Box3().setFromObject(object, true).getSize(new THREE.Vector3()).z;
-    const bounds = mountModelInFrontOfWall(object, -0.32);
+    const bounds = mountModelInFrontOfWall(object);
 
-    expect(bounds.min.z).toBeCloseTo(-0.32);
+    expect(bounds.min.z).toBeCloseTo(-0.38);
     expect(bounds.getSize(new THREE.Vector3()).z).toBeCloseTo(originalDepth);
+  });
+});
+
+describe("createWallArtMount", () => {
+  it("preserves every fitted dimension and exposes frame-aligned mount axes", () => {
+    const object = model(3, 4, 1.25);
+    object.rotation.x = Math.PI / 2;
+    const sizeBefore = new THREE.Box3().setFromObject(object, true).getSize(new THREE.Vector3());
+    const mount = createWallArtMount(object);
+    const size = new THREE.Box3().setFromObject(mount, true).getSize(new THREE.Vector3());
+
+    expect(size.x).toBeCloseTo(sizeBefore.x);
+    expect(size.y).toBeCloseTo(sizeBefore.y);
+    expect(size.z).toBeCloseTo(sizeBefore.z);
+    expect(mount.rotation.x).toBe(0);
+    expect(mount.rotation.y).toBe(0);
+    expect(mount.rotation.z).toBe(0);
+    expect(mount.scale.toArray()).toEqual([1, 1, 1]);
   });
 });

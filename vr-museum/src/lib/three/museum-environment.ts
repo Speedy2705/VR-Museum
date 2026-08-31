@@ -17,11 +17,12 @@ export const MUSEUM_EXHIBIT_FIT = {
 } as const;
 
 export const MUSEUM_WALL_ART_FIT = {
-  pedestalTopY: -1.05,
-  targetHeight: 3.1,
-  maxWidth: 3.45,
-  // Wall art is sized by its visible face. Natural folds may project forward
-  // without making the entire artwork shrink inside the fixed frame.
+  // The fixed frame opening is 3.7 × 3.5. These dimensions reserve an 8%
+  // margin on each edge while uniform scaling preserves the source aspect ratio.
+  pedestalTopY: -0.97,
+  targetHeight: 2.94,
+  maxWidth: 3.108,
+  // Natural folds retain their authored depth; only face dimensions determine fit.
   maxDepth: Number.POSITIVE_INFINITY,
 } as const;
 

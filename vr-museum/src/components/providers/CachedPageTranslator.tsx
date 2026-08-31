@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { TRANSLATION_POLICY_VERSION } from "@/lib/translation-policy";
 import { useI18n } from "@/context/I18nContext";
 
 const attributes = ["placeholder", "title", "aria-label", "alt"] as const;
@@ -87,7 +88,7 @@ export default function CachedPageTranslator() {
   const { locale } = useI18n();
   useEffect(() => {
     if (locale === "en") return;
-    const storageKey = `museum-gemini-translations:${locale}`;
+    const storageKey = `museum-gemini-translations:${TRANSLATION_POLICY_VERSION}:${locale}`;
     let dictionary: Record<string, string> = {};
     try { dictionary = JSON.parse(localStorage.getItem(storageKey) ?? "{}"); } catch { dictionary = {}; }
     let timer: ReturnType<typeof setTimeout>;

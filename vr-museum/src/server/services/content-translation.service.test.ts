@@ -87,17 +87,18 @@ describe("content translation service", () => {
     expect(result).toMatchObject({ title: "सूर्य मंदिर", subtitle: "पत्थर और प्रकाश", description: "13वीं शताब्दी में निर्मित" });
   });
 
-  it("preserves a legacy complete translation and stamps source hashes without Gemini", async () => {
+  it("regenerates a legacy translation that has no current policy hashes", async () => {
     const translated = {
       ...collection,
       translations: { es: { title: "India antigua", subtitle: "Una larga historia", description: "Objetos de toda la India", category: "Historia" } },
     } as Collection;
+    mocks.translatePhrases.mockResolvedValue(["La India ancestral", "Una historia que atraviesa los siglos", "Tesoros de todos los rincones de la India", "Historia"]);
     mocks.collectionUpdate.mockImplementation(async ({ data }: { data: { translations: unknown } }) => ({ translations: data.translations }));
 
     const result = await getLocalizedCollection(translated, "es");
 
-    expect(result).toMatchObject({ title: "India antigua", subtitle: "Una larga historia", description: "Objetos de toda la India" });
-    expect(mocks.translatePhrases).not.toHaveBeenCalled();
+    expect(result).toMatchObject({ title: "La India ancestral", subtitle: "Una historia que atraviesa los siglos", description: "Tesoros de todos los rincones de la India" });
+    expect(mocks.translatePhrases).toHaveBeenCalledWith("es", [collection.title, collection.subtitle, collection.description, collection.category]);
     expect(mocks.collectionUpdate).toHaveBeenCalledOnce();
   });
 

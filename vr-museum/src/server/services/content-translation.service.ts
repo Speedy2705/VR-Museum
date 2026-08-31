@@ -45,9 +45,8 @@ async function translateRecord<T extends TranslatableRecord>(
   const changedFields = fields.filter((field) => {
     const translated = existingTranslation[field];
     if (typeof translated !== "string" || !translated.trim()) return true;
-    // Legacy translations predate source tracking. Preserve them once and
-    // stamp the current source hashes, then invalidate field-by-field later.
-    return hasHashMetadata && existingHashes[field] !== currentHashes[field];
+    // Unversioned translations may use the old literal policy and must be refreshed.
+    return !hasHashMetadata || existingHashes[field] !== currentHashes[field];
   });
 
   try {
@@ -113,7 +112,7 @@ export async function getLocalizedUpload<T extends UploadedAsset>(upload: T, loc
   const hasHashMetadata = Object.keys(existingHashes).length > 0;
   const changedFields = fields.filter((field) => {
     const translated = existing[field];
-    return typeof translated !== "string" || !translated.trim() || (hasHashMetadata && existingHashes[field] !== currentHashes[field]);
+    return typeof translated !== "string" || !translated.trim() || !hasHashMetadata || existingHashes[field] !== currentHashes[field];
   });
 
   try {

@@ -1,6 +1,10 @@
 import type { Locale } from "@/lib/i18n";
 
-const SYSTEM_INSTRUCTION = "Translate museum website UI from English to the requested language. Preserve brand names, URLs, numbers, placeholders, punctuation, and HTML entities. Return translations in exactly the input order.";
+export const SYSTEM_INSTRUCTION = `Localize English museum website copy into the requested language.
+
+Preserve the source's meaning, emotional force, passion, and level of formality—not its word order. Write as a museum lover speaking naturally to artisans, customers, consumers, and museum visitors. Prefer an evocative, idiomatic, culturally resonant equivalent over a literal or word-for-word translation. You may freely change sentence structure, imagery, idioms, and phrasing, provided the central meaning and impact remain the same. Keep concise UI copy reasonably compact, but prioritize impact over matching the English length.
+
+Keep all proper names, artisan names, artwork titles that must not be localized, locations, materials, dates, historical facts, numbers, URLs, placeholders, punctuation, HTML entities, and the ViswaRoop brand accurate. Never invent or embellish factual claims. If a phrase is already in the target language, return it unchanged. Return only the translations, in exactly the input order, with no notes or explanations.`;
 
 export type GeminiTranslationErrorCode = "NOT_CONFIGURED" | "RATE_LIMITED" | "REQUEST_FAILED" | "INVALID_RESPONSE";
 

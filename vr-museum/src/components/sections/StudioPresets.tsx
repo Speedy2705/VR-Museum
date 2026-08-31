@@ -44,11 +44,11 @@ export default function StudioPresets() {
           Museum Lighting
         </p>
         <h2 className="font-display mt-5 text-4xl italic">
-          Tested Light Temperatures for Each Artifact Type
+          Tested Light Colour Temperatures for Each Artifact Type
         </h2>
 
         <p className="mt-5 max-w-3xl text-sm leading-relaxed text-stone">
-          A key part of ViswaRoop is our project&apos;s tested lighting recommendations. We assign a suitable colour temperature to each artifact domain so its material, colour, carving, and surface detail remain clear in the digital exhibit.
+          A key part of ViswaRoop is our project&apos;s tested lighting recommendations. We assign a suitable light colour temperature to each artifact domain so its material, colour, carving, and surface detail remain clear in the digital exhibit.
         </p>
 
         <div className="mt-10 grid gap-4 lg:grid-cols-3">

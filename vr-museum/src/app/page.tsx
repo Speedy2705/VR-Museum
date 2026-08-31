@@ -1,6 +1,5 @@
-import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
-import Hero from "@/components/sections/Hero";
+import HomeHeroHeader from "@/components/sections/HomeHeroHeader";
 import CategoryStrip from "@/components/sections/CategoryStrip";
 import MainExperience from "@/components/sections/MainExperience";
 import WelcomeSection from "@/components/sections/WelcomeSection";
@@ -65,15 +64,13 @@ export default async function Home() {
   }));
   return (
     <>
-      <Navbar hasHeroBackground />
-      <main>
-        <Hero />
+      <HomeHeroHeader>
         <CategoryStrip categories={categories} />
         <MainExperience />
         <WelcomeSection />
         <CollectionGrid collections={collections} />
         <CTASection />
-      </main>
+      </HomeHeroHeader>
       <Footer />
     </>
   );

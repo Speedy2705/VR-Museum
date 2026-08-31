@@ -26,8 +26,8 @@ export const MUSEUM_WALL_ART_FIT = {
   maxDepth: Number.POSITIVE_INFINITY,
 } as const;
 
-export const MUSEUM_DETAILS_EXHIBIT_X = -3.1;
-export const MUSEUM_DETAILS_DISPLAY_X = 3.1;
+export const MUSEUM_DETAILS_EXHIBIT_X = -2.0;
+export const MUSEUM_DETAILS_DISPLAY_X = 2.0;
 export const MUSEUM_DETAILS_EXHIBIT_ROTATION_Y = 0.28;
 export const MUSEUM_WALL_ART_ROTATION_Y = 0.12;
 
@@ -43,18 +43,6 @@ function createPlaqueTexture(title: string, origin: string) {
   context.fillStyle = "#3f3426"; context.font = "italic 700 138px Georgia, serif"; context.fillText(title, 512, 145, 940);
   context.shadowColor = "rgba(255,255,255,.4)"; context.font = "600 72px Arial, sans-serif"; context.fillText(origin.toUpperCase(), 512, 300, 940);
   const texture = new THREE.CanvasTexture(canvas); texture.colorSpace = THREE.SRGBColorSpace; texture.anisotropy = 4;
-  return texture;
-}
-
-function createBrandTexture() {
-  // The light mark is intentionally used here: the gallery wall is dark, and
-  // the mark-only asset keeps the 3D space free of the ViswaRoop wordmark.
-  // Use the rasterized copy in WebGL. Browsers can display the source SVG in
-  // regular page markup, but SVG-backed WebGL textures are not reliable across
-  // renderers and previously left this wall blank.
-  const texture = new THREE.TextureLoader().load("/brand/viswaroop-mark-light.png");
-  texture.colorSpace = THREE.SRGBColorSpace;
-  texture.anisotropy = 8;
   return texture;
 }
 
@@ -175,19 +163,6 @@ export function createMuseumEnvironment(options: MuseumEnvironmentOptions = {}):
   wallGlow.position.set(backdropX, options.showInfoDisplay ? 0.05 : 0.65, -3.6);
   wallGlow.name = "wall-glow";
 
-  // Display only the logo mark on the rear wall, without a wordmark or banner.
-  const brandTexture = createBrandTexture();
-  const brandSign = new THREE.Group();
-  brandSign.name = "viswaroop-gallery-sign";
-  brandSign.position.set(backdropX, options.showInfoDisplay ? 2.05 : 2.18, -3.48);
-  const signFace = new THREE.Mesh(
-    new THREE.PlaneGeometry(options.showInfoDisplay ? 3.2 : 2.8, options.showInfoDisplay ? 1.1 : 0.96),
-    new THREE.MeshBasicMaterial({ color: 0xffffff, map: brandTexture, transparent: true, alphaTest: 0.02, depthWrite: false, side: THREE.DoubleSide, toneMapped: false }),
-  );
-  signFace.name = "brand-logo-mark";
-  signFace.renderOrder = 10;
-  brandSign.add(signFace);
-
   if (options.showInfoDisplay) {
     const display = new THREE.Group();
     display.name = "museum-info-display";
@@ -257,6 +232,6 @@ export function createMuseumEnvironment(options: MuseumEnvironmentOptions = {}):
   // The circular gallery base belongs to the complete exhibit composition,
   // including wall-mounted artwork.
   group.add(floor);
-  group.add(exhibit, wallGlow, brandSign);
+  group.add(exhibit, wallGlow);
   return group;
 }

@@ -41,7 +41,7 @@ function frameObject(object: THREE.Object3D, camera: THREE.PerspectiveCamera, co
   const box = new THREE.Box3().setFromObject(object, true);
   const museumComposition = Boolean(museumEnvironment);
   if (museumEnvironment) {
-    ["artifact-exhibit", "museum-info-display", "wall-glow", "viswaroop-gallery-sign"].forEach((name) => {
+    ["artifact-exhibit", "museum-info-display", "wall-glow"].forEach((name) => {
       const part = museumEnvironment.getObjectByName(name);
       if (part) box.expandByObject(part, true);
     });

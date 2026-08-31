@@ -38,9 +38,15 @@ const NAVBAR_NO_BLUR = "blur(0px)";
 
 type NavbarProps = {
   hasHeroBackground?: boolean;
+  showBrand?: boolean;
+  sharedBrand?: boolean;
 };
 
-export default function Navbar({ hasHeroBackground = false }: NavbarProps) {
+export default function Navbar({
+  hasHeroBackground = false,
+  showBrand = true,
+  sharedBrand = false,
+}: NavbarProps) {
   const pathname = usePathname();
   const { locale, messages: t } = useI18n();
   const href = (path: string) => localizePath(path, locale);
@@ -185,13 +191,24 @@ export default function Navbar({ hasHeroBackground = false }: NavbarProps) {
           ))}
         </ul>
 
-        <Link
-          href={href("/")}
-          aria-label="ViswaRoop home"
-          className="flex flex-1 justify-center xl:flex-none"
-        >
-          <BrandLogo variant="light" className="h-14 w-auto max-w-[8.5rem] object-contain sm:max-w-[10rem]" priority />
-        </Link>
+        <div className="pointer-events-none absolute left-1/2 flex -translate-x-1/2 justify-center">
+          <AnimatePresence initial={false}>
+            {showBrand && (
+              <motion.div
+                layoutId={sharedBrand ? "viswaroop-home-brand" : undefined}
+                initial={sharedBrand || reduceMotion ? false : { opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={sharedBrand || reduceMotion ? undefined : { opacity: 0, y: -8 }}
+                transition={{ duration: reduceMotion ? 0 : 0.75, ease: [0.22, 1, 0.36, 1] }}
+              >
+                <Link href={href("/")} aria-label="ViswaRoop home" className="pointer-events-auto block">
+                  <BrandLogo variant="light" markOnly className="h-11 w-16 object-contain sm:hidden" priority />
+                  <BrandLogo variant="light" className="hidden h-14 w-auto max-w-[10rem] object-contain sm:block" priority />
+                </Link>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
 
         <div className="flex shrink-0 items-center justify-end gap-3 sm:gap-5 xl:flex-1 xl:gap-7">
           {user ? (
